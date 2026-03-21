@@ -1,17 +1,43 @@
 :root {
-    /* Premium Blue Palette */
-    --brand-primary: #0061FF;      /* Biru Inti */
-    --brand-soft: #F0F6FF;         /* Background Active State */
-    --brand-glass: rgba(240, 246, 255, 0.7);
+    /* 1. Core Brand (High-Performance Blue) */
+    /* Menggunakan biru yang lebih dalam untuk aksesibilitas dan kesan premium */
+    --brand-primary: #0052FF;      
+    --brand-primary-hover: #0041CC;
+    --brand-soft: #F0F5FF;         /* Blue Tint untuk Active State */
+    --brand-glass: rgba(255, 255, 255, 0.8);
 
-    /* Neutral & Background */
-    --bg-app: #F8FAFC;             /* Abu-abu biru sangat muda (luar card) */
-    --bg-card: #FFFFFF;            /* Putih murni (dalam card) */
-    --text-main: #0F172A;          /* Slate 900 */
-    --text-muted: #64748B;         /* Slate 500 */
-    --border-light: #F1F5F9;       /* Border halus */
+    /* 2. Surfaces & Backgrounds */
+    /* Background sedikit lebih gelap agar White Cards benar-benar "pop" */
+    --bg-app: #F1F5F9;             
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #FAFBFF;      /* Sedikit perubahan warna saat hover */
 
-    /* Elevation */
-    --shadow-premium: 0 10px 25px -5px rgba(0, 97, 255, 0.04), 
-                      0 8px 10px -6px rgba(0, 97, 255, 0.04);
+    /* 3. Typography (The Slate Palette) */
+    /* Menghindari hitam pekat agar mata tidak cepat lelah saat membaca data */
+    --text-main: #0F172A;          /* Slate 900 (Headers) */
+    --text-body: #334155;          /* Slate 700 (Paragraphs) */
+    --text-muted: #64748B;         /* Slate 500 (Labels/Captions) */
+
+    /* 4. Borders & Dividers */
+    /* Border sangat tipis untuk memisahkan konten tanpa terlihat kaku */
+    --border-light: #E2E8F0;       
+    --border-subtle: #F1F5F9;
+
+    /* 5. Precision Elevation (The "Shadow Glow") */
+    /* Kita bagi menjadi dua: Shadow Statis dan Shadow Hover (Interaktif) */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    
+    --shadow-premium: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.02), 
+        0 10px 15px -3px rgba(0, 97, 255, 0.03); /* Sedikit hint biru di shadow */
+
+    --shadow-hover: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.04), 
+        0 10px 10px -5px rgba(0, 97, 255, 0.05);
+
+    /* 6. System Properties */
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 24px;
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
