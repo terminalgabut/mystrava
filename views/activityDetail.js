@@ -12,9 +12,26 @@ export default {
         
         const activity = ref(null);
         const loading = ref(true);
+        const dynamicLocation = ref(''); // State untuk menampung nama area dari API
         let map = null;
 
-        // --- FETCH DATA ---
+        /**
+         * Mengambil nama tempat (Desa/Kecamatan) berdasarkan koordinat
+         */
+        const fetchGeoLocation = async (lat, lng) => {
+            try {
+                // Menggunakan Nominatim (OpenStreetMap) - Tanpa API Key
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
+                const data = await response.json();
+                
+                // Urutan prioritas: Nama Desa -> Kelurahan -> Kecamatan -> Kota
+                const addr = data.address;
+                return addr.village || addr.suburb || addr.city_district || addr.city || addr.town || 'Area Terdeteksi';
+            } catch (err) {
+                return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+            }
+        };
+
         const loadActivityDetail = async () => {
             loading.value = true;
             try {
@@ -26,13 +43,24 @@ export default {
 
                 if (error) throw error;
                 
-                // Normalisasi data untuk memastikan format angka dan field waktu tersedia
+                // 1. Normalisasi Data (PENTING: Memastikan elapsed_time terbaca sebagai angka)
                 activity.value = {
                     ...data,
                     moving_time: Number(data.moving_time || 0),
                     elapsed_time: Number(data.elapsed_time || 0)
                 };
 
+                // 2. Logic Lokasi Akurat
+                if (data.location_city) {
+                    dynamicLocation.value = data.location_city;
+                } else if (data.start_latlng && Array.isArray(data.start_latlng)) {
+                    // Jika data kota kosong, kita cari nama areanya lewat koordinat
+                    dynamicLocation.value = await fetchGeoLocation(data.start_latlng[0], data.start_latlng[1]);
+                } else {
+                    dynamicLocation.value = 'Jawa Timur, ID';
+                }
+
+                // 3. Render Map
                 if (data.summary_polyline) {
                     nextTick(() => initMap(data.summary_polyline));
                 }
@@ -44,23 +72,13 @@ export default {
             }
         };
 
-        // --- MAP LOGIC ---
         const initMap = (polylineStr) => {
             if (map) map.remove();
-            
             try {
                 const coordinates = polyline.decode(polylineStr); 
                 map = L.map('map', { zoomControl: false, attributionControl: false }).setView(coordinates[0], 13);
-                
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-                const path = L.polyline(coordinates, {
-                    color: '#2563eb',
-                    weight: 6,
-                    opacity: 0.9,
-                    lineJoin: 'round'
-                }).addTo(map);
-
+                const path = L.polyline(coordinates, { color: '#2563eb', weight: 6, opacity: 0.9 }).addTo(map);
                 map.fitBounds(path.getBounds(), { padding: [40, 40] });
             } catch (e) {
                 Logger.error('Map_Init_Error', e);
@@ -68,24 +86,10 @@ export default {
         };
 
         // --- COMPUTED PROPERTIES ---
-        const locationName = computed(() => {
-            if (!activity.value) return 'Loading...';
-            
-            // Prioritas 1: Nama Kota dari Strava
-            if (activity.value.location_city) return activity.value.location_city;
-            
-            // Prioritas 2: Koordinat GPS (Format: -7.123, 112.123)
-            if (activity.value.start_latlng && Array.isArray(activity.value.start_latlng)) {
-                const [lat, lng] = activity.value.start_latlng;
-                return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
-            }
-            
-            return 'Area Terdeteksi';
-        });
+        const locationName = computed(() => dynamicLocation.value || 'Memuat lokasi...');
 
         const realSplits = computed(() => {
             if (!activity.value?.splits_metric) return [];
-            
             return activity.value.splits_metric.map(s => ({
                 number: s.split,
                 distance: (s.distance / 1000).toFixed(1),
