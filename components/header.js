@@ -1,9 +1,9 @@
 import headerView from './headerView.js';
 
 export default {
-    ...headerView, // Menempelkan template HTML ke objek komponen
-    setup() {
-        // Semua logika reaktif di sini
-        return {};
+    ...headerView,
+    emits: ['toggle-sidebar'], // Deklarasikan event
+    mounted() {
+        if (window.lucide) window.lucide.createIcons();
     }
 };
