@@ -1,0 +1,36 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hilangkan scrollbar tapi tetap bisa di-scroll (Opsional untuk kesan clean) */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+img, svg {
+    display: block;
+    max-width: 100%;
+}
+
+button, input {
+    font: inherit;
+    border: none;
+    outline: none;
+    background: none;
+}
