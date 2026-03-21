@@ -1,27 +1,88 @@
 .app-header {
-    height: 72px;
+    height: 64px;
     background: var(--brand-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border-light);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    
+    /* MODIFIKASI: Kunci posisi di layar */
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0; /* Secara default di mobile, lebar penuh */
+    z-index: 100;
+    
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    padding: 0 1.25rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
 }
 
+/* --- LOGO: BOLD & STATIC --- */
 .header-logo {
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    color: var(--brand-primary);
+    font-size: 1.25rem;
+    font-weight: 850;
+    letter-spacing: -0.06em;
+    color: var(--text-main);
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s ease;
 }
 
+.header-logo:active {
+    opacity: 0.7;
+}
+
+.header-logo::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--brand-primary);
+    border-radius: 50%;
+}
+
+/* --- NAV & ICONS --- */
 .header-nav {
     margin-left: auto;
     display: flex;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: var(--text-body);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.nav-icon:hover {
+    background: var(--brand-soft);
+    color: var(--brand-primary);
+}
+
+.nav-icon:active {
+    background: var(--border-subtle);
+    transform: scale(0.92);
+}
+
+.nav-icon i {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2px;
+}
+
+/* --- DESKTOP ADJUSTMENT --- */
+/* Jika di desktop Sidebar tampil (misal lebar 280px), Header harus bergeser */
+@media (min-width: 1025px) {
+    .app-header {
+        left: 280px; 
+    }
 }
