@@ -40,60 +40,82 @@ export const stravaService = {
         }
     },
 
-    async getTrendData(activityType, year) {
-        try {
-            // Ambil data mentah untuk kalkulasi perbandingan yang akurat
-            const { data } = await supabase
-                .from('activities')
-                .select('start_date, average_speed, name')
-                .eq('type', activityType)
-                .like('start_date', `${year}%`);
+    // Tambahkan/Ganti fungsi getTrendData di dalam stravaService.js
+async getTrendData(activityType, year) {
+    try {
+        Logger.info(`Fetching Trend Data for ${activityType} Year ${year}`);
 
-            const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const monthlyStats = Array.from({ length: 12 }, () => ({
-                totalSpeed: 0, count: 0,
-                roadSpeed: 0, roadCount: 0,
-                trailSpeed: 0, trailCount: 0
-            }));
+        // Ambil semua aktivitas di tahun tersebut untuk diproses menjadi chart
+        const { data, error } = await supabase
+            .from('activities')
+            .select('start_date, average_speed, name, type')
+            .eq('type', activityType)
+            .like('start_date', `${year}%`);
 
-            data?.forEach(act => {
-                const month = new Date(act.start_date).getMonth();
-                const speed = activityType === 'Ride' ? (act.average_speed * 3.6) : (1000 / act.average_speed / 60);
-                
-                monthlyStats[month].totalSpeed += speed;
-                monthlyStats[month].count++;
+        if (error) throw error;
 
-                // Logika pemisah Trail vs Road
-                if (act.name.toLowerCase().includes('trail')) {
-                    monthlyStats[month].trailSpeed += speed;
-                    monthlyStats[month].trailCount++;
-                } else {
-                    monthlyStats[month].roadSpeed += speed;
-                    monthlyStats[month].roadCount++;
-                }
-            });
+        const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        
+        // Inisialisasi struktur data untuk 12 bulan
+        const monthlyStats = Array.from({ length: 12 }, () => ({
+            totalPace: 0, count: 0,
+            roadPace: 0, roadCount: 0,
+            trailPace: 0, trailCount: 0
+        }));
 
-            const mainDataset = monthlyStats.map(m => m.count > 0 ? parseFloat((m.totalSpeed / m.count).toFixed(2)) : 0);
-            const comparisonDatasets = [];
+        data?.forEach(act => {
+            const date = new Date(act.start_date);
+            const monthIdx = date.getMonth(); // 0-11
+            
+            // Hitung Pace (min/km) atau Speed (km/h)
+            const value = activityType === 'Ride' 
+                ? parseFloat((act.average_speed * 3.6).toFixed(1)) 
+                : parseFloat((1000 / act.average_speed / 60).toFixed(2));
 
-            // Trigger Chart ke-2 jika ada data Trail atau tipe-nya Run
-            if (activityType === 'Run') {
-                comparisonDatasets.push({
-                    label: 'Road Pace',
-                    data: monthlyStats.map(m => m.roadCount > 0 ? parseFloat((m.roadSpeed / m.roadCount).toFixed(2)) : 0),
-                    color: '#3b82f6'
-                }, {
-                    label: 'Trail Pace',
-                    data: monthlyStats.map(m => m.trailCount > 0 ? parseFloat((m.trailSpeed / m.trailCount).toFixed(2)) : 0),
-                    color: '#10b981'
-                });
+            // Masukkan ke dataset utama
+            monthlyStats[monthIdx].totalPace += value;
+            monthlyStats[monthIdx].count++;
+
+            // FIX: Pisahkan Trail vs Road untuk Chart ke-2
+            // Kita deteksi dari nama aktivitas (Case Insensitive)
+            const isTrail = act.name.toLowerCase().includes('trail');
+            if (isTrail) {
+                monthlyStats[monthIdx].trailPace += value;
+                monthlyStats[monthIdx].trailCount++;
+            } else {
+                monthlyStats[monthIdx].roadPace += value;
+                monthlyStats[monthIdx].roadCount++;
             }
+        });
 
-            return { labels, mainDataset, comparisonDatasets };
-        } catch (err) {
-            return { labels: [], mainDataset: [], comparisonDatasets: [] };
+        // Mapping ke format dataset yang dikenali PaceChart.js
+        const mainDataset = monthlyStats.map(m => 
+            m.count > 0 ? parseFloat((m.totalPace / m.count).toFixed(2)) : 0
+        );
+
+        const comparisonDatasets = [];
+        
+        // Hanya tampilkan pembanding jika tipe-nya lari dan ada data
+        if (activityType === 'Run') {
+            const roadData = monthlyStats.map(m => 
+                m.roadCount > 0 ? parseFloat((m.roadPace / m.roadCount).toFixed(2)) : 0
+            );
+            const trailData = monthlyStats.map(m => 
+                m.trailCount > 0 ? parseFloat((m.trailPace / m.trailCount).toFixed(2)) : 0
+            );
+
+            comparisonDatasets.push(
+                { label: 'Road', data: roadData, color: '#3b82f6' }, // Blue
+                { label: 'Trail', data: trailData, color: '#10b981' } // Green
+            );
         }
-    },
+
+        return { labels, mainDataset, comparisonDatasets };
+    } catch (err) {
+        Logger.error('TrendData_Error', err);
+        return { labels: [], mainDataset: [], comparisonDatasets: [] };
+    }
+},
 
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase.from('activities')
