@@ -143,3 +143,69 @@
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* --- 6. Advanced Loading State (Shimmer) --- */
+
+/* Keyframes untuk pergerakan cahaya dari kiri ke kanan */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Container utama saat sedang loading */
+.is-loading {
+    pointer-events: none; /* Cegah interaksi user saat data belum siap */
+}
+
+/* Utility untuk teks yang berubah jadi bar loading */
+.is-loading .shimmer-text {
+    color: transparent !important; /* Sembunyikan teks lama agar tidak tumpang tindih */
+    position: relative;
+    overflow: hidden;
+    background-color: var(--border-subtle); /* Warna dasar skeleton */
+    background-image: linear-gradient(
+        90deg, 
+        var(--border-subtle) 0px, 
+        var(--border-light) 40%, 
+        var(--border-subtle) 80%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    min-width: 80px; /* Lebar minimum bar jika teks kosong */
+}
+
+/* Efek pulse lembut pada kartu saat loading agar visual lebih hidup */
+.is-loading .bento-card {
+    border-color: var(--border-light);
+    box-shadow: none; /* Hilangkan shadow premium sementara agar fokus ke konten */
+    transition: opacity 0.3s ease;
+}
+
+/* Mencegah ikon ikut berkedip terlalu tajam */
+.is-loading .icon-box {
+    opacity: 0.5;
+    background-color: var(--border-subtle);
+}
+
+/* Overlay transisi halus saat data muncul */
+.animate-in {
+    animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
