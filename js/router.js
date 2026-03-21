@@ -18,13 +18,12 @@ const routes = [
         name: 'activities',
         component: Activities 
     },
-    /* { 
+    { 
         path: '/activity/:id', 
         name: 'activity-detail',
         component: ActivityDetail,
         props: true 
     }, 
-    */
     { 
         path: '/:pathMatch(.*)*', 
         redirect: '/' 
