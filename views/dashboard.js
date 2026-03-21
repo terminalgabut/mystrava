@@ -6,11 +6,11 @@ export default {
     name: 'DashboardView',
     template: dashboardTemplate,
     setup() {
-        const { ref, onMounted, watch, nextTick } = Vue;
+        const { ref, onMounted, watch, nextTick, computed } = Vue;
         
-        // State Filter: Sinkron dengan Dropdown di Template
+        // State Filter
         const selectedType = ref('Run'); 
-        const selectedPeriodKey = ref('total'); // 'total', '2026', '2026-03'
+        const selectedPeriodKey = ref('total'); 
         
         const stats = ref({
             totalDistance: "0.00",
@@ -18,37 +18,80 @@ export default {
             totalActivities: 0,
             avgPace: "00:00",
             calories: 0,
+            steps: 0,
             recentActivities: []
         });
         const isLoading = ref(true);
 
+        /**
+         * Konfigurasi Dinamis berdasarkan Tipe Aktivitas
+         * Mengatur Label, Unit, dan Ikon secara reaktif
+         */
+        const performanceConfig = computed(() => {
+            switch (selectedType.value) {
+                case 'Ride':
+                    return { 
+                        label: 'Avg Speed', 
+                        unit: 'km/h', 
+                        icon: 'zap',
+                        showSteps: false 
+                    };
+                case 'Walk':
+                    return { 
+                        label: 'Total Steps', 
+                        unit: 'steps', 
+                        icon: 'footprints',
+                        showSteps: true 
+                    };
+                default: // Run
+                    return { 
+                        label: 'Avg Pace', 
+                        unit: '/km', 
+                        icon: 'timer',
+                        showSteps: false 
+                    };
+            }
+        });
+
         const loadData = async () => {
             isLoading.value = true;
-            // Tentukan period_type berdasarkan format key
+            
+            // Logika penentuan period_type (all_time, year, month)
             let pType = 'all_time';
             if (selectedPeriodKey.value.includes('-')) pType = 'month';
             else if (selectedPeriodKey.value !== 'total') pType = 'year';
 
-            stats.value = await stravaService.getStats(
+            // Ambil data dari service
+            const data = await stravaService.getStats(
                 selectedType.value, 
                 pType, 
                 selectedPeriodKey.value
             );
 
+            stats.value = data;
+
+            // Trigger Lucide icons setelah DOM update
             nextTick(() => {
                 if (window.lucide) window.lucide.createIcons();
             });
+            
             isLoading.value = false;
         };
 
-        // Otomatis reload data saat user ganti pilihan di UI
+        // Watcher untuk mendeteksi perubahan filter
         watch([selectedType, selectedPeriodKey], () => {
-            Logger.info(`Filter Changed: ${selectedType.value} | ${selectedPeriodKey.value}`);
+            Logger.info(`Dashboard Filter: ${selectedType.value} | ${selectedPeriodKey.value}`);
             loadData();
         });
 
         onMounted(loadData);
 
-        return { stats, isLoading, selectedType, selectedPeriodKey };
+        return { 
+            stats, 
+            isLoading, 
+            selectedType, 
+            selectedPeriodKey, 
+            performanceConfig 
+        };
     }
 };
