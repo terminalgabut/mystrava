@@ -1,9 +1,7 @@
 import { Logger } from './services/debug.js';
 
-/**
- * Lazy Loading Native Vue Router.
- * Jika file dashboard.js gagal dimuat, 
- * browser akan menampilkan error di Console.
+/** * Gunakan jalur absolut relatif terhadap root domain untuk GitHub Pages.
+ * Jika file kamu ada di: mystrava/views/dashboard.js
  */
 const Dashboard = () => import('../views/dashboard.js');
 
@@ -13,9 +11,6 @@ const routes = [
         name: 'dashboard',
         component: Dashboard 
     },
-    /** * Catch-all: Mengarahkan semua path tidak dikenal ke Dashboard.
-     * Ini mencegah layar blank jika ada link yang salah ketik.
-     */
     { 
         path: '/:pathMatch(.*)*', 
         redirect: '/' 
@@ -27,12 +22,7 @@ export const router = VueRouter.createRouter({
     routes
 });
 
-// Debug Navigation
 router.beforeEach((to, from, next) => {
-    Logger.info(`Router: Navigating to ${to.path}`);
+    Logger.info(`Router: Attempting to load ${to.path}`);
     next();
-});
-
-router.afterEach((to) => {
-    document.title = "Dashboard | DASHSTRAV";
 });
