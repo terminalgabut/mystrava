@@ -77,59 +77,49 @@ export default {
 
         // --- CORE LOGIC ---
         const loadData = async () => {
-            isLoading.value = true;
-            const pKey = selectedPeriodKey.value;
-            const pType = pKey.includes('-') ? 'month' : (pKey === 'total' ? 'all_time' : 'year');
+    isLoading.value = true;
+    const pKey = selectedPeriodKey.value;
+    const pType = pKey.includes('-') ? 'month' : (pKey === 'total' ? 'all_time' : 'year');
 
-            try {
-                // 1. Ambil Stats
-                const rawData = await stravaService.getStats(selectedType.value, pType, pKey);
-                
-                // MAPPING EKSPLISIT: Pastikan nama key di sini sama dengan di template
-                stats.value = {
-                    totalDistance: rawData.totalDistance || "0.00",
-                    totalActivities: rawData.totalActivities || 0,
-                    avgPace: rawData.avgPace || "00:00",
-                    elevation: rawData.elevation || 0,
-                    calories: rawData.calories || 0,
-                    steps: rawData.steps || 0,
-                    records: rawData.records || { longestDistance: '0.00', bestEffort: '--:--' },
-                    totalDuration: rawData.totalDuration || "00:00", // Pastikan service return key ini
-                    recentActivities: (rawData.activities || []).slice(0, 5).map(act => ({
-                        id: act.id,
-                        name: act.name,
-                        type: act.type,
-                        distance: (act.distance / 1000).toFixed(2),
-                        date: formatDate(act.start_date),
-                        moving_time: act.moving_time,
-                        location_name: act.location_name,
-                        weather_temp: act.weather_temp
-                    }))
-                };
-
-                // 2. Ambil Trends (Hanya jika fungsi tersedia)
-                if (stravaService.getTrendData) {
-                    const chartYear = pKey === 'total' ? new Date().getFullYear().toString() : pKey.split('-')[0];
-                    const trend = await stravaService.getTrendData(selectedType.value, chartYear);
-
-                    trendData.value = {
-                        labels: trend.labels || [],
-                        paceDatasets: [{ 
-                            label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
-                            data: trend.mainDataset || [], 
-                            color: '#3b82f6' 
-                        }],
-                        comparisonDatasets: trend.comparisonDatasets || []
-                    };
-                }
-
-            } catch (err) {
-                Logger.error("Dashboard_Load_Error", err);
-            } finally {
-                isLoading.value = false;
-                refreshIcons();
-            }
+    try {
+        const rawData = await stravaService.getStats(selectedType.value, pType, pKey);
+        
+        // FIX 3: MAPPING RECENT LOG
+        stats.value = {
+            ...rawData,
+            recentActivities: (rawData.activities || []).slice(0, 5).map(act => ({
+                id: act.id,
+                name: act.name,
+                type: act.type,
+                distance: (act.distance / 1000).toFixed(2),
+                date: formatDate(act.start_date),
+                moving_time: act.moving_time, // Dibutuhkan oleh formatTime() di template
+                location_name: act.location_name || 'Training Ground',
+                weather_temp: act.weather_temp
+            }))
         };
+
+        // FIX 4: CHART LOADING
+        const chartYear = pKey === 'total' ? new Date().getFullYear().toString() : pKey.split('-')[0];
+        const trend = await stravaService.getTrendData(selectedType.value, chartYear);
+
+        trendData.value = {
+            labels: trend.labels,
+            paceDatasets: [{ 
+                label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
+                data: trend.mainDataset, 
+                color: '#3b82f6' 
+            }],
+            comparisonDatasets: trend.comparisonDatasets || []
+        };
+
+    } catch (err) {
+        Logger.error("Dashboard_Load_Error", err);
+    } finally {
+        isLoading.value = false;
+        refreshIcons(); // Pastikan ikon Lucide dirender ulang
+    }
+};
 
         watch([selectedType, selectedPeriodKey], loadData);
         onMounted(loadData);
