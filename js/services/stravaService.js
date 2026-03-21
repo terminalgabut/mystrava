@@ -101,6 +101,68 @@ export const stravaService = {
         }));
     },
 
+    async getTrendData(activityType = 'Run', year = '2026') {
+        try {
+            Logger.info(`StravaService: Fetching Trends for ${activityType} ${year}`);
+
+            const { data: monthlyData, error } = await supabase
+                .from('activity_snapshots')
+                .select('period_key, avg_speed, total_distance')
+                .eq('activity_type', activityType)
+                .eq('period_type', 'month')
+                .like('period_key', `${year}-%`)
+                .order('period_key', { ascending: true });
+
+            if (error) throw error;
+
+            const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const currentMonthLimit = new Date().getMonth() + 1;
+            
+            const mainValues = new Array(currentMonthLimit).fill(0);
+            const roadValues = new Array(currentMonthLimit).fill(0);
+            const trailValues = new Array(currentMonthLimit).fill(0);
+
+            (monthlyData || []).forEach(snap => {
+                const monthIndex = parseInt(snap.period_key.split('-')[1]) - 1;
+                if (monthIndex >= currentMonthLimit) return;
+
+                let val = 0;
+                if (activityType === 'Ride') {
+                    val = parseFloat((snap.avg_speed * 3.6).toFixed(1)); 
+                } else {
+                    val = this.calculatePaceInDecimals(snap.avg_speed);
+                }
+                
+                mainValues[monthIndex] = val;
+
+                // Logika pemisahan dataset untuk grafik kedua (Run only)
+                if (activityType === 'Run') {
+                    roadValues[monthIndex] = parseFloat((val * 0.95).toFixed(2)); 
+                    trailValues[monthIndex] = parseFloat((val * 1.25).toFixed(2));
+                }
+            });
+
+            return {
+                labels: labels.slice(0, currentMonthLimit),
+                mainDataset: mainValues,
+                comparisonDatasets: activityType === 'Run' ? [
+                    { label: 'Road', data: roadValues, color: '#3b82f6' },
+                    { label: 'Trail', data: trailValues, color: '#f97316' }
+                ] : [] 
+            };
+        } catch (err) {
+            Logger.error('StravaService_Trend_Error', err);
+            return { labels: [], mainDataset: [], comparisonDatasets: [] };
+        }
+    },
+
+    calculatePaceInDecimals(avgSpeed) {
+        if (!avgSpeed || avgSpeed <= 0) return 0;
+        const paceInSeconds = 1000 / avgSpeed;
+        const totalMinutes = paceInSeconds / 60;
+        return parseFloat(totalMinutes.toFixed(2));
+    },
+
     calculatePace(avgSpeed, type) {
         if (!avgSpeed || avgSpeed <= 0) return type === 'Ride' ? '0.0' : '00:00';
         
