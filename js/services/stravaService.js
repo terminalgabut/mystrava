@@ -2,65 +2,71 @@ import { supabase } from './supabase.js';
 import { Logger } from './debug.js';
 
 export const stravaService = {
-    async getStats() {
+    // Fungsi utama untuk mengambil data snapshot berdasarkan filter
+    async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
-            Logger.info('StravaService: Fetching from activity_snapshots');
+            Logger.info(`StravaService: Fetching ${activityType} - ${periodType}`);
 
-            // Kita ambil snapshot untuk tipe 'Run' pada periode 'all' (atau sesuaikan)
-            const { data, error } = await supabase
+            const { data: snapshot, error: snapError } = await supabase
                 .from('activity_snapshots')
                 .select('*')
-                .eq('activity_type', 'Run') // Pastikan tipe sesuai dengan data Strava
-                .eq('period_type', 'all')   // Contoh: 'all', 'month', atau 'year'
-                .single();
+                .eq('activity_type', activityType)
+                .eq('period_type', periodType)
+                .eq('period_key', periodKey)
+                .maybeSingle();
 
-            if (error) {
-                // Jika data snapshot belum ada (tabel kosong), jangan lari ke error dulu
-                if (error.code === 'PGRST116') {
-                    Logger.warn('StravaService: No snapshot found, returning zeros');
-                    return this.getEmptyState();
-                }
-                throw error;
+            if (!snapshot) {
+                Logger.warn('StravaService: Data tidak ditemukan untuk filter ini');
+                return this.getEmptyState();
             }
 
-            // Mapping dari activity_snapshots ke Dashboard UI
+            // Ambil list aktivitas terbaru (tanpa filter type agar semua muncul di log)
+            const recentActivities = await this.getRecentActivities();
+
             return {
-                totalDistance: (data.total_distance / 1000).toFixed(2), // Konversi m ke km jika perlu
-                avgPace: this.calculatePace(data.avg_speed),
-                heartRate: Math.round(data.avg_heartrate || 0), // Jika kamu menambahkan avg_heartrate ke snapshot nanti
-                recentActivities: await this.getRecentActivities()
+                totalDistance: (snapshot.total_distance / 1000).toFixed(2),
+                totalActivities: snapshot.total_activities || 0,
+                avgPace: this.calculatePace(snapshot.avg_speed, activityType),
+                calories: Math.round(snapshot.total_calories || 0),
+                elevation: Math.round(snapshot.total_elevation_gain || 0),
+                recentActivities: recentActivities
             };
         } catch (err) {
-            Logger.error('StravaService_GetStats_Error', err);
+            Logger.error('StravaService_Fetch_Error', err);
             return this.getEmptyState();
         }
     },
 
-    // Ambil 3 aktivitas terbaru dari tabel public.activities
     async getRecentActivities() {
         const { data } = await supabase
             .from('activities')
-            .select('name, distance, start_date')
+            .select('name, distance, type, start_date')
             .order('start_date', { ascending: false })
-            .limit(3);
+            .limit(5);
         
         return (data || []).map(act => ({
-            name: act.name,
-            distance: (act.distance / 1000).toFixed(2),
-            date: new Date(act.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+            name: act.name || 'Activity',
+            type: act.type,
+            distance: ((act.distance || 0) / 1000).toFixed(2),
+            date: act.start_date ? new Date(act.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'
         }));
     },
 
-    // Helper: Konversi speed (m/s) ke Pace (min/km)
-    calculatePace(avgSpeed) {
-        if (!avgSpeed || avgSpeed === 0) return "00:00";
-        const paceMinKm = 16.6666666667 / avgSpeed;
-        const minutes = Math.floor(paceMinKm);
-        const seconds = Math.round((paceMinKm - minutes) * 60);
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    calculatePace(avgSpeed, type) {
+        if (!avgSpeed || avgSpeed <= 0) return "00:00";
+        
+        // Jika Sepeda (Ride), gunakan km/h. Jika Run/Walk, gunakan min/km
+        if (type === 'Ride') {
+            return (avgSpeed * 3.6).toFixed(1) + ' km/h';
+        }
+
+        const paceInSeconds = 1000 / avgSpeed;
+        const minutes = Math.floor(paceInSeconds / 60);
+        const seconds = Math.round(paceInSeconds % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     },
 
     getEmptyState() {
-        return { totalDistance: 0, avgPace: '00:00', heartRate: 0, recentActivities: [] };
+        return { totalDistance: "0.00", totalActivities: 0, avgPace: "00:00", calories: 0, elevation: 0, recentActivities: [] };
     }
 };
