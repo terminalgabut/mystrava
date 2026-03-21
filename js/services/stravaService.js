@@ -7,15 +7,6 @@ export const stravaService = {
         try {
             Logger.info(`StravaService: Fetching ${activityType} - ${periodType}`);
 
-            // 1. Ambil Summary dari Snapshots (Data Agregat)
-import { supabase } from './supabase.js';
-import { Logger } from './debug.js';
-
-export const stravaService = {
-    async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
-        try {
-            Logger.info(`StravaService: Fetching ${activityType} - ${periodType}`);
-
             // Jalankan 3 query secara paralel agar jauh lebih cepat
             const [snapshotRes, records, activities] = await Promise.all([
                 supabase.from('activity_snapshots')
@@ -46,8 +37,8 @@ export const stravaService = {
                 avgPace: this.calculatePace(snapshot.avg_speed, activityType),
                 calories: Math.round(snapshot.total_calories || 0),
                 elevation: Math.round(snapshot.total_elevation_gain || 0),
-                totalDuration: this.formatSecondsToClock(totalSeconds), // Untuk Bento Card baru
-                activities: activities, // Kirim ke Dashboard untuk Recent Log
+                totalDuration: this.formatSecondsToClock(totalSeconds),
+                activities: activities, 
                 records: records
             };
 
@@ -62,9 +53,6 @@ export const stravaService = {
         }
     },
 
-    /**
-     * Mengambil daftar aktivitas dengan kolom Lokasi & Cuaca
-     */
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase
             .from('activities')
@@ -72,7 +60,6 @@ export const stravaService = {
             .eq('type', type)
             .order('start_date', { ascending: false });
 
-        // Filter dinamis berdasarkan periode
         if (pType === 'month') {
             query = query.like('start_date', `${pKey}%`);
         } else if (pType === 'year') {
@@ -85,7 +72,6 @@ export const stravaService = {
 
     async getRecords(activityType) {
         try {
-            // Gunakan satu query untuk ambil record terjauh dan tercepat (limit 10 untuk keamanan)
             const { data } = await supabase
                 .from('activities')
                 .select('distance, average_speed')
@@ -107,8 +93,6 @@ export const stravaService = {
         }
     },
 
-    // --- UTILS ---
-    
     formatSecondsToClock(totalSeconds) {
         const h = Math.floor(totalSeconds / 3600);
         const m = Math.floor((totalSeconds % 3600) / 60);
