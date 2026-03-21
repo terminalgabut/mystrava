@@ -5,7 +5,7 @@ import { Logger } from './services/debug.js';
  */
 const Dashboard = () => import('../views/dashboard.js');
 const Activities = () => import('../views/activities.js');
-// const ActivityDetail = () => import('../views/activityDetail.js'); // Placeholder untuk next step
+const ActivityDetail = () => import('../views/activityDetail.js'); // Placeholder untuk next step
 
 const routes = [
     { 
