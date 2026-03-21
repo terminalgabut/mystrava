@@ -1,46 +1,38 @@
-/* Container Utama: Membungkus seluruh aplikasi */
+/* Container Utama */
 .app-layout {
     display: flex;
     min-height: 100vh;
     background-color: var(--bg-app);
 }
 
-/* Sisi Kanan: Area yang menampung Header + Konten Utama */
+/* Sisi Kanan: Area Header + Konten */
 .app-viewport {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Mencegah konten meluap (overflow) pada flex item */
-    /* Jika Sidebar FIXED, kita butuh margin-left seukuran lebar sidebar */
+    min-width: 0;
+    /* Memberi ruang di kiri untuk Sidebar Desktop */
     margin-left: 280px; 
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Header: Tetap di atas viewport kanan */
-.app-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    height: 72px;
-    width: 100%;
-}
-
-/* Konten Utama: Area scrollable untuk dashboard/statistik */
+/* Konten Utama */
 .app-content {
     flex: 1;
-    padding: 2rem;
-    max-width: 1400px; /* Dashboard pro biasanya lebih lebar */
+    /* Padding atas = Tinggi Header (64px) + Gap (24px) */
+    padding: calc(64px + 1.5rem) 1.5rem 2rem; 
+    max-width: 1600px; /* Lebih lebar untuk Bento Grid */
     width: 100%;
     margin: 0 auto;
 }
 
-/* Responsive: Untuk HP Android */
-@media (max-width: 768px) {
+/* RESPONSIVE: Tablet & HP Android */
+@media (max-width: 1024px) {
     .app-viewport {
-        margin-left: 0; /* Sidebar biasanya jadi drawer/hidden di mobile */
+        margin-left: 0; /* Reset margin karena sidebar jadi drawer */
     }
     
     .app-content {
-        padding: 1.25rem;
+        padding: calc(64px + 1rem) 1rem 2rem;
     }
 }
