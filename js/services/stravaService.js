@@ -2,12 +2,11 @@ import { supabase } from './supabase.js';
 import { Logger } from './debug.js';
 
 export const stravaService = {
-    // Fungsi utama untuk mengambil data snapshot & records berdasarkan filter
+    // 1. Fungsi Stats & Activities
     async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
             Logger.info(`StravaService: Fetching ${activityType} - ${periodType}`);
 
-            // Jalankan 3 query secara paralel agar jauh lebih cepat
             const [snapshotRes, records, activities] = await Promise.all([
                 supabase.from('activity_snapshots')
                     .select('*')
@@ -21,12 +20,13 @@ export const stravaService = {
 
             const snapshot = snapshotRes.data;
 
+            // Jika snapshot tidak ada, kita buatkan data dasar dari list activities saja
             if (!snapshot) {
-                Logger.warn('StravaService: Data snapshot tidak ditemukan');
-                return this.getEmptyState();
+                Logger.warn('StravaService: Snapshot tidak ditemukan, fallback ke kalkulasi manual');
+                return this.createManualStats(activities, records, activityType);
             }
 
-            // Hitung Total Elapsed Time secara dinamis dari list aktivitas
+            // Hitung Total Elapsed Time secara dinamis
             const totalSeconds = activities.reduce((acc, act) => 
                 acc + (Number(act.elapsed_time_seconds) || Number(act.elapsed_time) || 0), 0
             );
@@ -37,7 +37,7 @@ export const stravaService = {
                 avgPace: this.calculatePace(snapshot.avg_speed, activityType),
                 calories: Math.round(snapshot.total_calories || 0),
                 elevation: Math.round(snapshot.total_elevation_gain || 0),
-                totalDuration: this.formatSecondsToClock(totalSeconds),
+                totalDuration: this.formatSecondsToClock(totalSeconds), // Data yang Anda cari
                 activities: activities, 
                 records: records
             };
@@ -53,28 +53,44 @@ export const stravaService = {
         }
     },
 
-    async getFilteredActivities(type, pType, pKey) {
-        let query = supabase
-            .from('activities')
-            .select('id, name, distance, type, start_date, moving_time, elapsed_time_seconds, elapsed_time, location_name, weather_temp')
-            .eq('type', type)
-            .order('start_date', { ascending: false });
+    // 2. Fungsi Trends (SOLUSI CHART KOSONG)
+    async getTrendData(activityType, year) {
+        try {
+            const { data, error } = await supabase
+                .from('activity_snapshots')
+                .select('period_key, avg_speed')
+                .eq('activity_type', activityType)
+                .eq('period_type', 'month')
+                .like('period_key', `${year}-%`)
+                .order('period_key', { ascending: true });
 
-        if (pType === 'month') {
-            query = query.like('start_date', `${pKey}%`);
-        } else if (pType === 'year') {
-            query = query.like('start_date', `${pKey}%`);
+            if (error) throw error;
+
+            const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const mainDataset = new Array(12).fill(0);
+
+            data?.forEach(item => {
+                const monthIdx = parseInt(item.period_key.split('-')[1]) - 1;
+                const value = activityType === 'Ride' 
+                    ? (item.avg_speed * 3.6) // km/h
+                    : (1000 / item.avg_speed / 60); // pace min/km
+                
+                mainDataset[monthIdx] = parseFloat(value.toFixed(2));
+            });
+
+            return { labels, mainDataset, comparisonDatasets: [] };
+        } catch (err) {
+            Logger.error('TrendData_Error', err);
+            return { labels: [], mainDataset: [], comparisonDatasets: [] };
         }
-
-        const { data } = await query;
-        return data || [];
     },
 
+    // 3. Fungsi Records
     async getRecords(activityType) {
         try {
             const { data } = await supabase
                 .from('activities')
-                .select('distance, average_speed')
+                .select('distance, average_speed, type')
                 .eq('type', activityType);
 
             if (!data || data.length === 0) return { longestDistance: '0.00', bestEffort: '--:--' };
@@ -93,13 +109,30 @@ export const stravaService = {
         }
     },
 
+    async getFilteredActivities(type, pType, pKey) {
+        let query = supabase
+            .from('activities')
+            .select('id, name, distance, type, start_date, moving_time, elapsed_time_seconds, elapsed_time, location_name, weather_temp')
+            .eq('type', type)
+            .order('start_date', { ascending: false });
+
+        if (pType === 'month' || pType === 'year') {
+            query = query.like('start_date', `${pKey}%`);
+        }
+
+        const { data } = await query;
+        return data || [];
+    },
+
+    // --- UTILS ---
     formatSecondsToClock(totalSeconds) {
+        if (!totalSeconds || totalSeconds <= 0) return "00:00";
         const h = Math.floor(totalSeconds / 3600);
         const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
+        const s = Math.floor(totalSeconds % 60);
         return h > 0 
             ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-            : `${m}:${s.toString().padStart(2, '0')}`;
+            : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     },
 
     calculatePace(avgSpeed, type) {
@@ -113,6 +146,21 @@ export const stravaService = {
     },
 
     calculateSteps: (dist) => Math.round(dist / 0.762),
+
+    createManualStats(activities, records, type) {
+        const totalDist = activities.reduce((acc, a) => acc + a.distance, 0);
+        const totalTime = activities.reduce((acc, a) => acc + (a.elapsed_time_seconds || 0), 0);
+        return {
+            totalDistance: (totalDist / 1000).toFixed(2),
+            totalActivities: activities.length,
+            avgPace: "N/A",
+            calories: 0,
+            elevation: 0,
+            totalDuration: this.formatSecondsToClock(totalTime),
+            activities: activities,
+            records: records
+        };
+    },
 
     getEmptyState() {
         return { 
