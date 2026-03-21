@@ -11,7 +11,6 @@ export default {
         const route = VueRouter.useRoute();
         const activity = ref(null);
         const loading = ref(true);
-        const hasRoute = ref(false);
         let map = null;
 
         const loadActivityDetail = async () => {
@@ -26,8 +25,8 @@ export default {
                 if (error) throw error;
                 activity.value = data;
 
+                // Render Map jika ada polyline
                 if (data.summary_polyline) {
-                    hasRoute.value = true;
                     nextTick(() => initMap(data.summary_polyline));
                 }
             } catch (err) {
@@ -41,51 +40,74 @@ export default {
         const initMap = (polylineStr) => {
             if (map) map.remove();
             
-            // Dekode polyline (membutuhkan library L.Polyline.fromEncoded atau sejenisnya)
-            // Untuk demo ini, kita asumsikan koordinat sudah didekode atau menggunakan plugin
+            // Dekode Polyline menggunakan library google-polyline (pastikan terpasang di index.html)
             const coordinates = polyline.decode(polylineStr); 
 
-            map = L.map('map', { zoomControl: false }).setView(coordinates[0], 13);
+            map = L.map('map', { 
+                zoomControl: false, 
+                attributionControl: false 
+            }).setView(coordinates[0], 13);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '©OpenStreetMap'
-            }).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
             const path = L.polyline(coordinates, {
                 color: '#2563eb',
-                weight: 5,
-                opacity: 0.8,
+                weight: 6,
+                opacity: 0.9,
                 lineJoin: 'round'
             }).addTo(map);
 
-            map.fitBounds(path.getBounds(), { padding: [30, 30] });
+            map.fitBounds(path.getBounds(), { padding: [40, 40] });
         };
 
+        // --- COMPUTED PROPERTIES ---
         const performanceValue = computed(() => {
             if (!activity.value) return '--:--';
             return stravaService.calculatePace(activity.value.average_speed, activity.value.type);
         });
 
-        const calculateSteps = (dist) => stravaService.calculateSteps(dist);
+        const performanceUnit = computed(() => {
+            return activity.value?.type === 'Ride' ? 'km/h' : '/km';
+        });
 
+        const locationName = computed(() => {
+            if (!activity.value) return 'Location...';
+            // Jika ada titik koordinat lari, tunjukkan (atau ambil dari field location jika ada)
+            if (activity.value.start_latlng) {
+                const [lat, lng] = activity.value.start_latlng;
+                return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+            }
+            return 'Global Area';
+        });
+
+        const weatherIcon = computed(() => {
+            // Logika sederhana: Jika elevasi tinggi, mungkin berawan/kabut (hanya simulasi)
+            return (activity.value?.total_elevation_gain > 50) ? 'cloud' : 'sun';
+        });
+
+        // --- HELPERS ---
         const formatTime = (seconds) => {
+            if (!seconds) return '00:00:00';
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
-            const s = seconds % 60;
-            return h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
+            const s = Math.floor(seconds % 60);
+            return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
         };
 
         const formatDate = (dateStr) => {
             if (!dateStr) return '';
             return new Date(dateStr).toLocaleDateString('id-ID', {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                day: 'numeric', month: 'short', year: 'numeric'
             });
         };
+
+        const calculateSteps = (dist) => stravaService.calculateSteps(dist);
 
         onMounted(loadActivityDetail);
 
         return { 
-            activity, loading, hasRoute, performanceValue, 
+            activity, loading, performanceValue, performanceUnit, 
+            locationName, weatherIcon,
             calculateSteps, formatTime, formatDate 
         };
     }
