@@ -1,0 +1,23 @@
+:root {
+    /* Main Theme: Clean White & Soft Blue */
+    --bg-main: #FFFFFF; /* Ganti ke putih murni seperti referensi */
+    --bg-dashboard: #F4F7FC; /* Biru langit sangat muda untuk kontras dashboard */
+    
+    /* Brand Colors (Updated to Blue) */
+    --accent-blue: #0081C9; /* Biru profesional yang soft namun jelas */
+    --accent-blue-soft: #EBF8FF; /* Biru muda sangat soft untuk background */
+    --strava-orange: #FC4C02; /* Tetap simpan untuk logo/status kecil jika butuh */
+    
+    /* Neutral Colors */
+    --text-dark: #00121D; /* Slate gelap dengan tone biru */
+    --text-muted: #8391A7; /* Slate medium untuk teks deskriptif */
+    --border-soft: #EBF0F7; /* Abu-abu biru sangat muda untuk border halus */
+
+    /* Shadows & Radii (Updated to match image) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 129 201 / 0.03);
+    --shadow-md: 0 10px 15px -3px rgb(0 129 201 / 0.08), 0 4px 6px -4px rgb(0 129 201 / 0.08); /* Shadow halus bernuansa biru */
+
+    --radius-xl: 1rem; /* 16px */
+    --radius-2xl: 1.5rem; /* 24px */
+    --radius-3xl: 2rem; /* 32px - Untuk Card utama seperti referensi */
+}
