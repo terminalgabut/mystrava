@@ -26,7 +26,7 @@ export default `
                 <span class="label-muted">Total Distance</span>
                 <div class="icon-box"><i data-lucide="map" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
+            <h2 class="stat-value text-2xl">
                 {{ stats.totalDistance }} <span class="text-xs font-medium tracking-normal text-slate-400">km</span>
             </h2>
         </div>
@@ -36,10 +36,10 @@ export default `
                 <span class="label-muted">Total Time (Elapsed)</span>
                 <div class="icon-box"><i data-lucide="timer" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
+            <h2 class="stat-value text-2xl">
                 {{ stats.totalDuration || '00:00' }}
             </h2>
-            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+            <p class="text-slate-400 mt-1 uppercase tracking-tighter" style="font-size: 9px; font-weight: 700;">
                 Incl. pauses & rest
             </p>
         </div>
@@ -49,7 +49,7 @@ export default `
                 <span class="label-muted">Activities</span>
                 <div class="icon-box"><i data-lucide="calendar" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">{{ stats.totalActivities }}</h2>
+            <h2 class="stat-value text-2xl">{{ stats.totalActivities }}</h2>
         </div>
 
         <div class="bento-card">
@@ -59,7 +59,7 @@ export default `
                     <i :data-lucide="performanceConfig.icon" class="w-4 h-4"></i>
                 </div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
+            <h2 class="stat-value text-2xl">
                 <template v-if="performanceConfig.showSteps">
                     {{ (stats.steps || 0).toLocaleString('id-ID') }}
                 </template>
@@ -77,7 +77,7 @@ export default `
                 <span class="label-muted">Calories</span>
                 <div class="icon-box"><i data-lucide="flame" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
+            <h2 class="stat-value text-2xl">
                 {{ (stats.calories || 0).toLocaleString('id-ID') }} <span class="text-xs font-medium tracking-normal text-slate-400">kcal</span>
             </h2>
         </div>
@@ -87,17 +87,17 @@ export default `
         <div class="bento-card p-6">
              <h3 class="text-card-title mb-6">Performance Records</h3>
              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all hover:bg-white hover:border-blue-100 group">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all hover:bg-white hover:border-blue-100">
                     <p class="label-muted mb-1">Longest Activity</p>
-                    <p class="stat-value text-xl text-slate-900 shimmer-text">
+                    <p class="stat-value text-xl text-slate-900">
                         {{ stats.records?.longestDistance || '0.00' }} <span class="text-sm font-medium tracking-normal text-slate-400">km</span>
                     </p>
                 </div>
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all hover:bg-white hover:border-blue-100 group">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all hover:bg-white hover:border-blue-100">
                     <p class="label-muted mb-1">
                         {{ selectedType === 'Ride' ? 'Top Speed' : 'Best Effort' }}
                     </p>
-                    <p class="stat-value text-xl text-slate-900 shimmer-text">
+                    <p class="stat-value text-xl text-slate-900">
                         {{ stats.records?.bestEffort || '--:--' }}
                         <span class="text-sm font-medium tracking-normal text-slate-400">
                              {{ performanceConfig.unit }}
@@ -144,9 +144,9 @@ export default `
                             <div class="min-w-0">
                                 <p class="text-xs font-black text-slate-900 truncate">{{ act.name }}</p>
                                 <div class="flex items-center gap-2 mt-0.5">
-                                    <span class="label-muted !text-[9px] whitespace-nowrap">{{ act.date }}</span>
+                                    <span class="label-muted whitespace-nowrap" style="font-size: 9px; letter-spacing: 0.05em;">{{ act.date }}</span>
                                     <span class="text-slate-200">•</span>
-                                    <span class="label-muted !text-[9px] truncate max-w-[120px] md:max-w-[200px]">
+                                    <span class="label-muted truncate max-w-[120px] md:max-w-[200px]" style="font-size: 9px;">
                                         <i data-lucide="map-pin" class="w-2.5 h-2.5 inline mr-0.5"></i>
                                         {{ act.location_name || 'Global Area' }}
                                     </span>
@@ -162,7 +162,7 @@ export default `
                             
                             <div class="text-right">
                                 <p class="stat-value text-sm text-slate-900">{{ act.distance }} km</p>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 9px; font-weight: 700;">
                                     {{ formatTime(act.moving_time) }}
                                 </p>
                             </div>
