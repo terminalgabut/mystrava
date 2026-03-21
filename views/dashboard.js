@@ -16,21 +16,21 @@ export default {
         
         const stats = ref({
             totalDistance: "0.00",
-            totalDuration: "00:00:00",
+            totalDuration: "00:00",
             elevation: 0,
             totalActivities: 0,
             avgPace: "00:00",
             calories: 0,
             steps: 0,
             records: { longestDistance: '0.00', bestEffort: '--:--' },
-            recentActivities: []
+            recentActivities: [] // Ini harus sinkron dengan template
         });
 
         const trendData = ref({ labels: [], paceDatasets: [], comparisonDatasets: [] });
 
         // --- HELPERS ---
         const formatTime = (seconds) => {
-            if (seconds === undefined || seconds === null || isNaN(seconds)) return '00:00';
+            if (!seconds || isNaN(seconds)) return '00:00';
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = Math.floor(seconds % 60);
@@ -48,9 +48,7 @@ export default {
 
         const refreshIcons = () => {
             nextTick(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
+                if (window.lucide) window.lucide.createIcons();
             });
         };
 
@@ -58,12 +56,12 @@ export default {
         const periodOptions = computed(() => {
             const now = new Date();
             const year = now.getFullYear();
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             const options = [{ value: 'total', label: 'All Time' }, { value: `${year}`, label: `Year ${year}` }];
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             
             for (let i = now.getMonth(); i >= 0; i--) {
-                const monthVal = (i + 1).toString().padStart(2, '0');
-                options.push({ value: `${year}-${monthVal}`, label: `${months[i]} ${year}` });
+                const m = (i + 1).toString().padStart(2, '0');
+                options.push({ value: `${year}-${m}`, label: `${months[i]} ${year}` });
             }
             return options;
         });
@@ -84,36 +82,46 @@ export default {
             const pType = pKey.includes('-') ? 'month' : (pKey === 'total' ? 'all_time' : 'year');
 
             try {
-                // 1. Fetch Stats & Activities
+                // 1. Ambil Stats
                 const rawData = await stravaService.getStats(selectedType.value, pType, pKey);
                 
-                const activityList = rawData.activities || [];
-                
-                // Sinkronisasi data ke state
+                // MAPPING EKSPLISIT: Pastikan nama key di sini sama dengan di template
                 stats.value = {
-                    ...rawData,
-                    // Durasi dihitung ulang atau diambil dari rawData jika service sudah menghitungnya
-                    totalDuration: rawData.totalDuration || formatTime(0),
-                    recentActivities: activityList.slice(0, 5).map(act => ({
-                        ...act,
+                    totalDistance: rawData.totalDistance || "0.00",
+                    totalActivities: rawData.totalActivities || 0,
+                    avgPace: rawData.avgPace || "00:00",
+                    elevation: rawData.elevation || 0,
+                    calories: rawData.calories || 0,
+                    steps: rawData.steps || 0,
+                    records: rawData.records || { longestDistance: '0.00', bestEffort: '--:--' },
+                    totalDuration: rawData.totalDuration || "00:00", // Pastikan service return key ini
+                    recentActivities: (rawData.activities || []).slice(0, 5).map(act => ({
+                        id: act.id,
+                        name: act.name,
+                        type: act.type,
                         distance: (act.distance / 1000).toFixed(2),
-                        date: formatDate(act.start_date)
+                        date: formatDate(act.start_date),
+                        moving_time: act.moving_time,
+                        location_name: act.location_name,
+                        weather_temp: act.weather_temp
                     }))
                 };
 
-                // 2. Fetch Trends
-                const chartYear = pKey === 'total' ? new Date().getFullYear().toString() : pKey.split('-')[0];
-                const trend = await stravaService.getTrendData(selectedType.value, chartYear);
+                // 2. Ambil Trends (Hanya jika fungsi tersedia)
+                if (stravaService.getTrendData) {
+                    const chartYear = pKey === 'total' ? new Date().getFullYear().toString() : pKey.split('-')[0];
+                    const trend = await stravaService.getTrendData(selectedType.value, chartYear);
 
-                trendData.value = {
-                    labels: trend.labels,
-                    paceDatasets: [{ 
-                        label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
-                        data: trend.mainDataset, 
-                        color: '#3b82f6' 
-                    }],
-                    comparisonDatasets: trend.comparisonDatasets || []
-                };
+                    trendData.value = {
+                        labels: trend.labels || [],
+                        paceDatasets: [{ 
+                            label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
+                            data: trend.mainDataset || [], 
+                            color: '#3b82f6' 
+                        }],
+                        comparisonDatasets: trend.comparisonDatasets || []
+                    };
+                }
 
             } catch (err) {
                 Logger.error("Dashboard_Load_Error", err);
@@ -123,13 +131,8 @@ export default {
             }
         };
 
-        watch([selectedType, selectedPeriodKey], () => {
-            loadData();
-        });
-
-        onMounted(() => {
-            loadData();
-        });
+        watch([selectedType, selectedPeriodKey], loadData);
+        onMounted(loadData);
 
         return { 
             stats, isLoading, selectedType, selectedPeriodKey, 
