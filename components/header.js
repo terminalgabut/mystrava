@@ -1,17 +1,9 @@
 import headerView from './headerView.js';
 
 export default {
-    ...headerView, // Mengambil template dari headerView.js
+    ...headerView, // Menempelkan template HTML ke objek komponen
     setup() {
-        // Taruh logika reaktif di sini jika dibutuhkan nanti
-        // Contoh: const user = ref('Mochammad');
-        
-        return {
-            // user
-        };
-    },
-    mounted() {
-        // Logika spesifik komponen jika ada
-        if (window.lucide) window.lucide.createIcons();
+        // Semua logika reaktif di sini
+        return {};
     }
 };
