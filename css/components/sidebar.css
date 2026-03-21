@@ -1,85 +1,120 @@
+/* --- 1. CORE LAYOUT --- */
 .app-sidebar {
     width: 280px;
-    background: var(--bg-card);
-    border-right: 1px solid var(--border-light);
+    background: #ffffff; /* Menggunakan solid white agar kontras dengan bento dashboard */
+    border-right: 1px solid #f1f5f9;
     
-    /* MODIFIKASI: Tinggi Sidebar menyesuaikan sisa layar di bawah header */
+    /* MODIFIKASI: Mengisi penuh tinggi layar di bawah header */
     height: calc(100vh - 64px); 
     display: flex;
     flex-direction: column;
-    padding: 1.5rem 1rem;
     
     position: fixed;
     left: 0;
-    /* Dimulai tepat di bawah Header */
     top: 64px; 
     
-    /* Z-Index harus LEBIH RENDAH dari Header (100) agar Header di atas */
+    /* Layering: Di bawah header (100) tapi di atas konten (0) */
     z-index: 90; 
     
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Smooth Slide Transition */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
 }
 
-/* --- RESPONSIVE LOGIC --- */
-
+/* --- 2. RESPONSIVE LOGIC (Mobile First) --- */
 @media (max-width: 1024px) {
     .app-sidebar {
-        /* Di Mobile, biasanya drawer ingin full height, 
-           tapi jika ingin tetap di bawah header: */
-        top: 64px;
-        height: calc(100vh - 64px);
+        /* Sembunyikan ke kiri secara default di mobile */
         transform: translateX(-100%);
-        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.02);
+        /* Tambahkan shadow halus saat sidebar terbuka di atas konten */
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.05);
     }
 
+    /* Trigger class yang dipasang pada <body> atau parent container */
     .sidebar-open .app-sidebar {
         transform: translateX(0);
     }
+
+    /* Tambahkan overlay redup saat sidebar terbuka di mobile */
+    .sidebar-open::after {
+        content: "";
+        position: fixed;
+        inset: 64px 0 0 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 80;
+    }
 }
 
+/* Desktop Fixity */
 @media (min-width: 1025px) {
     .app-sidebar {
-        transform: translateX(0);
-        /* Pastikan tetap fixed di samping saat konten di-scroll */
+        transform: translateX(0) !important;
         position: fixed; 
     }
 }
 
-/* --- MENU ITEMS (Ultra Clean Style) --- */
+/* --- 3. MENU ITEMS (Premium Clean Style) --- */
+.sidebar-nav {
+    padding: 1.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem; /* Jarak antar menu lebih rapat & modern */
+}
 
-.sidebar-link {
+.sidebar-item {
     display: flex;
     align-items: center;
     gap: 0.875rem;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    color: var(--text-muted);
-    font-weight: 500; /* Lebih elegan dibanding 600 */
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
+    padding: 0.85rem 1rem;
+    border-radius: 14px; /* Lebih rounded agar konsisten dengan bento card */
+    color: #64748b; /* Slate-500 */
+    font-size: 0.925rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
-.sidebar-link i {
+/* Hover State */
+.sidebar-item:hover {
+    background: #f8fafc; /* Slate-50 */
+    color: #0f172a; /* Slate-900 */
+}
+
+/* Active State (is-active atau router-link-active) */
+.sidebar-item.is-active,
+.router-link-active.sidebar-item {
+    background: #eff6ff; /* Blue-50 */
+    color: #2563eb; /* Blue-600 */
+    font-weight: 700;
+}
+
+/* Dot Indicator (Hanya muncul saat aktif) */
+.sidebar-item.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 4px;
+    height: 16px;
+    background: #2563eb;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Icon Styling */
+.sidebar-item i {
     width: 20px;
     height: 20px;
-    stroke-width: 2px;
+    stroke-width: 2.25px; /* Ikon sedikit lebih tebal untuk kejelasan */
     flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
-/* Hover: Tanpa geser (Anti-Dashstrav), cukup mainkan warna */
-.sidebar-link:hover {
-    background: var(--brand-soft);
-    color: var(--brand-primary);
+.sidebar-item:hover i {
+    transform: scale(1.1);
 }
 
-.sidebar-link:active {
-    transform: scale(0.96);
-}
-
-/* Active State: Solid & Minimalist */
-.router-link-active.sidebar-link {
-    background: var(--brand-soft);
-    color: var(--brand-primary);
-    font-weight: 700;
+/* --- 4. UTILITY --- */
+.sidebar-item:active {
+    transform: scale(0.97);
 }
