@@ -1,0 +1,35 @@
+/* Container Utama */
+.app-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--bg-app);
+}
+
+/* Header Sticky dengan Glassmorphism */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: 70px;
+    background: var(--brand-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+}
+
+/* Wrapper Konten Tengah */
+.app-content {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px; /* Lebih lebar untuk dashboard profesional */
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Sidebar (Jika ingin mode Desktop nanti) */
+.app-sidebar {
+    /* Logika sidebar dipisahkan di sini */
+}
