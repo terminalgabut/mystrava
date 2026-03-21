@@ -1,6 +1,6 @@
 import layoutView from './layoutView.js';
 import Header from './header.js';
-import Sidebar from './sidebar.js';
+import Sidebar from './sidebarView.js';
 
 export default {
     ...layoutView, // Menggabungkan template HTML dari layoutView.js
