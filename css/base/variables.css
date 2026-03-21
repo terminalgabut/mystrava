@@ -1,23 +1,17 @@
 :root {
-    /* Main Theme: Clean White & Soft Blue */
-    --bg-main: #FFFFFF; /* Ganti ke putih murni seperti referensi */
-    --bg-dashboard: #F4F7FC; /* Biru langit sangat muda untuk kontras dashboard */
-    
-    /* Brand Colors (Updated to Blue) */
-    --accent-blue: #0081C9; /* Biru profesional yang soft namun jelas */
-    --accent-blue-soft: #EBF8FF; /* Biru muda sangat soft untuk background */
-    --strava-orange: #FC4C02; /* Tetap simpan untuk logo/status kecil jika butuh */
-    
-    /* Neutral Colors */
-    --text-dark: #00121D; /* Slate gelap dengan tone biru */
-    --text-muted: #8391A7; /* Slate medium untuk teks deskriptif */
-    --border-soft: #EBF0F7; /* Abu-abu biru sangat muda untuk border halus */
+    /* Premium Blue Palette */
+    --brand-primary: #0061FF;      /* Biru Inti */
+    --brand-soft: #F0F6FF;         /* Background Active State */
+    --brand-glass: rgba(240, 246, 255, 0.7);
 
-    /* Shadows & Radii (Updated to match image) */
-    --shadow-sm: 0 1px 2px 0 rgb(0 129 201 / 0.03);
-    --shadow-md: 0 10px 15px -3px rgb(0 129 201 / 0.08), 0 4px 6px -4px rgb(0 129 201 / 0.08); /* Shadow halus bernuansa biru */
+    /* Neutral & Background */
+    --bg-app: #F8FAFC;             /* Abu-abu biru sangat muda (luar card) */
+    --bg-card: #FFFFFF;            /* Putih murni (dalam card) */
+    --text-main: #0F172A;          /* Slate 900 */
+    --text-muted: #64748B;         /* Slate 500 */
+    --border-light: #F1F5F9;       /* Border halus */
 
-    --radius-xl: 1rem; /* 16px */
-    --radius-2xl: 1.5rem; /* 24px */
-    --radius-3xl: 2rem; /* 32px - Untuk Card utama seperti referensi */
+    /* Elevation */
+    --shadow-premium: 0 10px 25px -5px rgba(0, 97, 255, 0.04), 
+                      0 8px 10px -6px rgba(0, 97, 255, 0.04);
 }
