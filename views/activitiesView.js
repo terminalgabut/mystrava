@@ -52,11 +52,13 @@ export default `
                             <p class="text-[10px] text-slate-400 mt-0.5 font-mono">ID: {{ act.id.toString().slice(0,8) }}</p>
                         </td>
                         
-                        <td class="px-6 py-4 text-center">
-                            <div :class="getTypeIconClass(act.type)" class="w-10 h-10 rounded-xl flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
-                                <i :data-lucide="getIconName(act.type)" class="w-5 h-5"></i>
-                            </div>
-                        </td>
+                        
+<td class="px-6 py-4 text-center">
+    <div :class="getTypeIconClass(act.type)" 
+         class="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all group-hover:scale-110 shadow-sm">
+        <i :data-lucide="getIconName(act.type)" class="w-5 h-5 stroke-[2.5px]"></i>
+    </div>
+</td>
 
                         <td class="px-6 py-4 text-right">
                             <span class="text-sm font-black text-slate-700">{{ (act.distance / 1000).toFixed(2) }}</span>
