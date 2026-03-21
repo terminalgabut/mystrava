@@ -1,5 +1,11 @@
-import Dashboard from '../views/dashboard.js';
 import { Logger } from './services/debug.js';
+
+/**
+ * Lazy Loading Native Vue Router.
+ * Jika file dashboard.js gagal dimuat, 
+ * browser akan menampilkan error di Console.
+ */
+const Dashboard = () => import('../views/dashboard.js');
 
 const routes = [
     { 
@@ -7,8 +13,9 @@ const routes = [
         name: 'dashboard',
         component: Dashboard 
     },
-    // Catch-all route: Jika user mengetik path aneh, 
-    // arahkan paksa kembali ke Dashboard agar tidak BLANK.
+    /** * Catch-all: Mengarahkan semua path tidak dikenal ke Dashboard.
+     * Ini mencegah layar blank jika ada link yang salah ketik.
+     */
     { 
         path: '/:pathMatch(.*)*', 
         redirect: '/' 
@@ -20,13 +27,12 @@ export const router = VueRouter.createRouter({
     routes
 });
 
-// --- NAVIGATION GUARD ---
+// Debug Navigation
 router.beforeEach((to, from, next) => {
     Logger.info(`Router: Navigating to ${to.path}`);
-    window.scrollTo(0, 0);
     next();
 });
 
-router.afterEach(() => {
+router.afterEach((to) => {
     document.title = "Dashboard | DASHSTRAV";
 });
