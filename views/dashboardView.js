@@ -13,10 +13,10 @@ export default `
                 <option value="Walk">Walking</option>
             </select>
             <select v-model="selectedPeriodKey" class="select-clean" :disabled="isLoading">
-    <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">
-        {{ opt.label }}
-    </option>
-</select>
+                <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                </option>
+            </select>
         </div>
     </header>
 
@@ -26,8 +26,8 @@ export default `
                 <span class="label-muted">Total Distance</span>
                 <div class="icon-box"><i data-lucide="map" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
-                {{ stats.totalDistance }} <span class="text-xs font-medium tracking-normal text-slate-400">km</span>
+            <h2 class="stat-value text-2xl">
+                {{ stats.totalDistance }} <span class="text-xs font-medium text-slate-400">km</span>
             </h2>
         </div>
         
@@ -36,8 +36,8 @@ export default `
                 <span class="label-muted">Total Elevation</span>
                 <div class="icon-box"><i data-lucide="mountain" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
-                {{ stats.elevation }} <span class="text-xs font-medium tracking-normal text-slate-400">m</span>
+            <h2 class="stat-value text-2xl">
+                {{ stats.elevation }} <span class="text-xs font-medium text-slate-400">m</span>
             </h2>
         </div>
 
@@ -46,7 +46,7 @@ export default `
                 <span class="label-muted">Activities</span>
                 <div class="icon-box"><i data-lucide="calendar" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">{{ stats.totalActivities }}</h2>
+            <h2 class="stat-value text-2xl">{{ stats.totalActivities }}</h2>
         </div>
 
         <div class="bento-card">
@@ -56,14 +56,14 @@ export default `
                     <i :data-lucide="performanceConfig.icon" class="w-4 h-4"></i>
                 </div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
+            <h2 class="stat-value text-2xl">
                 <template v-if="performanceConfig.showSteps">
                     {{ (stats.steps || 0).toLocaleString('id-ID') }}
                 </template>
                 <template v-else>
                     {{ stats.avgPace }}
                 </template>
-                <span class="text-xs font-medium tracking-normal text-slate-400 ml-0.5">
+                <span class="text-xs font-medium text-slate-400 ml-0.5">
                     {{ performanceConfig.unit }}
                 </span>
             </h2>
@@ -74,9 +74,22 @@ export default `
                 <span class="label-muted">Calories</span>
                 <div class="icon-box"><i data-lucide="flame" class="w-4 h-4"></i></div>
             </div>
-            <h2 class="stat-value text-2xl shimmer-text">
-                {{ (stats.calories || 0).toLocaleString('id-ID') }} <span class="text-xs font-medium tracking-normal text-slate-400">kcal</span>
+            <h2 class="stat-value text-2xl">
+                {{ (stats.calories || 0).toLocaleString('id-ID') }} <span class="text-xs font-medium text-slate-400">kcal</span>
             </h2>
+        </div>
+
+        <div class="bento-card">
+            <div class="card-header">
+                <span class="label-muted">Total Time</span>
+                <div class="icon-box"><i data-lucide="timer" class="w-4 h-4"></i></div>
+            </div>
+            <h2 class="stat-value text-2xl">
+                {{ stats.totalDuration || '00:00' }}
+            </h2>
+            <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
+                Elapsed time
+            </p>
         </div>
     </div>
 
@@ -86,17 +99,17 @@ export default `
              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all hover:bg-white hover:border-blue-100 group">
                     <p class="label-muted mb-1">Longest Activity</p>
-                    <p class="stat-value text-xl text-slate-900 shimmer-text">
-                        {{ stats.records?.longestDistance || '0.00' }} <span class="text-sm font-medium tracking-normal text-slate-400">km</span>
+                    <p class="stat-value text-xl text-slate-900">
+                        {{ stats.records?.longestDistance || '0.00' }} <span class="text-sm font-medium text-slate-400">km</span>
                     </p>
                 </div>
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 transition-all hover:bg-white hover:border-blue-100 group">
                     <p class="label-muted mb-1">
                         {{ selectedType === 'Ride' ? 'Top Speed' : 'Best Effort' }}
                     </p>
-                    <p class="stat-value text-xl text-slate-900 shimmer-text">
+                    <p class="stat-value text-xl text-slate-900">
                         {{ stats.records?.bestEffort || '--:--' }}
-                        <span class="text-sm font-medium tracking-normal text-slate-400">
+                        <span class="text-sm font-medium text-slate-400">
                              {{ performanceConfig.unit }}
                         </span>
                     </p>
@@ -105,47 +118,65 @@ export default `
         </div>
 
         <div class="flex flex-col lg:grid gap-6 mb-6" 
-     :class="trendData.comparisonDatasets.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
-    
-    <PaceChart 
-        chartId="monthlyPace"
-        :title="selectedType === 'Ride' ? 'Average Speed per Month' : 'Average Pace per Month'"
-        :labels="trendData.labels"
-        :datasets="trendData.paceDatasets"
-        :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
-    />
-
-    <PaceChart 
-        v-if="trendData.comparisonDatasets.length > 0"
-        chartId="trailVsRoad"
-        title="Trail vs Road Comparison"
-        :labels="trendData.labels"
-        :datasets="trendData.comparisonDatasets"
-        :unit="' /km'"
-    />
-</div>
+             :class="trendData.comparisonDatasets.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
+            <PaceChart 
+                chartId="monthlyPace"
+                :title="selectedType === 'Ride' ? 'Average Speed per Month' : 'Average Pace per Month'"
+                :labels="trendData.labels"
+                :datasets="trendData.paceDatasets"
+                :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
+            />
+            <PaceChart 
+                v-if="trendData.comparisonDatasets.length > 0"
+                chartId="trailVsRoad"
+                title="Trail vs Road Comparison"
+                :labels="trendData.labels"
+                :datasets="trendData.comparisonDatasets"
+                :unit="' /km'"
+            />
+        </div>
 
         <div class="bento-card p-6">
             <h3 class="text-card-title mb-6">Recent Log</h3>
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <template v-if="isLoading && stats.recentActivities.length === 0">
-                    <div v-for="i in 3" class="activity-item shimmer-text opacity-50">
-                        <div class="h-8 w-full"></div>
-                    </div>
+                    <div v-for="i in 3" class="h-16 bg-slate-50 rounded-2xl animate-pulse"></div>
                 </template>
 
                 <template v-else>
-                    <div v-for="act in stats.recentActivities" :key="act.id" class="activity-item">
-                        <div class="flex items-center gap-3">
-                            <div class="icon-box">
+                    <div v-for="act in stats.recentActivities" :key="act.id" 
+                         class="flex items-center justify-between p-3 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/50 transition-all cursor-pointer group">
+                        
+                        <div class="flex items-center gap-4 min-w-0">
+                            <div class="icon-box group-hover:bg-white transition-all shadow-sm">
                                 <i :data-lucide="act.type === 'Ride' ? 'zap' : 'footprints'" class="w-4 h-4"></i>
                             </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-900">{{ act.name }}</p>
-                                <p class="label-muted !text-[8px] !tracking-widest">{{ act.date }}</p>
+                            <div class="min-w-0">
+                                <p class="text-xs font-black text-slate-900 truncate">{{ act.name }}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="label-muted whitespace-nowrap" style="font-size: 8px;">{{ act.date }}</span>
+                                    <span class="text-slate-200">•</span>
+                                    <span class="label-muted truncate max-w-[120px]" style="font-size: 8px;">
+                                        <i data-lucide="map-pin" class="w-2 h-2 inline mr-0.5"></i>
+                                        {{ act.location_name || 'Global Area' }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <span class="stat-value text-sm">{{ act.distance }} km</span>
+
+                        <div class="flex items-center gap-4">
+                            <div v-if="act.weather_temp" class="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-amber-50 rounded-lg border border-amber-100/50">
+                                <i data-lucide="sun" class="w-3 h-3 text-amber-500"></i>
+                                <span style="font-size: 9px; font-weight: 800;" class="text-amber-700">{{ act.weather_temp }}°</span>
+                            </div>
+                            
+                            <div class="text-right">
+                                <p class="stat-value text-sm text-slate-900">{{ act.distance }} km</p>
+                                <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800;">
+                                    {{ formatTime(act.moving_time) }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </template>
                 
