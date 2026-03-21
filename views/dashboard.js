@@ -1,17 +1,22 @@
 import dashboardTemplate from './dashboardView.js';
+import PaceChart from './components/PaceChart.js'; // Komponen terpisah
 import { stravaService } from '../js/services/stravaService.js';
 import { Logger } from '../js/services/debug.js';
 
 export default {
     name: 'DashboardView',
     template: dashboardTemplate,
+    components: {
+        PaceChart
+    },
     setup() {
         const { ref, onMounted, watch, nextTick, computed } = Vue;
         
-        // State Filter
+        // --- STATE FILTER ---
         const selectedType = ref('Run'); 
         const selectedPeriodKey = ref('total'); 
         
+        // --- STATE DATA ---
         const stats = ref({
             totalDistance: "0.00",
             elevation: 0,
@@ -25,17 +30,23 @@ export default {
             },
             recentActivities: []
         });
+
+        // State khusus untuk grafik
+        const trendData = ref({
+            labels: [],
+            paceDatasets: [],
+            comparisonDatasets: []
+        });
         
         const isLoading = ref(true);
 
         /**
          * Generate Opsi Periode secara Dinamis
-         * Menghasilkan: All Time, Year Sekarang, dan List Bulan di tahun berjalan
          */
         const periodOptions = computed(() => {
             const now = new Date();
             const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth(); // 0 = Jan, 2 = Mar (untuk 2026)
+            const currentMonth = now.getMonth();
             
             const options = [
                 { value: 'total', label: 'All Time' },
@@ -47,7 +58,6 @@ export default {
                 "July", "August", "September", "October", "November", "December"
             ];
 
-            // Loop untuk membuat list bulan dari bulan saat ini mundur ke Januari
             for (let i = currentMonth; i >= 0; i--) {
                 const monthNum = (i + 1).toString().padStart(2, '0');
                 options.push({
@@ -55,45 +65,33 @@ export default {
                     label: `${monthNames[i]} ${currentYear}`
                 });
             }
-
             return options;
         });
 
         const performanceConfig = computed(() => {
             switch (selectedType.value) {
                 case 'Ride':
-                    return { 
-                        label: 'Avg Speed', 
-                        unit: 'km/h', 
-                        icon: 'zap',
-                        showSteps: false 
-                    };
+                    return { label: 'Avg Speed', unit: 'km/h', icon: 'zap', showSteps: false };
                 case 'Walk':
-                    return { 
-                        label: 'Total Steps', 
-                        unit: 'steps', 
-                        icon: 'footprints',
-                        showSteps: true 
-                    };
+                    return { label: 'Total Steps', unit: 'steps', icon: 'footprints', showSteps: true };
                 default:
-                    return { 
-                        label: 'Avg Pace', 
-                        unit: '/km', 
-                        icon: 'timer',
-                        showSteps: false 
-                    };
+                    return { label: 'Avg Pace', unit: '/km', icon: 'timer', showSteps: false };
             }
         });
 
+        /**
+         * Fungsi Utama Loading Data
+         */
         const loadData = async () => {
             isLoading.value = true;
             
+            // 1. Tentukan pType untuk Summary
             let pType = 'all_time';
-            // Deteksi format: YYYY-MM (month) vs YYYY (year) vs total (all_time)
             if (selectedPeriodKey.value.includes('-')) pType = 'month';
             else if (selectedPeriodKey.value !== 'total') pType = 'year';
 
             try {
+                // PROSES A: Ambil Statistik Utama
                 const data = await stravaService.getStats(
                     selectedType.value, 
                     pType, 
@@ -104,6 +102,31 @@ export default {
                     ...data,
                     records: data.records || { longestDistance: '0.00', bestEffort: '--:--' }
                 };
+
+                // PROSES B: Ambil Data Tren (Grafik)
+                // Ambil tahun dari filter (default tahun ini jika 'total')
+                const yearForChart = selectedPeriodKey.value === 'total' 
+                    ? new Date().getFullYear().toString() 
+                    : selectedPeriodKey.value.split('-')[0];
+
+                const trend = await stravaService.getTrendData(
+                    selectedType.value, 
+                    yearForChart
+                );
+
+                // Update state trendData untuk komponen PaceChart
+                trendData.value = {
+                    labels: trend.labels,
+                    paceDatasets: [
+                        { 
+                            label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
+                            data: trend.mainDataset, 
+                            color: '#f97316' 
+                        }
+                    ],
+                    comparisonDatasets: trend.comparisonDatasets
+                };
+
             } catch (err) {
                 Logger.error("Dashboard Load Error", err);
             } finally {
@@ -126,7 +149,8 @@ export default {
             selectedType, 
             selectedPeriodKey, 
             performanceConfig,
-            periodOptions // Diekspor agar bisa digunakan v-for di template
+            periodOptions,
+            trendData // Return agar bisa dibaca template
         };
     }
 };
