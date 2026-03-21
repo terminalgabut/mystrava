@@ -9,24 +9,18 @@ export default {
         const { ref, onMounted, nextTick, computed } = Vue;
         const router = VueRouter.useRouter();
         
-        // --- STATES ---
         const activities = ref([]);
         const loading = ref(true);
-        const filterType = ref('All'); // Default filter
+        const filterType = ref('All'); 
 
-        // --- COMPUTED: FILTER LOGIC ---
-        // Menghitung data yang tampil berdasarkan chip yang dipilih
         const filteredActivities = computed(() => {
             if (filterType.value === 'All') return activities.value;
             return activities.value.filter(act => act.type === filterType.value);
         });
 
-        // --- METHODS ---
         const loadActivities = async () => {
             loading.value = true;
             try {
-                Logger.info(`Activities: Fetching data from Supabase`);
-                
                 const { data, error } = await supabase
                     .from('activities')
                     .select('*')
@@ -34,67 +28,50 @@ export default {
                 
                 if (error) throw error;
                 activities.value = data || [];
-                
             } catch (err) {
                 Logger.error('Activities_Load_Error', err);
             } finally {
                 loading.value = false;
-                // Re-render Lucide Icons setelah DOM update
                 nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
                 });
             }
         };
 
-        const goToDetail = (id) => {
-            router.push(`/activity/${id}`);
-        };
-
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        };
-
-        // --- ICON HELPERS ---
+        // --- SELEKSI IKON SPORTY ---
         const getIconName = (type) => {
             const icons = {
-                'Run': 'timer',
-                'Ride': 'zap',
-                'Walk': 'footprints'
+                'Run': 'footprints', // Jejak kaki (Google Fit Style)
+                'Ride': 'bike',      // Sepeda (Strava Style)
+                'Walk': 'person-standing' // Orang berjalan/berdiri
             };
             return icons[type] || 'activity';
         };
 
         const getTypeIconClass = (type) => {
             const classes = {
-                'Run': 'bg-orange-50 text-orange-600 ring-1 ring-orange-100',
-                'Ride': 'bg-blue-50 text-blue-600 ring-1 ring-blue-100',
-                'Walk': 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100'
+                'Run': 'bg-orange-100 text-orange-600 ring-1 ring-orange-200',
+                'Ride': 'bg-blue-100 text-blue-600 ring-1 ring-blue-200',
+                'Walk': 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
             };
-            return classes[type] || 'bg-slate-50 text-slate-600 ring-1 ring-slate-100';
+            return classes[type] || 'bg-slate-100 text-slate-600 ring-1 ring-slate-200';
+        };
+
+        const goToDetail = (id) => router.push(`/activity/${id}`);
+        
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            });
         };
 
         onMounted(loadActivities);
 
         return { 
-            // Data & UI State
-            activities, 
-            filteredActivities,
-            loading, 
-            filterType,
-            
-            // Methods
-            loadActivities,
-            goToDetail, 
-            formatDate, 
-            
-            // Icon & Style Helpers
-            getIconName,
-            getTypeIconClass
+            activities, filteredActivities, loading, filterType,
+            loadActivities, goToDetail, formatDate, 
+            getIconName, getTypeIconClass
         };
     }
 };
