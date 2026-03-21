@@ -6,19 +6,26 @@ export default {
     name: 'ActivitiesView',
     template: activitiesTemplate,
     setup() {
-        const { ref, onMounted, nextTick } = Vue;
+        const { ref, onMounted, nextTick, computed } = Vue;
         const router = VueRouter.useRouter();
         
+        // --- STATES ---
         const activities = ref([]);
         const loading = ref(true);
+        const filterType = ref('All'); // Default filter
 
-        /**
-         * Mengambil data aktivitas langsung dari tabel mentah
-         */
+        // --- COMPUTED: FILTER LOGIC ---
+        // Menghitung data yang tampil berdasarkan chip yang dipilih
+        const filteredActivities = computed(() => {
+            if (filterType.value === 'All') return activities.value;
+            return activities.value.filter(act => act.type === filterType.value);
+        });
+
+        // --- METHODS ---
         const loadActivities = async () => {
             loading.value = true;
             try {
-                Logger.info('Activities: Fetching list from Supabase');
+                Logger.info(`Activities: Fetching data from Supabase`);
                 
                 const { data, error } = await supabase
                     .from('activities')
@@ -26,13 +33,13 @@ export default {
                     .order('start_date', { ascending: false });
                 
                 if (error) throw error;
-                
                 activities.value = data || [];
+                
             } catch (err) {
                 Logger.error('Activities_Load_Error', err);
             } finally {
                 loading.value = false;
-                // Pastikan ikon Lucide dirender ulang setelah data muncul di DOM
+                // Re-render Lucide Icons setelah DOM update
                 nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
                 });
@@ -43,9 +50,6 @@ export default {
             router.push(`/activity/${id}`);
         };
 
-        /**
-         * Formatter tanggal standar (contoh: 21 Mar 2026)
-         */
         const formatDate = (dateStr) => {
             if (!dateStr) return '-';
             return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -55,27 +59,42 @@ export default {
             });
         };
 
-        /**
-         * Dinamis class untuk badge tipe aktivitas
-         */
-        const getTypeBadgeClass = (type) => {
-            const classes = {
-                'Run': 'bg-orange-50 text-orange-600 border border-orange-100',
-                'Ride': 'bg-blue-50 text-blue-600 border border-blue-100',
-                'Walk': 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+        // --- ICON HELPERS ---
+        const getIconName = (type) => {
+            const icons = {
+                'Run': 'timer',
+                'Ride': 'zap',
+                'Walk': 'footprints'
             };
-            return classes[type] || 'bg-slate-50 text-slate-600 border border-slate-100';
+            return icons[type] || 'activity';
+        };
+
+        const getTypeIconClass = (type) => {
+            const classes = {
+                'Run': 'bg-orange-50 text-orange-600 ring-1 ring-orange-100',
+                'Ride': 'bg-blue-50 text-blue-600 ring-1 ring-blue-100',
+                'Walk': 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100'
+            };
+            return classes[type] || 'bg-slate-50 text-slate-600 ring-1 ring-slate-100';
         };
 
         onMounted(loadActivities);
 
         return { 
+            // Data & UI State
             activities, 
+            filteredActivities,
             loading, 
+            filterType,
+            
+            // Methods
+            loadActivities,
             goToDetail, 
             formatDate, 
-            getTypeBadgeClass, 
-            loadActivities 
+            
+            // Icon & Style Helpers
+            getIconName,
+            getTypeIconClass
         };
     }
 };
