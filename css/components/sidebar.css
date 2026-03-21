@@ -2,80 +2,84 @@
     width: 280px;
     background: var(--bg-card);
     border-right: 1px solid var(--border-light);
-    height: 100vh;
+    
+    /* MODIFIKASI: Tinggi Sidebar menyesuaikan sisa layar di bawah header */
+    height: calc(100vh - 64px); 
     display: flex;
     flex-direction: column;
     padding: 1.5rem 1rem;
-    position: fixed; /* Penting untuk navigasi drawer */
+    
+    position: fixed;
     left: 0;
-    top: 0;
-    z-index: 100;
+    /* Dimulai tepat di bawah Header */
+    top: 64px; 
+    
+    /* Z-Index harus LEBIH RENDAH dari Header (100) agar Header di atas */
+    z-index: 90; 
+    
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* --- RESPONSIVE LOGIC --- */
 
-/* Mobile & Tablet State */
 @media (max-width: 1024px) {
     .app-sidebar {
-        transform: translateX(-100%); /* Sembunyi secara default */
-        box-shadow: 20px 0 30px rgba(0, 0, 0, 0.05);
+        /* Di Mobile, biasanya drawer ingin full height, 
+           tapi jika ingin tetap di bawah header: */
+        top: 64px;
+        height: calc(100vh - 64px);
+        transform: translateX(-100%);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.02);
     }
 
-    /* Saat Class .sidebar-open aktif di Layout */
     .sidebar-open .app-sidebar {
         transform: translateX(0);
     }
 }
 
-/* Desktop State */
 @media (min-width: 1025px) {
     .app-sidebar {
-        transform: translateX(0); /* Selalu muncul */
-        position: sticky; /* Agar ikut bergeser jika layout flex */
+        transform: translateX(0);
+        /* Pastikan tetap fixed di samping saat konten di-scroll */
+        position: fixed; 
     }
 }
 
-/* --- MENU ITEMS --- */
+/* --- MENU ITEMS (Ultra Clean Style) --- */
 
 .sidebar-link {
     display: flex;
     align-items: center;
     gap: 0.875rem;
-    padding: 0.875rem 1rem;
-    border-radius: var(--radius-xl);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: 500; /* Lebih elegan dibanding 600 */
     cursor: pointer;
-    user-select: none; /* Cegah seleksi teks saat tap lama di Android */
+    user-select: none;
     transition: all 0.2s ease;
 }
 
 .sidebar-link i {
     width: 20px;
     height: 20px;
-    stroke-width: 2.2px;
+    stroke-width: 2px;
     flex-shrink: 0;
 }
 
-/* Interactions */
+/* Hover: Tanpa geser (Anti-Dashstrav), cukup mainkan warna */
 .sidebar-link:hover {
     background: var(--brand-soft);
     color: var(--brand-primary);
-    transform: translateX(6px);
 }
 
 .sidebar-link:active {
-    transform: scale(0.97); /* Feedback saat ditekan di layar sentuh */
+    transform: scale(0.96);
 }
 
-/* Active State (The Premium Blue Feel) */
+/* Active State: Solid & Minimalist */
 .router-link-active.sidebar-link {
     background: var(--brand-soft);
     color: var(--brand-primary);
-    box-shadow: 0 4px 15px -3px rgba(0, 97, 255, 0.1);
-}
-
-.router-link-active.sidebar-link i {
-    color: var(--brand-primary);
+    font-weight: 700;
 }
