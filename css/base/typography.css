@@ -1,0 +1,47 @@
+:root {
+    --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    font-family: var(--font-main);
+    line-height: 1.5;
+    font-size: 16px;
+    color: var(--text-dark);
+}
+
+/* Heading Style: Bold & Tight (Seperti Gambar Referensi) */
+h1, .text-display {
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+}
+
+h2, .text-card-title {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-dark);
+}
+
+/* Data Style: Untuk angka statistik lari */
+.stat-value {
+    font-family: var(--font-main);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums; /* Angka tetap sejajar saat berubah */
+}
+
+/* Muted Text: Untuk label "Month", "Year", dll */
+.label-muted {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+/* Link & Interactive */
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
