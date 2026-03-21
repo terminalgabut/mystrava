@@ -11,9 +11,9 @@ export default `
                     <span>{{ formatDate(activity?.start_date) }}</span>
                     <span class="text-slate-300">•</span>
                     <span class="flex items-center gap-1 text-slate-700 max-w-[250px] md:max-w-none">
-    <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
-    <span class="truncate md:whitespace-normal">{{ locationName }}</span>
-</span>
+                        <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
+                        <span class="truncate md:whitespace-normal">{{ locationName }}</span>
+                    </span>
                     <span class="text-slate-300">•</span>
                     <span class="text-blue-600 font-black">{{ activity?.type }}</span>
                 </p>
@@ -27,17 +27,23 @@ export default `
                 </div>
                 <div>
                     <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Temp</p>
-                    <p class="text-sm font-black text-slate-900 leading-none">28°C</p>
+                    <p class="text-sm font-black text-slate-900 leading-none">
+                        {{ activity?.weather_temp || '28' }}°C
+                    </p>
                 </div>
             </div>
             <div class="flex gap-5">
                 <div class="text-center">
                     <i data-lucide="wind" class="w-4 h-4 text-slate-300 mx-auto mb-1"></i>
-                    <p class="text-[10px] font-bold text-slate-700">12 <span class="text-[8px] text-slate-400">km/h</span></p>
+                    <p class="text-[10px] font-bold text-slate-700">
+                        {{ activity?.weather_wind || '12' }} <span class="text-[8px] text-slate-400">km/h</span>
+                    </p>
                 </div>
                 <div class="text-center">
                     <i data-lucide="droplets" class="w-4 h-4 text-blue-300 mx-auto mb-1"></i>
-                    <p class="text-[10px] font-bold text-slate-700">65 <span class="text-[8px] text-slate-400">%</span></p>
+                    <p class="text-[10px] font-bold text-slate-700">
+                        {{ activity?.weather_humidity || '65' }} <span class="text-[8px] text-slate-400">%</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -103,7 +109,9 @@ export default `
                         </div>
                         <div class="pt-6 border-t border-white/10">
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Elapsed Time</p>
-                            <p class="text-2xl font-bold text-white tabular-nums">{{ formatTime(activity.elapsed_time) }}</p>
+                            <p class="text-2xl font-bold text-white tabular-nums">
+                                {{ formatTime(activity.elapsed_time_seconds || activity.elapsed_time) }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -113,7 +121,7 @@ export default `
             <div class="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
                 <div class="flex items-center justify-between mb-4 px-2">
                     <h3 class="font-black text-slate-900">Splits Metric</h3>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Real Data</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pace /km</span>
                 </div>
                 <div class="space-y-2">
                     <div v-for="split in realSplits" :key="split.number" 
@@ -143,4 +151,4 @@ export default `
         </div>
     </div>
 </div>
-`;
+\`;
