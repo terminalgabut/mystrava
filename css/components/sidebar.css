@@ -1,0 +1,40 @@
+.app-sidebar {
+    width: 280px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-light);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+}
+
+/* Menu Item */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-xl);
+    color: var(--text-muted);
+    font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-link:hover {
+    background: var(--bg-app);
+    color: var(--brand-primary);
+    transform: translateX(4px);
+}
+
+/* Active State (The Premium Blue Feel) */
+.router-link-active.sidebar-link {
+    background: var(--brand-soft);
+    color: var(--brand-primary);
+    box-shadow: 0 4px 12px rgba(0, 97, 255, 0.08);
+}
+
+.sidebar-link i {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.2px;
+}
