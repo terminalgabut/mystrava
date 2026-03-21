@@ -2,7 +2,6 @@ import { supabase } from './supabase.js';
 import { Logger } from './debug.js';
 
 export const stravaService = {
-    // 1. Fungsi Stats & Activities
     async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
             Logger.info(`StravaService: Fetching ${activityType} - ${periodType}`);
@@ -19,155 +18,129 @@ export const stravaService = {
             ]);
 
             const snapshot = snapshotRes.data;
+            if (!snapshot) return this.getEmptyState();
 
-            // Jika snapshot tidak ada, kita buatkan data dasar dari list activities saja
-            if (!snapshot) {
-                Logger.warn('StravaService: Snapshot tidak ditemukan, fallback ke kalkulasi manual');
-                return this.createManualStats(activities, records, activityType);
-            }
-
-            // Hitung Total Elapsed Time secara dinamis
-            const totalSeconds = activities.reduce((acc, act) => 
-                acc + (Number(act.elapsed_time_seconds) || Number(act.elapsed_time) || 0), 0
+            // FIX 1: FOKUS MOVING TIME (Waktu Bergerak)
+            const totalMovingSeconds = activities.reduce((acc, act) => 
+                acc + (Number(act.moving_time) || 0), 0
             );
 
-            const baseStats = {
+            return {
                 totalDistance: (snapshot.total_distance / 1000).toFixed(2),
                 totalActivities: snapshot.total_activities || 0,
                 avgPace: this.calculatePace(snapshot.avg_speed, activityType),
                 calories: Math.round(snapshot.total_calories || 0),
                 elevation: Math.round(snapshot.total_elevation_gain || 0),
-                totalDuration: this.formatSecondsToClock(totalSeconds), // Data yang Anda cari
+                // Mengirim string format clock ke UI
+                totalDuration: this.formatSecondsToClock(totalMovingSeconds),
                 activities: activities, 
-                records: records
+                records: records,
+                steps: activityType === 'Walk' ? this.calculateSteps(snapshot.total_distance) : 0
             };
-
-            if (activityType === 'Walk') {
-                baseStats.steps = this.calculateSteps(snapshot.total_distance);
-            }
-
-            return baseStats;
         } catch (err) {
-            Logger.error('StravaService_Fetch_Error', err);
+            Logger.error('StravaService_Error', err);
             return this.getEmptyState();
         }
     },
 
-    // 2. Fungsi Trends (SOLUSI CHART KOSONG)
+    // FIX 2: LOGIKA CHART TRAIL VS ROAD
     async getTrendData(activityType, year) {
-        try {
-            const { data, error } = await supabase
-                .from('activity_snapshots')
-                .select('period_key, avg_speed')
-                .eq('activity_type', activityType)
-                .eq('period_type', 'month')
-                .like('period_key', `${year}-%`)
-                .order('period_key', { ascending: true });
-
-            if (error) throw error;
-
-            const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const mainDataset = new Array(12).fill(0);
-
-            data?.forEach(item => {
-                const monthIdx = parseInt(item.period_key.split('-')[1]) - 1;
-                const value = activityType === 'Ride' 
-                    ? (item.avg_speed * 3.6) // km/h
-                    : (1000 / item.avg_speed / 60); // pace min/km
-                
-                mainDataset[monthIdx] = parseFloat(value.toFixed(2));
-            });
-
-            return { labels, mainDataset, comparisonDatasets: [] };
-        } catch (err) {
-            Logger.error('TrendData_Error', err);
-            return { labels: [], mainDataset: [], comparisonDatasets: [] };
-        }
-    },
-
-    // 3. Fungsi Records
-    async getRecords(activityType) {
         try {
             const { data } = await supabase
                 .from('activities')
-                .select('distance, average_speed, type')
-                .eq('type', activityType);
+                .select('start_date, average_speed, name, distance')
+                .eq('type', activityType)
+                .like('start_date', `${year}%`);
 
-            if (!data || data.length === 0) return { longestDistance: '0.00', bestEffort: '--:--' };
+            const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const mainDataset = new Array(12).fill(0);
+            const comparisonDatasets = [];
 
-            const longest = data.reduce((max, act) => act.distance > max.distance ? act : max, data[0]);
-            const fastest = data.reduce((max, act) => act.average_speed > max.average_speed ? act : max, data[0]);
+            // Grouping data per bulan
+            const monthlyData = {};
+            data.forEach(act => {
+                const month = new Date(act.start_date).getMonth();
+                if (!monthlyData[month]) monthlyData[month] = { totalSpeed: 0, count: 0, trailSpeed: 0, trailCount: 0, roadSpeed: 0, roadCount: 0 };
+                
+                const pace = activityType === 'Ride' ? (act.average_speed * 3.6) : (1000 / act.average_speed / 60);
+                
+                monthlyData[month].totalSpeed += pace;
+                monthlyData[month].count++;
 
-            return {
-                longestDistance: (longest.distance / 1000).toFixed(2),
-                bestEffort: activityType === 'Walk' 
-                    ? this.calculateSteps(longest.distance).toLocaleString('id-ID')
-                    : this.calculatePace(fastest.average_speed, activityType)
-            };
+                // Logika pemisah Trail vs Road (Bisa disesuaikan dengan tag nama atau workout_type)
+                if (act.name.toLowerCase().includes('trail')) {
+                    monthlyData[month].trailSpeed += pace;
+                    monthlyData[month].trailCount++;
+                } else {
+                    monthlyData[month].roadSpeed += pace;
+                    monthlyData[month].roadCount++;
+                }
+            });
+
+            labels.forEach((_, i) => {
+                if (monthlyData[i]) {
+                    mainDataset[i] = parseFloat((monthlyData[i].totalSpeed / monthlyData[i].count).toFixed(2));
+                }
+            });
+
+            // Munculkan comparison jika tipe adalah Run
+            if (activityType === 'Run') {
+                const trailData = labels.map((_, i) => monthlyData[i]?.trailCount > 0 ? parseFloat((monthlyData[i].trailSpeed / monthlyData[i].trailCount).toFixed(2)) : 0);
+                const roadData = labels.map((_, i) => monthlyData[i]?.roadCount > 0 ? parseFloat((monthlyData[i].roadSpeed / monthlyData[i].roadCount).toFixed(2)) : 0);
+                
+                comparisonDatasets.push(
+                    { label: 'Road Run', data: roadData, color: '#3b82f6' },
+                    { label: 'Trail Run', data: trailData, color: '#10b981' }
+                );
+            }
+
+            return { labels, mainDataset, comparisonDatasets };
         } catch (err) {
-            return { longestDistance: '0.00', bestEffort: '--:--' };
+            return { labels: [], mainDataset: [], comparisonDatasets: [] };
         }
     },
 
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase
             .from('activities')
-            .select('id, name, distance, type, start_date, moving_time, elapsed_time_seconds, elapsed_time, location_name, weather_temp')
+            .select('id, name, distance, type, start_date, moving_time, location_name, weather_temp')
             .eq('type', type)
             .order('start_date', { ascending: false });
 
-        if (pType === 'month' || pType === 'year') {
-            query = query.like('start_date', `${pKey}%`);
-        }
+        if (pType !== 'all_time') query = query.like('start_date', `${pKey}%`);
 
         const { data } = await query;
         return data || [];
     },
 
-    // --- UTILS ---
-    formatSecondsToClock(totalSeconds) {
-        if (!totalSeconds || totalSeconds <= 0) return "00:00";
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = Math.floor(totalSeconds % 60);
-        return h > 0 
-            ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-            : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    },
+    async getRecords(activityType) {
+        const { data } = await supabase.from('activities').select('distance, average_speed').eq('type', activityType);
+        if (!data?.length) return { longestDistance: '0.00', bestEffort: '--:--' };
+        
+        const longest = data.reduce((max, act) => act.distance > max.distance ? act : max, data[0]);
+        const fastest = data.reduce((max, act) => act.average_speed > max.average_speed ? act : max, data[0]);
 
-    calculatePace(avgSpeed, type) {
-        if (!avgSpeed || avgSpeed <= 0) return type === 'Ride' ? '0.0' : '00:00';
-        if (type === 'Ride') return (avgSpeed * 3.6).toFixed(1); 
-
-        const paceInSeconds = 1000 / avgSpeed;
-        const minutes = Math.floor(paceInSeconds / 60);
-        const seconds = Math.round(paceInSeconds % 60);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    },
-
-    calculateSteps: (dist) => Math.round(dist / 0.762),
-
-    createManualStats(activities, records, type) {
-        const totalDist = activities.reduce((acc, a) => acc + a.distance, 0);
-        const totalTime = activities.reduce((acc, a) => acc + (a.elapsed_time_seconds || 0), 0);
         return {
-            totalDistance: (totalDist / 1000).toFixed(2),
-            totalActivities: activities.length,
-            avgPace: "N/A",
-            calories: 0,
-            elevation: 0,
-            totalDuration: this.formatSecondsToClock(totalTime),
-            activities: activities,
-            records: records
+            longestDistance: (longest.distance / 1000).toFixed(2),
+            bestEffort: activityType === 'Walk' ? Math.round(longest.distance / 0.762).toLocaleString() : this.calculatePace(fastest.average_speed, activityType)
         };
     },
 
-    getEmptyState() {
-        return { 
-            totalDistance: "0.00", totalDuration: "00:00", totalActivities: 0, 
-            avgPace: "00:00", calories: 0, elevation: 0, steps: 0,
-            records: { longestDistance: '0.00', bestEffort: '--:--' },
-            activities: [] 
-        };
-    }
+    formatSecondsToClock(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = Math.floor(sec % 60);
+        return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
+    },
+
+    calculatePace: (s, t) => {
+        if (!s || s <= 0) return t === 'Ride' ? '0.0' : '00:00';
+        if (t === 'Ride') return (s * 3.6).toFixed(1);
+        const p = 1000 / s;
+        return `${Math.floor(p / 60)}:${Math.round(p % 60).toString().padStart(2, '0')}`;
+    },
+
+    calculateSteps: (d) => Math.round(d / 0.762),
+
+    getEmptyState: () => ({ totalDistance: "0.00", totalDuration: "00:00", totalActivities: 0, avgPace: "00:00", calories: 0, elevation: 0, steps: 0, records: {}, activities: [] })
 };
