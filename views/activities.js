@@ -6,16 +6,25 @@ export default {
     name: 'ActivitiesView',
     template: activitiesTemplate,
     setup() {
-        const { ref, onMounted, nextTick, computed } = Vue;
+        const { ref, onMounted, nextTick, computed, watch } = Vue;
         const router = VueRouter.useRouter();
         
         const activities = ref([]);
         const loading = ref(true);
         const filterType = ref('All'); 
 
+        // Filter Logic
         const filteredActivities = computed(() => {
             if (filterType.value === 'All') return activities.value;
             return activities.value.filter(act => act.type === filterType.value);
+        });
+
+        // PENTING: Pantau perubahan filterType
+        // Setiap kali user klik filter, jalankan lucide.createIcons setelah DOM update
+        watch(filterType, () => {
+            nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
         });
 
         const loadActivities = async () => {
@@ -38,12 +47,12 @@ export default {
             }
         };
 
-        // --- SELEKSI IKON SPORTY ---
+        // Sporty Icons Selector
         const getIconName = (type) => {
             const icons = {
-                'Run': 'footprints', // Jejak kaki (Google Fit Style)
-                'Ride': 'bike',      // Sepeda (Strava Style)
-                'Walk': 'person-standing' // Orang berjalan/berdiri
+                'Run': 'footprints',
+                'Ride': 'bike',
+                'Walk': 'person-standing'
             };
             return icons[type] || 'activity';
         };
