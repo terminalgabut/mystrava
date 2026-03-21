@@ -51,10 +51,23 @@ export default `
 
         <div class="bento-card">
             <div class="card-header">
-                <span class="label-muted">Avg Pace</span>
-                <div class="icon-box"><i data-lucide="timer" class="w-4 h-4"></i></div>
+                <span class="label-muted">{{ performanceConfig.label }}</span>
+                <div class="icon-box">
+                    <i :data-lucide="performanceConfig.icon" class="w-4 h-4"></i>
+                </div>
             </div>
-            <h2 class="stat-value text-2xl">{{ stats.avgPace }}</h2>
+            <h2 class="stat-value text-2xl">
+                <template v-if="performanceConfig.showSteps">
+                    {{ stats.steps.toLocaleString('id-ID') }}
+                </template>
+                <template v-else>
+                    {{ stats.avgPace }}
+                </template>
+                
+                <span class="text-xs font-medium tracking-normal text-slate-400 ml-0.5">
+                    {{ performanceConfig.unit }}
+                </span>
+            </h2>
         </div>
 
         <div class="bento-card">
@@ -63,7 +76,7 @@ export default `
                 <div class="icon-box"><i data-lucide="flame" class="w-4 h-4"></i></div>
             </div>
             <h2 class="stat-value text-2xl">
-                {{ stats.calories.toLocaleString() }} <span class="text-xs font-medium tracking-normal text-slate-400">kcal</span>
+                {{ stats.calories.toLocaleString('id-ID') }} <span class="text-xs font-medium tracking-normal text-slate-400">kcal</span>
             </h2>
         </div>
     </div>
@@ -86,10 +99,10 @@ export default `
         <div class="bento-card p-6">
             <h3 class="text-card-title mb-6">Recent Log</h3>
             <div class="space-y-3">
-                <div v-for="act in stats.recentActivities" class="activity-item">
+                <div v-for="act in stats.recentActivities" :key="act.id" class="activity-item">
                     <div class="flex items-center gap-3">
                         <div class="icon-box">
-                            <i data-lucide="footprints" class="w-4 h-4"></i>
+                            <i :data-lucide="act.type === 'Ride' ? 'zap' : 'footprints'" class="w-4 h-4"></i>
                         </div>
                         <div>
                             <p class="text-xs font-bold text-slate-900">{{ act.name }}</p>
@@ -99,9 +112,10 @@ export default `
                     <span class="stat-value text-sm">{{ act.distance }} km</span>
                 </div>
                 
-                <p v-if="stats.recentActivities.length === 0" class="text-caption text-center py-4">
-                    No activities recorded.
-                </p>
+                <div v-if="stats.recentActivities.length === 0" class="text-center py-8">
+                    <i data-lucide="database" class="w-8 h-8 text-slate-200 mx-auto mb-2"></i>
+                    <p class="text-caption">No activities recorded for this period.</p>
+                </div>
             </div>
         </div>
     </div>
