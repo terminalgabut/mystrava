@@ -1,29 +1,17 @@
 import Dashboard from '../views/dashboard.js';
 import { Logger } from './services/debug.js';
 
-// Placeholder untuk views yang akan kita buat selanjutnya
-const Activities = { 
-    template: '<div class="premium-card"><h1 class="text-display">Activities</h1><p class="label-muted">Coming Soon</p></div>' 
-};
-const Analytics = { 
-    template: '<div class="premium-card"><h1 class="text-display">Statistics</h1><p class="label-muted">Coming Soon</p></div>' 
-};
-
 const routes = [
     { 
         path: '/', 
         name: 'dashboard',
         component: Dashboard 
     },
+    // Catch-all route: Jika user mengetik path aneh, 
+    // arahkan paksa kembali ke Dashboard agar tidak BLANK.
     { 
-        path: '/activities', 
-        name: 'activities',
-        component: Activities 
-    },
-    { 
-        path: '/statistics', 
-        name: 'statistics',
-        component: Analytics 
+        path: '/:pathMatch(.*)*', 
+        redirect: '/' 
     }
 ];
 
@@ -32,19 +20,13 @@ export const router = VueRouter.createRouter({
     routes
 });
 
-// --- NAVIGATION GUARD (DEBUG SYSTEM) ---
+// --- NAVIGATION GUARD ---
 router.beforeEach((to, from, next) => {
-    // Log setiap perpindahan halaman ke console/vConsole
-    Logger.info(`Navigating: ${from.path} -> ${to.path}`);
-    
-    // Pastikan scroll kembali ke atas setiap pindah halaman
+    Logger.info(`Router: Navigating to ${to.path}`);
     window.scrollTo(0, 0);
-    
     next();
 });
 
-router.afterEach((to) => {
-    // Update judul dokumen sesuai halaman
-    const pageName = to.name ? to.name.charAt(0).toUpperCase() + to.name.slice(1) : 'App';
-    document.title = `${pageName} | DASHSTRAV`;
+router.afterEach(() => {
+    document.title = "Dashboard | DASHSTRAV";
 });
