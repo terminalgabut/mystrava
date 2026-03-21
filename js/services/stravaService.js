@@ -56,33 +56,34 @@ export const stravaService = {
      * Dinamis mengikuti activityType (Run/Ride/Walk)
      */
     async getRecords(activityType) {
-        try {
-            // Jarak Terjauh
-            const { data: longest } = await supabase
-                .from('activities')
-                .select('distance')
-                .eq('type', activityType)
-                .order('distance', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+    try {
+        const { data: longest } = await supabase
+            .from('activities')
+            .select('distance')
+            .eq('type', activityType)
+            .order('distance', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-            // Usaha Terbaik (Pace terkecil atau Speed tertinggi)
-            const { data: fastest } = await supabase
-                .from('activities')
-                .select('average_speed')
-                .eq('type', activityType)
-                .order('average_speed', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+        const { data: fastest } = await supabase
+            .from('activities')
+            .select('average_speed, distance') // Tambahkan distance di sini
+            .eq('type', activityType)
+            .order('average_speed', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-            return {
-                longestDistance: longest ? (longest.distance / 1000).toFixed(2) : '0.00',
-                bestEffort: fastest ? this.calculatePace(fastest.average_speed, activityType) : '--:--'
-            };
-        } catch (err) {
-            Logger.error('StravaService_Records_Error', err);
-            return { longestDistance: '0.00', bestEffort: '--:--' };
-        }
+        return {
+            longestDistance: longest ? (longest.distance / 1000).toFixed(2) : '0.00',
+            // MODIFIKASI DISINI: Jika Walk, hitung langkah dari aktivitas terjauh tersebut
+            bestEffort: activityType === 'Walk' 
+                ? (longest ? this.calculateSteps(longest.distance).toLocaleString('id-ID') : '0')
+                : (fastest ? this.calculatePace(fastest.average_speed, activityType) : '--:--')
+        };
+    } catch (err) {
+        Logger.error('StravaService_Records_Error', err);
+        return { longestDistance: '0.00', bestEffort: '--:--' };
+    }
     },
 
     async getRecentActivities() {
