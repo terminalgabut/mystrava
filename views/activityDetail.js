@@ -18,19 +18,39 @@ export default {
         /**
          * Mengambil nama tempat (Desa/Kecamatan) berdasarkan koordinat
          */
-        const fetchGeoLocation = async (lat, lng) => {
-            try {
-                // Menggunakan Nominatim (OpenStreetMap) - Tanpa API Key
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
-                const data = await response.json();
-                
-                // Urutan prioritas: Nama Desa -> Kelurahan -> Kecamatan -> Kota
-                const addr = data.address;
-                return addr.village || addr.suburb || addr.city_district || addr.city || addr.town || 'Area Terdeteksi';
-            } catch (err) {
-                return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
-            }
-        };
+        /**
+ * Mengambil alamat lengkap (Desa, Kec, Prov, ID) dari koordinat
+ */
+const fetchGeoLocation = async (lat, lng) => {
+    try {
+        // Menggunakan zoom=18 untuk akurasi setingkat jalan/desa
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+        const data = await response.json();
+        const addr = data.address;
+
+        if (!addr) return 'Area Terdeteksi';
+
+        // 1. Ambil Desa/Kelurahan (Priority: village -> suburb -> hamlet -> neighborhood)
+        const desa = addr.village || addr.suburb || addr.hamlet || addr.neighbourhood || addr.village_district || '';
+        
+        // 2. Ambil Kecamatan/Distrik (Priority: city_district -> district -> town)
+        const kecamatan = addr.city_district || addr.district || addr.town || addr.municipality || '';
+        
+        // 3. Ambil Provinsi
+        const provinsi = addr.state || 'Jawa Timur';
+        
+        // 4. Kode Negara (ID)
+        const countryCode = (addr.country_code || 'ID').toUpperCase();
+
+        // Rangkai String (Filter bagian yang kosong agar tidak ada koma double)
+        const components = [desa, kecamatan, provinsi, countryCode].filter(part => part !== '');
+        
+        return components.join(', '); // Hasil: "Dandangan, Kota, Jawa Timur, ID"
+    } catch (err) {
+        // Fallback jika API limit atau offline
+        return `${lat.toFixed(3)}, ${lng.toFixed(3)}, ID`;
+    }
+};
 
         const loadActivityDetail = async () => {
             loading.value = true;
