@@ -13,10 +13,10 @@ export default `
                 <option value="Walk">Walking</option>
             </select>
             <select v-model="selectedPeriodKey" class="select-clean" :disabled="isLoading">
-                <option value="total">All Time</option>
-                <option value="2026">Year 2026</option>
-                <option value="2026-03">March 2026</option>
-            </select>
+    <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">
+        {{ opt.label }}
+    </option>
+</select>
         </div>
     </header>
 
