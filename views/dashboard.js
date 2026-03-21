@@ -8,10 +8,10 @@ export default {
     setup() {
         const { ref, onMounted, watch, nextTick, computed } = Vue;
         
+        // State Filter
         const selectedType = ref('Run'); 
         const selectedPeriodKey = ref('total'); 
         
-        // Menambahkan struktur 'records' pada inisialisasi awal
         const stats = ref({
             totalDistance: "0.00",
             elevation: 0,
@@ -27,6 +27,37 @@ export default {
         });
         
         const isLoading = ref(true);
+
+        /**
+         * Generate Opsi Periode secara Dinamis
+         * Menghasilkan: All Time, Year Sekarang, dan List Bulan di tahun berjalan
+         */
+        const periodOptions = computed(() => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth(); // 0 = Jan, 2 = Mar (untuk 2026)
+            
+            const options = [
+                { value: 'total', label: 'All Time' },
+                { value: `${currentYear}`, label: `Year ${currentYear}` }
+            ];
+
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+
+            // Loop untuk membuat list bulan dari bulan saat ini mundur ke Januari
+            for (let i = currentMonth; i >= 0; i--) {
+                const monthNum = (i + 1).toString().padStart(2, '0');
+                options.push({
+                    value: `${currentYear}-${monthNum}`,
+                    label: `${monthNames[i]} ${currentYear}`
+                });
+            }
+
+            return options;
+        });
 
         const performanceConfig = computed(() => {
             switch (selectedType.value) {
@@ -58,6 +89,7 @@ export default {
             isLoading.value = true;
             
             let pType = 'all_time';
+            // Deteksi format: YYYY-MM (month) vs YYYY (year) vs total (all_time)
             if (selectedPeriodKey.value.includes('-')) pType = 'month';
             else if (selectedPeriodKey.value !== 'total') pType = 'year';
 
@@ -68,7 +100,6 @@ export default {
                     selectedPeriodKey.value
                 );
 
-                // Pastikan data records selalu ada meskipun database kosong
                 stats.value = {
                     ...data,
                     records: data.records || { longestDistance: '0.00', bestEffort: '--:--' }
@@ -94,7 +125,8 @@ export default {
             isLoading, 
             selectedType, 
             selectedPeriodKey, 
-            performanceConfig 
+            performanceConfig,
+            periodOptions // Diekspor agar bisa digunakan v-for di template
         };
     }
 };
