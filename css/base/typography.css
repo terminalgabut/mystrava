@@ -1,47 +1,76 @@
 :root {
+    /* Menggunakan Inter dengan font-feature-settings untuk ketajaman maksimal */
     --font-main: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
     font-family: var(--font-main);
-    line-height: 1.5;
+    line-height: 1.6; /* Sedikit lebih renggang untuk keterbacaan artikel/data */
     font-size: 16px;
-    color: var(--text-dark);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Mengaktifkan fitur font modern: angka proporsional & ligatur */
+    font-feature-settings: "cv02", "cv05", "cv11", "ss01";
 }
 
-/* Heading Style: Bold & Tight (Seperti Gambar Referensi) */
+/* --- THE MODERN DISPLAY (Anti-Miring) --- */
+
 h1, .text-display {
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.1;
+    font-weight: 850; /* Variable font weight jika didukung, sangat tebal & solid */
+    letter-spacing: -0.05em; /* Lebih rapat untuk kesan "High-Tech" */
+    line-height: 0.95; /* Sangat rapat secara vertikal */
+    font-style: normal;
+    color: var(--text-main);
 }
 
 h2, .text-card-title {
     font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text-dark);
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    color: var(--text-main);
 }
 
-/* Data Style: Untuk angka statistik lari */
+/* --- DATA & NUMBERS (The Analytics Heart) --- */
+
 .stat-value {
     font-family: var(--font-main);
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    font-variant-numeric: tabular-nums; /* Angka tetap sejajar saat berubah */
+    font-weight: 800;
+    letter-spacing: -0.06em; /* Angka statistik terlihat lebih menyatu */
+    line-height: 1;
+    /* Tabular nums wajib agar angka tidak "loncat" saat real-time sync */
+    font-variant-numeric: tabular-nums; 
+    font-feature-settings: "tnum", "lnum"; /* Force tabular & lining figures */
 }
 
-/* Muted Text: Untuk label "Month", "Year", dll */
+/* --- LABELS & MICRO-COPY --- */
+
 .label-muted {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 10px; /* Lebih kecil tapi tetap terbaca karena tracking */
+    font-weight: 800; /* Lebih tebal agar kontras dengan ukuran kecil */
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    /* Wide tracking untuk label kecil memberikan kesan mewah (Apple/Stripe Style) */
+    letter-spacing: 0.15em; 
     color: var(--text-muted);
 }
 
-/* Link & Interactive */
-a {
+/* --- INTERACTIVE --- */
+
+a, .btn-link {
     text-decoration: none;
     color: inherit;
-    transition: all 0.2s ease;
+    font-weight: 600;
+    transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:hover {
+    color: var(--brand-primary);
+}
+
+/* Helper untuk teks yang sangat halus */
+.text-caption {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 450;
+    letter-spacing: -0.01em;
 }
