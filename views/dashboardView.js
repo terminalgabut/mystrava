@@ -1,5 +1,3 @@
-ada kekurangan yaitu total waktu , kamu bisa tambah cuaca dan lokasi di log
-
 export default `
 <div class="dashboard-wrapper animate-in" :class="{ 'is-loading': isLoading }">
     <header class="dashboard-header">
