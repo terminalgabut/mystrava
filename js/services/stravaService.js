@@ -20,17 +20,25 @@ export const stravaService = {
                 return this.getEmptyState();
             }
 
-            // Ambil list aktivitas terbaru (tanpa filter type agar semua muncul di log)
             const recentActivities = await this.getRecentActivities();
 
-            return {
+            // Mapping data dasar
+            const baseStats = {
                 totalDistance: (snapshot.total_distance / 1000).toFixed(2),
                 totalActivities: snapshot.total_activities || 0,
                 avgPace: this.calculatePace(snapshot.avg_speed, activityType),
                 calories: Math.round(snapshot.total_calories || 0),
                 elevation: Math.round(snapshot.total_elevation_gain || 0),
-                recentActivities: recentActivities
+                recentActivities: recentActivities,
+                activityType: activityType // Untuk mempermudah logika di UI
             };
+
+            // Tambahkan data langkah jika aktivitas adalah 'Walk'
+            if (activityType === 'Walk') {
+                baseStats.steps = this.calculateSteps(snapshot.total_distance);
+            }
+
+            return baseStats;
         } catch (err) {
             Logger.error('StravaService_Fetch_Error', err);
             return this.getEmptyState();
@@ -55,18 +63,37 @@ export const stravaService = {
     calculatePace(avgSpeed, type) {
         if (!avgSpeed || avgSpeed <= 0) return "00:00";
         
-        // Jika Sepeda (Ride), gunakan km/h. Jika Run/Walk, gunakan min/km
+        // Sepeda (Ride): Menggunakan Speed (km/h)
         if (type === 'Ride') {
-            return (avgSpeed * 3.6).toFixed(1) + ' km/h';
+            return (avgSpeed * 3.6).toFixed(1); 
         }
 
+        // Lari atau Jalan: Menggunakan Pace (min/km)
         const paceInSeconds = 1000 / avgSpeed;
         const minutes = Math.floor(paceInSeconds / 60);
         const seconds = Math.round(paceInSeconds % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     },
 
+    /**
+     * Menghitung estimasi langkah secara manual
+     * Rata-rata panjang langkah manusia sekitar 0.762 meter 
+     */
+    calculateSteps(distanceInMeters) {
+        if (!distanceInMeters || distanceInMeters <= 0) return 0;
+        const stepLength = 0.762; 
+        return Math.round(distanceInMeters / stepLength);
+    },
+
     getEmptyState() {
-        return { totalDistance: "0.00", totalActivities: 0, avgPace: "00:00", calories: 0, elevation: 0, recentActivities: [] };
+        return { 
+            totalDistance: "0.00", 
+            totalActivities: 0, 
+            avgPace: "00:00", 
+            calories: 0, 
+            elevation: 0, 
+            steps: 0,
+            recentActivities: [] 
+        };
     }
 };
