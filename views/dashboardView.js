@@ -13,10 +13,10 @@ export default `
                 <option value="Walk">Walking</option>
             </select>
             <select v-model="selectedPeriodKey" class="select-clean" :disabled="isLoading">
-    <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">
-        {{ opt.label }}
-    </option>
-</select>
+                <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                </option>
+            </select>
         </div>
     </header>
 
@@ -30,15 +30,18 @@ export default `
                 {{ stats.totalDistance }} <span class="text-xs font-medium tracking-normal text-slate-400">km</span>
             </h2>
         </div>
-        
+
         <div class="bento-card">
             <div class="card-header">
-                <span class="label-muted">Total Elevation</span>
-                <div class="icon-box"><i data-lucide="mountain" class="w-4 h-4"></i></div>
+                <span class="label-muted">Total Time (Elapsed)</span>
+                <div class="icon-box"><i data-lucide="timer" class="w-4 h-4"></i></div>
             </div>
             <h2 class="stat-value text-2xl shimmer-text">
-                {{ stats.elevation }} <span class="text-xs font-medium tracking-normal text-slate-400">m</span>
+                {{ stats.totalDuration || '00:00' }}
             </h2>
+            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+                Incl. pauses & rest
+            </p>
         </div>
 
         <div class="bento-card">
@@ -104,48 +107,66 @@ export default `
              </div>
         </div>
 
-        <div class="flex flex-col lg:grid gap-6 mb-6" 
-     :class="trendData.comparisonDatasets.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
-    
-    <PaceChart 
-        chartId="monthlyPace"
-        :title="selectedType === 'Ride' ? 'Average Speed per Month' : 'Average Pace per Month'"
-        :labels="trendData.labels"
-        :datasets="trendData.paceDatasets"
-        :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
-    />
-
-    <PaceChart 
-        v-if="trendData.comparisonDatasets.length > 0"
-        chartId="trailVsRoad"
-        title="Trail vs Road Comparison"
-        :labels="trendData.labels"
-        :datasets="trendData.comparisonDatasets"
-        :unit="' /km'"
-    />
-</div>
+        <div class="flex flex-col lg:grid gap-6 mb-6" :class="trendData.comparisonDatasets.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
+            <PaceChart 
+                chartId="monthlyPace"
+                :title="selectedType === 'Ride' ? 'Average Speed per Month' : 'Average Pace per Month'"
+                :labels="trendData.labels"
+                :datasets="trendData.paceDatasets"
+                :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
+            />
+            <PaceChart 
+                v-if="trendData.comparisonDatasets.length > 0"
+                chartId="trailVsRoad"
+                title="Trail vs Road Comparison"
+                :labels="trendData.labels"
+                :datasets="trendData.comparisonDatasets"
+                :unit="' /km'"
+            />
+        </div>
 
         <div class="bento-card p-6">
             <h3 class="text-card-title mb-6">Recent Log</h3>
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <template v-if="isLoading && stats.recentActivities.length === 0">
-                    <div v-for="i in 3" class="activity-item shimmer-text opacity-50">
-                        <div class="h-8 w-full"></div>
-                    </div>
+                    <div v-for="i in 3" class="activity-item shimmer-text opacity-50 h-16 bg-slate-50 rounded-2xl"></div>
                 </template>
 
                 <template v-else>
-                    <div v-for="act in stats.recentActivities" :key="act.id" class="activity-item">
-                        <div class="flex items-center gap-3">
-                            <div class="icon-box">
-                                <i :data-lucide="act.type === 'Ride' ? 'zap' : 'footprints'" class="w-4 h-4"></i>
+                    <div v-for="act in stats.recentActivities" :key="act.id" 
+                         @click="$router.push('/activity/' + act.id)"
+                         class="flex items-center justify-between p-3 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/50 transition-all cursor-pointer group">
+                        
+                        <div class="flex items-center gap-4 min-w-0">
+                            <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                                <i :data-lucide="act.type === 'Ride' ? 'zap' : 'footprints'" class="w-5 h-5 text-slate-600"></i>
                             </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-900">{{ act.name }}</p>
-                                <p class="label-muted !text-[8px] !tracking-widest">{{ act.date }}</p>
+                            <div class="min-w-0">
+                                <p class="text-xs font-black text-slate-900 truncate">{{ act.name }}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="label-muted !text-[9px] whitespace-nowrap">{{ act.date }}</span>
+                                    <span class="text-slate-200">•</span>
+                                    <span class="label-muted !text-[9px] truncate max-w-[120px] md:max-w-[200px]">
+                                        <i data-lucide="map-pin" class="w-2.5 h-2.5 inline mr-0.5"></i>
+                                        {{ act.location_name || 'Global Area' }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <span class="stat-value text-sm">{{ act.distance }} km</span>
+
+                        <div class="flex items-center gap-4">
+                            <div v-if="act.weather_temp" class="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-amber-50 rounded-lg border border-amber-100/50">
+                                <i data-lucide="sun" class="w-3 h-3 text-amber-500"></i>
+                                <span class="text-[10px] font-black text-amber-700">{{ act.weather_temp }}°</span>
+                            </div>
+                            
+                            <div class="text-right">
+                                <p class="stat-value text-sm text-slate-900">{{ act.distance }} km</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                    {{ formatTime(act.moving_time) }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </template>
                 
