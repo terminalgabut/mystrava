@@ -1,35 +1,46 @@
-/* Container Utama */
+/* Container Utama: Membungkus seluruh aplikasi */
 .app-layout {
     display: flex;
-    flex-direction: column;
     min-height: 100vh;
     background-color: var(--bg-app);
 }
 
-/* Header Sticky dengan Glassmorphism */
+/* Sisi Kanan: Area yang menampung Header + Konten Utama */
+.app-viewport {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Mencegah konten meluap (overflow) pada flex item */
+    /* Jika Sidebar FIXED, kita butuh margin-left seukuran lebar sidebar */
+    margin-left: 280px; 
+    transition: margin-left 0.3s ease;
+}
+
+/* Header: Tetap di atas viewport kanan */
 .app-header {
     position: sticky;
     top: 0;
     z-index: 50;
-    height: 70px;
-    background: var(--brand-glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-light);
-    display: flex;
-    align-items: center;
+    height: 72px;
+    width: 100%;
 }
 
-/* Wrapper Konten Tengah */
+/* Konten Utama: Area scrollable untuk dashboard/statistik */
 .app-content {
     flex: 1;
+    padding: 2rem;
+    max-width: 1400px; /* Dashboard pro biasanya lebih lebar */
     width: 100%;
-    max-width: 1200px; /* Lebih lebar untuk dashboard profesional */
     margin: 0 auto;
-    padding: 2rem 1rem;
 }
 
-/* Sidebar (Jika ingin mode Desktop nanti) */
-.app-sidebar {
-    /* Logika sidebar dipisahkan di sini */
+/* Responsive: Untuk HP Android */
+@media (max-width: 768px) {
+    .app-viewport {
+        margin-left: 0; /* Sidebar biasanya jadi drawer/hidden di mobile */
+    }
+    
+    .app-content {
+        padding: 1.25rem;
+    }
 }
