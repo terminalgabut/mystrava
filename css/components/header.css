@@ -1,0 +1,27 @@
+.app-header {
+    height: 72px;
+    background: var(--brand-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-logo {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    color: var(--brand-primary);
+    text-decoration: none;
+}
+
+.header-nav {
+    margin-left: auto;
+    display: flex;
+    gap: 0.75rem;
+}
