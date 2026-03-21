@@ -104,23 +104,26 @@ export default `
              </div>
         </div>
 
-        <div class="flex flex-col lg:grid lg:grid-cols-2 gap-6 mb-6">
-        <PaceChart 
-            chartId="monthlyPace"
-            title="Average Pace per Month"
-            :labels="trendData.labels"
-            :datasets="trendData.paceDatasets"
-            :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
-        />
+        <div class="flex flex-col lg:grid gap-6 mb-6" 
+     :class="trendData.comparisonDatasets.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
+    
+    <PaceChart 
+        chartId="monthlyPace"
+        :title="selectedType === 'Ride' ? 'Average Speed per Month' : 'Average Pace per Month'"
+        :labels="trendData.labels"
+        :datasets="trendData.paceDatasets"
+        :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
+    />
 
-        <PaceChart 
-            chartId="trailVsRoad"
-            title="Trail vs Road Pace"
-            :labels="trendData.labels"
-            :datasets="trendData.comparisonDatasets"
-            :unit="' /km'"
-        />
-    </div>
+    <PaceChart 
+        v-if="trendData.comparisonDatasets.length > 0"
+        chartId="trailVsRoad"
+        title="Trail vs Road Comparison"
+        :labels="trendData.labels"
+        :datasets="trendData.comparisonDatasets"
+        :unit="' /km'"
+    />
+</div>
 
         <div class="bento-card p-6">
             <h3 class="text-card-title mb-6">Recent Log</h3>
