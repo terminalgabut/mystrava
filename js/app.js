@@ -6,5 +6,5 @@ const app = Vue.createApp({
     template: `<layout-wrapper />`
 });
 
-app.use(router);
+//app.use(router);
 app.mount('#app');
