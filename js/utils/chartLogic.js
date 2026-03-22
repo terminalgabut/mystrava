@@ -79,20 +79,27 @@ export const ChartLogic = {
             m[countKey] > 0 ? parseFloat((m[valKey] / m[countKey]).toFixed(2)) : 0;
 
         return {
-            labels: slicedLabels,
-            mainDataset: monthly.slice(0, displayLimit + 1).map(m => calculateAvg(m, 'total', 'count')),
-            comparisonDatasets: activityType === 'Run' ? [
-                { 
-                    label: 'Road', 
-                    data: monthly.slice(0, displayLimit + 1).map(m => calculateAvg(m, 'road', 'rCount')), 
-                    color: '#3b82f6' 
-                },
-                { 
-                    label: 'Trail', 
-                    data: monthly.slice(0, displayLimit + 1).map(m => calculateAvg(m, 'trail', 'tCount')), 
-                    color: '#10b981' 
-                }
-            ] : []
-        };
+    labels: slicedLabels,
+    // Dataset utama harus merupakan total (Road + Trail) / total_count
+    mainDataset: monthly.slice(0, displayLimit + 1).map(m => {
+        const totalActivities = m.rCount + m.tCount;
+        return totalActivities > 0 ? parseFloat(( (m.road + m.trail) / totalActivities ).toFixed(2)) : 0;
+    }),
+    comparisonDatasets: activityType === 'Run' ? [
+        { 
+            label: 'Road', 
+            // Hanya tampilkan jika ada data, agar tidak ditarik ke angka 0 yang merusak visual
+            data: monthly.slice(0, displayLimit + 1).map(m => m.rCount > 0 ? calculateAvg(m, 'road', 'rCount') : null), 
+            color: '#3b82f6',
+            spanGaps: true // Agar garis tidak putus tapi tetap akurat
+        },
+        { 
+            label: 'Trail', 
+            data: monthly.slice(0, displayLimit + 1).map(m => m.tCount > 0 ? calculateAvg(m, 'trail', 'tCount') : null), 
+            color: '#10b981',
+            spanGaps: true
+        }
+    ] : []
+};
     }
 };
