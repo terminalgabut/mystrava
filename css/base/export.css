@@ -1,0 +1,34 @@
+/* base/export.css */
+
+/* 1. Paksa Lebar agar tidak gepeng di layar HP */
+.is-exporting.activity-detail-wrapper {
+    width: 600px !important;
+    padding: 30px !important;
+    background-color: #F1F5F9 !important; /* Sesuai --bg-app */
+    margin: 0 auto !important;
+}
+
+/* 2. Perkuat Kontras Teks (Solusi teks pudar) */
+.is-exporting .text-slate-400,
+.is-exporting .label-muted,
+.is-exporting .text-muted {
+    color: #334155 !important; /* Slate 700 (Lebih gelap dari Slate 500) */
+    opacity: 1 !important;
+}
+
+.is-exporting h1, 
+.is-exporting .stat-value,
+.is-exporting .text-slate-900 {
+    color: #0F172A !important; /* Slate 900 Solid */
+}
+
+/* 3. Pastikan Mapbox & Elemen Visual Terlihat Tajam */
+.is-exporting .mapboxgl-canvas {
+    opacity: 1 !important;
+    border-radius: 2rem !important;
+}
+
+/* 4. Sembunyikan elemen yang mungkin masih lolos */
+.is-exporting .no-export {
+    display: none !important;
+}
