@@ -20,33 +20,37 @@ export default `
             </div>
         </div>
 
-        <div v-if="!loading && activity" class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm">
-            <div class="flex items-center gap-3 border-r border-slate-100 pr-4">
-                <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
-                    <i :data-lucide="weatherIcon || 'sun'" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Temp</p>
-                    <p class="text-sm font-black text-slate-900 leading-none">
-                        {{ activity?.weather_temp || '28' }}°C
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-5">
-                <div class="text-center">
-                    <i data-lucide="wind" class="w-4 h-4 text-slate-300 mx-auto mb-1"></i>
-                    <p class="text-[10px] font-bold text-slate-700">
-                        {{ activity?.weather_wind || '12' }} <span class="text-[8px] text-slate-400">km/h</span>
-                    </p>
-                </div>
-                <div class="text-center">
-                    <i data-lucide="droplets" class="w-4 h-4 text-blue-300 mx-auto mb-1"></i>
-                    <p class="text-[10px] font-bold text-slate-700">
-                        {{ activity?.weather_humidity || '65' }} <span class="text-[8px] text-slate-400">%</span>
-                    </p>
-                </div>
-            </div>
+        <div v-if="!loading && activity" 
+     class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm transition-all">
+    
+    <div class="flex items-center gap-3 border-r border-slate-100 pr-4">
+        <div :class="weatherInfo.bgClass" 
+             class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors">
+            <i :data-lucide="weatherInfo.icon" :class="weatherInfo.iconClass" class="w-6 h-6 stroke-[2.5px]"></i>
         </div>
+        <div>
+            <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Temp</p>
+            <p class="text-sm font-black text-slate-900 leading-none">
+                {{ activity.weather_temp }}°C
+            </p>
+        </div>
+    </div>
+
+    <div class="flex gap-5">
+        <div class="text-center group">
+            <i data-lucide="wind" class="w-4 h-4 text-slate-300 mx-auto mb-1 group-hover:text-slate-500 transition-colors"></i>
+            <p class="text-[10px] font-bold text-slate-700">
+                {{ activity.weather_wind }} <span class="text-[8px] text-slate-400 uppercase">km/h</span>
+            </p>
+        </div>
+        <div class="text-center group">
+            <i data-lucide="droplets" class="w-4 h-4 text-blue-200 mx-auto mb-1 group-hover:text-blue-500 transition-colors"></i>
+            <p class="text-[10px] font-bold text-slate-700">
+                {{ activity.weather_humidity }} <span class="text-[8px] text-slate-400 uppercase">%</span>
+            </p>
+        </div>
+    </div>
+</div>
     </header>
 
     <div v-if="loading" class="space-y-6">
