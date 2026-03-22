@@ -3,7 +3,6 @@ import detailTemplate from './activityDetailView.js';
 import { supabase } from '../js/services/supabase.js';
 import { stravaService } from '../js/services/stravaService.js';
 import { Logger } from '../js/services/debug.js';
-// 1. Import Weather Engine
 import { getWeatherEngine } from '../js/utils/weatherEngine.js'; 
 
 export default {
@@ -93,17 +92,29 @@ export default {
         };
 
         // --- NEW WEATHER COMPUTED ---
-        const weatherInfo = computed(() => {
-            if (!activity.value || activity.value.weather_temp === null) {
-                return { icon: 'sun', bgClass: 'bg-slate-50', iconClass: 'text-slate-400', label: 'N/A' };
-            }
-            return getWeatherEngine(
-                activity.value.weather_temp,
-                activity.value.weather_humidity,
-                activity.value.weather_wind,
-                activity.value.start_date
-            );
-        });
+        // --- NEW WEATHER COMPUTED ---
+const weatherInfo = computed(() => {
+    // Default fallback jika data belum ada
+    if (!activity.value || activity.value.weather_temp === null) {
+        return { 
+            icon: 'sun', 
+            bg: 'bg-slate-50', 
+            text: 'text-slate-400', 
+            status: 'N/A' 
+        };
+    }
+
+    // Panggil engine
+    const engineData = getWeatherEngine(
+        activity.value.weather_temp,
+        activity.value.weather_humidity,
+        activity.value.weather_wind,
+        activity.value.start_date
+    );
+
+    // KUNCI: Kembalikan bagian .main saja agar template tidak bingung
+    return engineData.main;
+});
 
         // Watch weatherInfo untuk trigger Lucide saat data selesai di-calculate
         watch(weatherInfo, () => refreshLucide());
