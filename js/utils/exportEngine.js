@@ -47,7 +47,7 @@ export const captureElement = async (elementClassOrId, fileName = 'activity-pro'
 
                     clonedEl.querySelectorAll('h1, .stat-value, p').forEach(text => {
                         text.style.color = "#0F172A"; // Menggunakan --text-main [cite: 38]
-                        text.style.webkitFontSmoothing = "antialiased"; [cite: 7, 18]
+                        text.style.webkitFontSmoothing = "antialiased"; 
                     });
 
                     const mapCanvas = clonedEl.querySelector('.mapboxgl-canvas');
