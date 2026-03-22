@@ -1,3 +1,4 @@
+// dashboardView.js
 export default `
 <div class="dashboard-wrapper animate-in" :class="{ 'is-loading': isLoading }">
     <header class="dashboard-header">
@@ -117,22 +118,13 @@ export default `
              </div>
         </div>
 
-        <div class="flex flex-col lg:grid gap-6 mb-6" 
-             :class="trendData.comparisonDatasets.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
+        <div class="grid grid-cols-1 gap-6 mb-6">
             <PaceChart 
-                chartId="monthlyPace"
-                :title="selectedType === 'Ride' ? 'Average Speed per Month' : 'Average Pace per Month'"
+                chartId="monthlyPerformance"
+                :title="selectedType === 'Ride' ? 'Average Speed Trend' : 'Average Pace Trend'"
                 :labels="trendData.labels"
                 :datasets="trendData.paceDatasets"
-                :unit="selectedType === 'Ride' ? ' km/h' : ' /km'"
-            />
-            <PaceChart 
-                v-if="trendData.comparisonDatasets.length > 0"
-                chartId="trailVsRoad"
-                title="Trail vs Road Comparison"
-                :labels="trendData.labels"
-                :datasets="trendData.comparisonDatasets"
-                :unit="' /km'"
+                :unit="performanceConfig.unit"
             />
         </div>
 
@@ -149,7 +141,7 @@ export default `
                         
                         <div class="flex items-center gap-4 min-w-0">
                             <div class="icon-box group-hover:bg-white transition-all shadow-sm">
-                                <i :data-lucide="act.type === 'Ride' ? 'zap' : 'footprints'" class="w-4 h-4"></i>
+                                <i :data-lucide="act.type === 'Ride' ? 'zap' : (act.type === 'Walk' ? 'footprints' : 'run')" class="w-4 h-4"></i>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-xs font-black text-slate-900 truncate">{{ act.name }}</p>
