@@ -11,35 +11,66 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-  /* Hanya aktif saat proses pengambilan gambar */
+  /* Reset dasar saat ekspor */
   .is-exporting {
-    background-color: #F1F5F9 !important; /* Force Slate 50 */
+    background-color: #F1F5F9 !important;
   }
   
   .is-exporting .activity-detail-wrapper {
     background-color: #F1F5F9 !important;
     width: 600px !important;
+    opacity: 1 !important;
   }
 
-  /* Perbaikan Kartu Waktu yang Hitam Pudar */
-  .is-exporting [class*="card-dark"], 
-  .is-exporting .time-analysis-card { 
-    background-color: #0F172A !important; /* Force Slate 900 */
-    color: #FFFFFF !important;
-  }
-
-  /* Perbaikan Teks Utama agar Hitam Pekat */
+  /* PAKSA SEMUA TEKS JADI SOLID (Anti-Pudar) */
   .is-exporting h1, 
-  .is-exporting .stat-value {
-    color: #0F172A !important;
+  .is-exporting h2, 
+  .is-exporting p, 
+  .is-exporting span, 
+  .is-exporting div:not([class*="card"]) {
     opacity: 1 !important;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Perbaikan Peta agar tidak transparan */
-  .is-exporting .mapboxgl-canvas {
+  /* Teks Utama (Judul & Angka Statistik) */
+  .is-exporting h1, 
+  .is-exporting .stat-value,
+  .is-exporting .text-main {
+    color: #0F172A !important; /* Slate 900 */
+    font-weight: 800 !important;
+  }
+
+  /* Teks Muted (Label) - Kita pertebal sedikit agar tidak hilang */
+  .is-exporting .text-slate-400, 
+  .is-exporting .text-muted, 
+  .is-exporting .label-muted {
+    color: #475569 !important; /* Slate 600 (lebih gelap dari 400) */
     opacity: 1 !important;
-    background-color: #e5e7eb !important;
+  }
+
+  /* KARTU TIME ANALYSIS (Hitam Pekat) */
+  /* Kita targetkan class spesifik atau div yang punya latar gelap */
+  .is-exporting [class*="card-dark"], 
+  .is-exporting .time-analysis-card,
+  .is-exporting .bg-slate-900 { 
+    background-color: #0F172A !important;
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+    border: none !important;
+  }
+
+  /* Paksa teks di dalam kartu gelap jadi putih terang */
+  .is-exporting [class*="card-dark"] *, 
+  .is-exporting .time-analysis-card * {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+  }
+
+  /* FIX MAPBOX & IMAGE */
+  .is-exporting .mapboxgl-canvas,
+  .is-exporting img {
+    opacity: 1 !important;
+    filter: none !important;
   }
     </style>
 </head>
