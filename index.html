@@ -11,43 +11,59 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="export-styles">
-  /* Gaya ini HANYA aktif saat class .is-exporting ditambahkan oleh JS */
-  
+  /* 1. Kunci Container Utama */
   .is-exporting.activity-detail-wrapper {
     width: 600px !important;
-    background-color: #F1F5F9 !important; /* Slate 50 asli */
+    background-color: #F1F5F9 !important;
     padding: 30px !important;
-    margin: 0 auto !important;
-    border-radius: 24px !important;
-    display: block !important;
-    opacity: 1 !important;
-    filter: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important; /* Kunci gap antar section */
   }
 
-  .is-exporting .stat-value, 
-  .is-exporting h1 {
-    color: #0F172A !important; /* Hitam Slate 900 */
-    opacity: 1 !important;
-    letter-spacing: 0 !important; /* Cegah blur */
-    -webkit-font-smoothing: antialiased !important;
+  /* 2. Kunci Teks Statistik (Hitam & Tengah) */
+  .is-exporting .stat-value {
+    color: #0F172A !important;
+    font-size: 32px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.2 !important;
   }
 
   .is-exporting .label-muted {
-    color: #475569 !important; /* Slate 600 */
-    font-weight: 800 !important;
-    opacity: 1 !important;
-    text-transform: uppercase !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
   }
 
-  .is-exporting p, .is-exporting span, .is-exporting div {
-    color: #1E293B !important; /* Slate 800 */
+  /* 3. PERBAIKAN KARTU GELAP (Time Analysis) */
+  .is-exporting .time-analysis-card,
+  .is-exporting [class*="bg-slate-900"] {
+    background-color: #0F172A !important;
+    border-radius: 20px !important;
+    padding: 24px !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Paksa semua teks di dalam kartu gelap tetap putih */
+  .is-exporting .time-analysis-card *,
+  .is-exporting [class*="bg-slate-900"] * {
+    color: #FFFFFF !important;
     opacity: 1 !important;
   }
 
-  /* Sembunyikan elemen pengganggu di foto */
-  .is-exporting .no-export,
-  .is-exporting button,
-  .is-exporting .nav-menu {
+  /* 4. Perbaikan Map (Kunci Posisi) */
+  .is-exporting .mapboxgl-map {
+    border-radius: 20px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* 5. Sembunyikan UI */
+  .is-exporting .no-export, 
+  .is-exporting button, 
+  .is-exporting .nav-menu,
+  .is-exporting #__vconsole {
     display: none !important;
   }
     </style>
