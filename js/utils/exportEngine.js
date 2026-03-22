@@ -1,16 +1,21 @@
 /**
- * Export Engine V1.5 - Stabilized High-Res
- * Perbaikan error pada baris 59 (Blob/Download Logic)
+ * Export Engine V1.6 - CSS Driven HD
+ * Menggunakan .is-exporting class untuk kontrol gaya yang lebih presisi
  */
 export const captureElement = async (elementClassOrId, fileName = 'activity-pro') => {
+    // 1. Validasi awal
     if (!window.html2canvas) {
         console.error("❌ Export Engine: html2canvas tidak ditemukan!");
         return false;
     }
 
     const element = document.getElementById(elementClassOrId) || document.querySelector(`.${elementClassOrId}`);
-    if (!element) return false;
+    if (!element) {
+        console.error(`❌ Export Engine: Element ${elementClassOrId} tidak ditemukan!`);
+        return false;
+    }
 
+    // 2. Sembunyikan elemen UI (tombol, nav, debug) secara manual sebelum cloning
     const toHide = document.querySelectorAll('.no-export, .vc-switch, button, .nav-menu');
     const hiddenElements = [];
     toHide.forEach(el => {
@@ -21,59 +26,49 @@ export const captureElement = async (elementClassOrId, fileName = 'activity-pro'
     });
 
     try {
-        console.log("🚀 Memulai High-Res Capture (600px Width)...");
+        console.log("🚀 Memulai High-Res Capture (600px Viewport)...");
 
         const canvas = await window.html2canvas(element, {
             useCORS: true,
             allowTaint: false,
-            scale: 3, 
-            backgroundColor: '#F1F5F9', // Menggunakan --bg-app [cite: 37]
+            scale: 3,                 // Resolusi HD
+            backgroundColor: '#F1F5F9', // Sesuai --bg-app
             logging: false,
-            windowWidth: 600, 
+            windowWidth: 600,         // Paksa lebar viewport virtual ke 600px
             scrollX: 0,
             scrollY: -window.scrollY,
             onclone: (clonedDoc) => {
+                // Cari elemen utama di dokumen hasil clone
                 const clonedEl = clonedDoc.querySelector(`.${elementClassOrId}`) || clonedDoc.getElementById(elementClassOrId);
                 if (clonedEl) {
-                    clonedEl.style.width = "600px";
-                    clonedEl.style.padding = "24px";
-                    clonedEl.style.margin = "0 auto";
-
-                    clonedEl.querySelectorAll('.text-slate-400, .label-muted, .text-muted').forEach(text => {
-                        text.style.color = "#334155"; // Menggunakan --text-body [cite: 39]
-                        text.style.opacity = "1";
-                        text.style.fontWeight = "700"; // Kontras untuk label kecil [cite: 29]
-                    });
-
-                    clonedEl.querySelectorAll('h1, .stat-value, p').forEach(text => {
-                        text.style.color = "#0F172A"; // Menggunakan --text-main [cite: 38]
-                        text.style.webkitFontSmoothing = "antialiased"; 
-                    });
-
-                    const mapCanvas = clonedEl.querySelector('.mapboxgl-canvas');
-                    if (mapCanvas) mapCanvas.style.opacity = "1";
+                    /**
+                     * AKTIFKAN MODE EXPORT
+                     * Menghubungkan ke aturan di base/export.css
+                     */
+                    clonedEl.classList.add('is-exporting');
                 }
             }
         });
 
-        // PERBAIKAN LINE 59: Menggunakan DataURL untuk kompatibilitas lebih luas
+        // 3. Eksekusi Download (DataURL lebih stabil untuk Mobile)
         const dataUrl = canvas.toDataURL("image/png", 1.0);
         const link = document.createElement('a');
         link.download = `${fileName.replace(/\s+/g, '-').toLowerCase()}.png`;
         link.href = dataUrl;
         
-        // Trigger download secara aman
+        // Append ke body sesaat agar browser mobile memproses download dengan benar
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        console.log("✅ Ultra-HD Snapshot Berhasil!");
+        console.log("✅ Snapshot Berhasil di-export!");
         return true;
 
     } catch (err) {
         console.error("❌ Export Engine Error:", err);
         return false;
     } finally {
+        // 4. Kembalikan UI ke kondisi semula
         hiddenElements.forEach(({ el, originalDisplay }) => {
             el.style.display = originalDisplay;
         });
