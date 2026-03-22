@@ -1,17 +1,17 @@
 /**
- * Weather Engine V7 - Hyper-Detail (Google Fit & Health Style)
- * Membagi waktu menjadi 8 fase transisi langit untuk Indonesia.
+ * Weather Engine V8 - Smart Hybrid (Konteks Waktu + Kondisi WMO)
+ * Menghasilkan output seperti: "Dini Hari Gerimis", "Subuh Mendung", "Tengah Malam Cerah".
  */
 
 export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null, weatherCode = null) => {
-    // 1. Parsing Jam (Waktu Lokal/WIB dari DB)
+    // 1. Parsing Jam (Data WIB)
     let hour = 12; 
     if (startDate) {
         const timePart = startDate.includes(' ') ? startDate.split(' ')[1] : startDate.split('T')[1];
         hour = parseInt(timePart.split(':')[0]);
     }
 
-    // 2. Definisi 8 Fase Waktu (Threshold Hyper-Detail)
+    // 2. Threshold 8 Fase Waktu ala Google Fit
     let timeCtx = { label: 'Siang', icon: 'sun', color: 'amber', isDark: false };
 
     if (hour >= 0 && hour < 3) {
@@ -32,61 +32,61 @@ export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null
         timeCtx = { label: 'Malam', icon: 'moon', color: 'indigo', isDark: true };
     }
 
-    // 3. Konfigurasi Dasar Berdasarkan Waktu
-    let config = {
-        status: 'Cerah',
-        icon: timeCtx.icon,
-        color: timeCtx.color,
-        desc: `Suasana ${timeCtx.label.toLowerCase()} yang stabil`
-    };
+    // 3. Logika Cuaca (WMO Code)
+    let weatherStatus = 'Cerah';
+    let finalIcon = timeCtx.icon;
+    let finalColor = timeCtx.color;
+    let description = `Suasana ${timeCtx.label.toLowerCase()} yang stabil`;
 
-    // 4. Integrasi Weather Code (WMO) sebagai Penentu Utama
     if (weatherCode !== null) {
         const code = Number(weatherCode);
         
         if (code === 0) {
-            config.status = 'Cerah';
+            weatherStatus = 'Cerah';
+            // Gunakan icon & color dari timeCtx
         } 
         else if ([1, 2, 3].includes(code)) {
-            config.status = code === 3 ? 'Mendung' : 'Berawan';
-            config.icon = timeCtx.isDark ? 'cloud-moon' : 'cloud-sun';
-            config.color = 'slate';
+            weatherStatus = code === 3 ? 'Mendung' : 'Berawan';
+            finalIcon = timeCtx.isDark ? 'cloud-moon' : 'cloud-sun';
+            finalColor = 'slate';
+            description = 'Langit tertutup awan';
         } 
         else if ([45, 48].includes(code)) {
-            config.status = 'Berkabut';
-            config.icon = 'cloud-fog';
-            config.color = 'slate';
+            weatherStatus = 'Berkabut';
+            finalIcon = 'cloud-fog';
+            finalColor = 'slate';
+            description = 'Jarak pandang terbatas';
         } 
         else if ([51, 53, 55, 56, 57].includes(code)) {
-            config.status = 'Gerimis';
-            config.icon = 'cloud-drizzle';
-            config.color = 'blue';
+            weatherStatus = 'Gerimis';
+            finalIcon = 'cloud-drizzle';
+            finalColor = 'blue';
+            description = 'Hujan rintik tipis';
         } 
         else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
-            config.status = 'Hujan';
-            config.icon = 'cloud-rain';
-            config.color = 'blue';
+            weatherStatus = 'Hujan';
+            finalIcon = 'cloud-rain';
+            finalColor = 'blue';
+            description = 'Kondisi jalanan basah';
         } 
         else if ([95, 96, 99].includes(code)) {
-            config.status = 'Badai Petir';
-            config.icon = 'cloud-lightning';
-            config.color = 'red';
+            weatherStatus = 'Badai Petir';
+            finalIcon = 'cloud-lightning';
+            finalColor = 'red';
+            description = 'Waspada cuaca ekstrem';
         }
     }
 
-    // 5. Final Mapping ke Dashboard
-    // Menghasilkan output seperti: "Dini Hari Mendung" atau "Siang Cerah"
-    const finalStatus = `${timeCtx.label} ${config.status}`;
-
+    // 4. Final Mapping (Kombinasi Label)
     return {
         main: {
             temp: `${temp.toFixed(1)}°C`,
-            status: finalStatus,
-            icon: config.icon,
-            bg: `bg-${config.color}-50`,
-            text: `text-${config.color}-600`,
-            border: `border-${config.color}-100`,
-            desc: `Aktivitas pukul ${hour.toString().padStart(2, '0')}:00 WIB`
+            status: `${timeCtx.label} ${weatherStatus}`, // Output: "Dini Hari Gerimis"
+            icon: finalIcon,
+            bg: `bg-${finalColor}-50`,
+            text: `text-${finalColor}-600`,
+            border: `border-${finalColor}-100`,
+            desc: description
         },
         stats: [
             {
