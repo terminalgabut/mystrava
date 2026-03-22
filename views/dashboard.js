@@ -1,6 +1,7 @@
 import dashboardTemplate from './dashboardView.js';
 import PaceChart from './components/PaceChart.js';
 import { stravaService } from '../js/services/stravaService.js';
+import { ChartLogic } from '../js/utils/chartLogic.js'; // IMPORT LOGIKA MANDIRI
 import { Logger } from '../js/services/debug.js';
 
 export default {
@@ -13,20 +14,14 @@ export default {
         const selectedType = ref('Run'); 
         const selectedPeriodKey = ref('total'); 
         const isLoading = ref(true);
+        const trendData = ref({ labels: [], paceDatasets: [], comparisonDatasets: [] });
         
         const stats = ref({
-            totalDistance: "0.00",
-            totalDuration: "00:00",
-            elevation: 0,
-            totalActivities: 0,
-            avgPace: "00:00",
-            calories: 0,
-            steps: 0,
+            totalDistance: "0.00", totalDuration: "00:00", elevation: 0,
+            totalActivities: 0, avgPace: "00:00", calories: 0, steps: 0,
             records: { longestDistance: '0.00', bestEffort: '--:--' },
-            recentActivities: [] // Ini harus sinkron dengan template
+            recentActivities: []
         });
-
-        const trendData = ref({ labels: [], paceDatasets: [], comparisonDatasets: [] });
 
         // --- HELPERS ---
         const formatTime = (seconds) => {
@@ -41,15 +36,58 @@ export default {
 
         const formatDate = (dateStr) => {
             if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleDateString('id-ID', { 
-                day: 'numeric', month: 'short' 
-            });
+            return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
         };
 
         const refreshIcons = () => {
-            nextTick(() => {
-                if (window.lucide) window.lucide.createIcons();
-            });
+            nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+        };
+
+        // --- CORE LOGIC ---
+        const loadData = async () => {
+            isLoading.value = true;
+            const pKey = selectedPeriodKey.value;
+            const pType = pKey.includes('-') ? 'month' : (pKey === 'total' ? 'all_time' : 'year');
+            const chartYear = pKey === 'total' ? new Date().getFullYear() : pKey.split('-')[0];
+
+            try {
+                // 1. Ambil data secara paralel
+                // getStats untuk kotak ringkasan, getActivitiesByYear untuk bahan baku chart
+                const [rawData, yearlyActivities] = await Promise.all([
+                    stravaService.getStats(selectedType.value, pType, pKey),
+                    stravaService.getActivitiesByYear(selectedType.value, chartYear)
+                ]);
+                
+                // 2. Map Stats & Recent Log
+                stats.value = {
+                    ...rawData,
+                    recentActivities: (rawData.activities || []).slice(0, 5).map(act => ({
+                        ...act,
+                        distance: (act.distance / 1000).toFixed(2),
+                        date: formatDate(act.start_date),
+                        location_name: act.location_name || 'Training Ground'
+                    }))
+                };
+
+                // 3. JALANKAN LOGIKA CHART MANDIRI
+                const trend = ChartLogic.process(yearlyActivities, selectedType.value);
+
+                trendData.value = {
+                    labels: trend.labels,
+                    paceDatasets: [{ 
+                        label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
+                        data: trend.mainDataset, 
+                        color: '#3b82f6' 
+                    }],
+                    comparisonDatasets: trend.comparisonDatasets
+                };
+
+            } catch (err) {
+                Logger.error("Dashboard_Load_Error", err);
+            } finally {
+                isLoading.value = false;
+                refreshIcons();
+            }
         };
 
         // --- COMPUTED ---
@@ -58,7 +96,6 @@ export default {
             const year = now.getFullYear();
             const options = [{ value: 'total', label: 'All Time' }, { value: `${year}`, label: `Year ${year}` }];
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            
             for (let i = now.getMonth(); i >= 0; i--) {
                 const m = (i + 1).toString().padStart(2, '0');
                 options.push({ value: `${year}-${m}`, label: `${months[i]} ${year}` });
@@ -74,52 +111,6 @@ export default {
             };
             return configs[selectedType.value] || configs['Run'];
         });
-
-        // --- CORE LOGIC ---
-        const loadData = async () => {
-    isLoading.value = true;
-    const pKey = selectedPeriodKey.value;
-    const pType = pKey.includes('-') ? 'month' : (pKey === 'total' ? 'all_time' : 'year');
-
-    try {
-        const rawData = await stravaService.getStats(selectedType.value, pType, pKey);
-        
-        // FIX 3: MAPPING RECENT LOG
-        stats.value = {
-            ...rawData,
-            recentActivities: (rawData.activities || []).slice(0, 5).map(act => ({
-                id: act.id,
-                name: act.name,
-                type: act.type,
-                distance: (act.distance / 1000).toFixed(2),
-                date: formatDate(act.start_date),
-                moving_time: act.moving_time, // Dibutuhkan oleh formatTime() di template
-                location_name: act.location_name || 'Training Ground',
-                weather_temp: act.weather_temp
-            }))
-        };
-
-        // FIX 4: CHART LOADING
-        const chartYear = pKey === 'total' ? new Date().getFullYear().toString() : pKey.split('-')[0];
-        const trend = await stravaService.getTrendData(selectedType.value, chartYear);
-
-        trendData.value = {
-            labels: trend.labels,
-            paceDatasets: [{ 
-                label: selectedType.value === 'Ride' ? 'Avg Speed' : 'Avg Pace', 
-                data: trend.mainDataset, 
-                color: '#3b82f6' 
-            }],
-            comparisonDatasets: trend.comparisonDatasets || []
-        };
-
-    } catch (err) {
-        Logger.error("Dashboard_Load_Error", err);
-    } finally {
-        isLoading.value = false;
-        refreshIcons(); // Pastikan ikon Lucide dirender ulang
-    }
-};
 
         watch([selectedType, selectedPeriodKey], loadData);
         onMounted(loadData);
