@@ -23,8 +23,7 @@ export const ChartLogic = {
             const monthIdx = date.getMonth();
             const actYear = date.getFullYear();
 
-            // Hanya proses jika data berada di tahun yang relevan (menghindari overflow data lama)
-            // Dan update bulan terakhir yang memiliki aktivitas
+            // Hanya proses data di tahun berjalan/relevan untuk grafik tahunan
             if (monthIdx > lastMonthWithData) {
                 lastMonthWithData = monthIdx;
             }
@@ -50,8 +49,11 @@ export const ChartLogic = {
                 // Ratio: meter naik per 1 kilometer
                 const elevationRatio = distanceKm > 0 ? (elevationGain / distanceKm) : 0;
 
-                // Threshold diturunkan ke 12m/km agar lebih sensitif terhadap rute perbukitan
-                const isTrailByElevation = elevationRatio > 12; 
+                /** * ADJUSTMENT: Threshold diturunkan ke 3m/km.
+                 * Berdasarkan data audit, rute lari kamu (test10k/rute tangkis) 
+                 * berada di kisaran 3.6 - 3.7 m/km. 
+                 */
+                const isTrailByElevation = elevationRatio > 3; 
                 const isTrailByName = act.name && act.name.toLowerCase().includes('trail');
 
                 if (isTrailByElevation || isTrailByName) {
@@ -66,15 +68,13 @@ export const ChartLogic = {
 
         /**
          * PENENTUAN BATAS TAMPILAN (Slicing)
-         * Jika data tahun ini: tampilkan sampai bulan berjalan atau bulan terakhir ada data.
-         * Jika data tahun lalu: tampilkan full 12 bulan.
          */
         const isCurrentYear = activities.length > 0 && new Date(activities[0].start_date).getFullYear() === currentYear;
         const displayLimit = isCurrentYear ? Math.max(lastMonthWithData, currentMonth) : 11;
         
         const slicedLabels = fullLabels.slice(0, displayLimit + 1);
 
-        // Helper untuk menghitung rata-rata agar tidak terjadi pembagian dengan nol
+        // Helper untuk rata-rata
         const calculateAvg = (m, valKey, countKey) => 
             m[countKey] > 0 ? parseFloat((m[valKey] / m[countKey]).toFixed(2)) : 0;
 
