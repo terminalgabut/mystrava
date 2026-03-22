@@ -12,18 +12,18 @@ export default `
                     <span class="text-slate-300">•</span>
                     <span class="flex items-center gap-1 text-slate-700 max-w-[250px] md:max-w-none">
                         <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
-                        <span class="truncate md:whitespace-normal">{{ locationName }}</span>
+                        <span class="truncate md:whitespace-normal">{{ locationName || 'Unknown Location' }}</span>
                     </span>
                     <span class="text-slate-300">•</span>
-                    <span class="text-blue-600 font-black">{{ activity?.type }}</span>
+                    <span class="text-blue-600 font-black">{{ activity?.type || 'Activity' }}</span>
                 </p>
             </div>
         </div>
 
-        <div v-if="!loading" class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div v-if="!loading && activity" class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm">
             <div class="flex items-center gap-3 border-r border-slate-100 pr-4">
                 <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
-                    <i :data-lucide="weatherIcon" class="w-6 h-6"></i>
+                    <i :data-lucide="weatherIcon || 'sun'" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Temp</p>
@@ -52,11 +52,11 @@ export default `
     <div v-if="loading" class="space-y-6">
         <div class="h-80 w-full bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div v-for="i in 4" class="h-28 bg-slate-50 rounded-3xl animate-pulse"></div>
+            <div v-for="i in 4" :key="i" class="h-28 bg-slate-50 rounded-3xl animate-pulse"></div>
         </div>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div v-else-if="activity" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden h-[450px] relative">
                 <div id="map" class="w-full h-full rounded-[2rem] z-10"></div>
@@ -66,30 +66,30 @@ export default `
                 <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</p>
                     <p class="text-xl font-black text-slate-900 leading-none">
-                        {{ (activity.distance / 1000).toFixed(2) }} <span class="text-xs text-slate-400 font-bold">km</span>
+                        {{ ((activity?.distance || 0) / 1000).toFixed(2) }} <span class="text-xs text-slate-400 font-bold">km</span>
                     </p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ activity.type === 'Ride' ? 'Avg Speed' : 'Avg Pace' }}</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ activity?.type === 'Ride' ? 'Avg Speed' : 'Avg Pace' }}</p>
                     <p class="text-xl font-black text-slate-900 leading-none">
-                        {{ performanceValue }} <span class="text-xs text-slate-400 font-bold">{{ performanceUnit }}</span>
+                        {{ performanceValue || '00:00' }} <span class="text-xs text-slate-400 font-bold">{{ performanceUnit }}</span>
                     </p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Elevation</p>
                     <p class="text-xl font-black text-slate-900 leading-none">
-                        {{ Math.round(activity.total_elevation_gain) }} <span class="text-xs text-slate-400 font-bold">m</span>
+                        {{ Math.round(activity?.total_elevation_gain || 0) }} <span class="text-xs text-slate-400 font-bold">m</span>
                     </p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                    <template v-if="activity.type === 'Walk'">
+                    <template v-if="activity?.type === 'Walk'">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Steps</p>
-                        <p class="text-xl font-black text-slate-900 leading-none">{{ calculateSteps(activity.distance) }}</p>
+                        <p class="text-xl font-black text-slate-900 leading-none">{{ calculateSteps(activity?.distance || 0) }}</p>
                     </template>
                     <template v-else>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Calories</p>
                         <p class="text-xl font-black text-slate-900 leading-none">
-                            {{ Math.round(activity.calories || 0) }} <span class="text-xs text-slate-400 font-bold">kcal</span>
+                            {{ Math.round(activity?.calories || 0) }} <span class="text-xs text-slate-400 font-bold">kcal</span>
                         </p>
                     </template>
                 </div>
@@ -105,12 +105,14 @@ export default `
                     <div class="space-y-6">
                         <div>
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Moving Time</p>
-                            <p class="text-4xl font-black tabular-nums tracking-tighter text-blue-400">{{ formatTime(activity.moving_time) }}</p>
+                            <p class="text-4xl font-black tabular-nums tracking-tighter text-blue-400">
+                                {{ formatTime(activity?.moving_time) }}
+                            </p>
                         </div>
                         <div class="pt-6 border-t border-white/10">
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Elapsed Time</p>
                             <p class="text-2xl font-bold text-white tabular-nums">
-                                {{ formatTime(activity.elapsed_time_seconds || activity.elapsed_time) }}
+                                {{ formatTime(activity?.elapsed_time_seconds || activity?.elapsed_time || 0) }}
                             </p>
                         </div>
                     </div>
@@ -124,26 +126,28 @@ export default `
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pace /km</span>
                 </div>
                 <div class="space-y-2">
-                    <div v-for="split in realSplits" :key="split.number" 
-                         class="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 transition-all">
-                        <div class="flex items-center gap-3">
-                            <span class="w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 shadow-sm">
-                                {{ split.number }}
-                            </span>
-                            <div class="flex flex-col">
-                                <span class="text-xs font-bold text-slate-900">KM {{ split.number }}</span>
-                                <span class="text-[9px] font-medium text-slate-400">{{ split.distance }} km</span>
+                    <template v-if="realSplits && realSplits.length > 0">
+                        <div v-for="split in realSplits" :key="split.number" 
+                             class="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 transition-all">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 shadow-sm">
+                                    {{ split.number }}
+                                </span>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold text-slate-900">KM {{ split.number }}</span>
+                                    <span class="text-[9px] font-medium text-slate-400">{{ split.distance }} km</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-black text-slate-900">{{ split.pace }}</p>
+                                <p class="text-[9px] font-bold" :class="split.elevation >= 0 ? 'text-emerald-500' : 'text-rose-500'">
+                                    {{ split.elevation > 0 ? '+' : '' }}{{ split.elevation }}m
+                                </p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-sm font-black text-slate-900">{{ split.pace }}</p>
-                            <p class="text-[9px] font-bold text-emerald-500" :class="{'text-rose-500': split.elevation < 0}">
-                                {{ split.elevation > 0 ? '+' : '' }}{{ split.elevation }}m
-                            </p>
-                        </div>
-                    </div>
+                    </template>
                     
-                    <div v-if="realSplits.length === 0" class="py-4 text-center">
+                    <div v-else class="py-4 text-center">
                         <p class="text-[10px] text-slate-400 font-bold uppercase italic">Data split tidak tersedia</p>
                     </div>
                 </div>
