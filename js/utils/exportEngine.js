@@ -1,86 +1,76 @@
 /**
- * Export Engine V1.6 - Production Ready
- * Memperbaiki Syntax Error (Cite Tags) yang menyebabkan Build Cancelled
+ * Export Engine V1.8 - Direct Color Injection
+ * Solusi untuk komponen tanpa CSS spesifik (mengandalkan base variables)
  */
 export const captureElement = async (elementClassOrId, fileName = 'activity-pro') => {
-    if (!window.html2canvas) {
-        console.error("❌ Export Engine: html2canvas tidak ditemukan!");
-        return false;
-    }
+    if (!window.html2canvas) return false;
 
     const element = document.getElementById(elementClassOrId) || document.querySelector(`.${elementClassOrId}`);
     if (!element) return false;
 
-    // Sembunyikan elemen UI
+    // Sembunyikan UI interaktif
     const toHide = document.querySelectorAll('.no-export, .vc-switch, button, .nav-menu');
-    const hiddenElements = [];
-    toHide.forEach(el => {
-        if (el.style.display !== 'none') {
-            hiddenElements.push({ el, originalDisplay: el.style.display });
-            el.style.setProperty('display', 'none', 'important');
-        }
-    });
+    toHide.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
     try {
-        console.log("🚀 Memulai High-Res Capture (600px Width)...");
-
         const canvas = await window.html2canvas(element, {
             useCORS: true,
-            allowTaint: false,
             scale: 3, 
-            backgroundColor: '#F1F5F9', 
-            logging: false,
+            backgroundColor: '#F1F5F9', // Paksa warna --bg-app 
             windowWidth: 600, 
-            scrollX: 0,
-            scrollY: -window.scrollY,
             onclone: (clonedDoc) => {
                 const clonedEl = clonedDoc.querySelector(`.${elementClassOrId}`) || clonedDoc.getElementById(elementClassOrId);
+                
                 if (clonedEl) {
-                    // Paksa Lebar agar tidak gepeng
+                    // 1. STYLING KONTAINER
                     clonedEl.style.width = "600px";
                     clonedEl.style.padding = "24px";
-                    clonedEl.style.margin = "0 auto";
+                    clonedEl.style.backgroundColor = "#F1F5F9"; // --bg-app 
 
-                    // Perkuat Kontras Teks Muted
-                    clonedEl.querySelectorAll('.text-slate-400, .label-muted, .text-muted').forEach(text => {
-                        text.style.color = "#334155"; 
-                        text.style.opacity = "1";
-                        text.style.fontWeight = "700"; 
+                    // 2. INJEKSI WARNA TEXT (Mencegah Pudar)
+                    // Ambil semua elemen teks dan paksa ke warna Slate pekat Anda
+                    const allTexts = clonedEl.querySelectorAll('h1, h2, p, span, div, b');
+                    
+                    allTexts.forEach(el => {
+                        // Jika elemen adalah label kecil (label-muted)
+                        if (el.classList.contains('label-muted')) {
+                            el.style.color = "#64748B"; // --text-muted [cite: 39]
+                            el.style.fontWeight = "800"; // [cite: 28]
+                        } 
+                        // Jika elemen adalah angka statistik (stat-value) atau judul (h1)
+                        else if (el.classList.contains('stat-value') || el.tagName === 'H1') {
+                            el.style.color = "#0F172A"; // --text-main 
+                        }
+                        // Default teks lainnya
+                        else {
+                            el.style.color = "#334155"; // --text-body [cite: 39]
+                        }
+                        
+                        // Pastikan tidak ada transparansi yang terbawa
+                        el.style.opacity = "1";
                     });
 
-                    // Perkuat Teks Utama
-                    clonedEl.querySelectorAll('h1, .stat-value, p').forEach(text => {
-                        text.style.color = "#0F172A"; 
-                        text.style.webkitFontSmoothing = "antialiased"; 
-                    });
-
+                    // 3. FIX MAPBOX (Agar tidak transparan)
                     const mapCanvas = clonedEl.querySelector('.mapboxgl-canvas');
                     if (mapCanvas) mapCanvas.style.opacity = "1";
                 }
             }
         });
 
-        // Konversi ke Image
+        // Eksekusi Download
         const dataUrl = canvas.toDataURL("image/png", 1.0);
         const link = document.createElement('a');
-        link.download = `${fileName.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.download = `${fileName.toLowerCase()}.png`;
         link.href = dataUrl;
-        
-        // Trigger download
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        console.log("✅ Ultra-HD Snapshot Berhasil!");
         return true;
-
     } catch (err) {
-        console.error("❌ Export Engine Error:", err);
+        console.error("Export Error:", err);
         return false;
     } finally {
-        // Kembalikan UI
-        hiddenElements.forEach(({ el, originalDisplay }) => {
-            el.style.display = originalDisplay;
-        });
+        toHide.forEach(el => el.style.display = '');
     }
 };
