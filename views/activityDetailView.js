@@ -8,15 +8,15 @@ export default `
             <div>
                 <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ activity?.name || 'Loading...' }}</h1>
                 <p class="text-slate-500 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
-                    <span>{{ formatDate(activity?.start_date) }}</span>
-                    <span class="text-slate-300">•</span>
-                    <span class="flex items-center gap-1 text-slate-700 max-w-[250px] md:max-w-none">
-                        <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
-                        <span class="truncate md:whitespace-normal">{{ locationName || 'Unknown Location' }}</span>
-                    </span>
-                    <span class="text-slate-300">•</span>
-                    <span class="text-blue-600 font-black">{{ activity?.type || 'Activity' }}</span>
-                </p>
+    <span>{{ formatDate(activity?.start_date) }}</span>
+    <span class="text-slate-300">•</span>
+    <span class="flex items-center gap-1 text-slate-700 max-w-[250px] md:max-w-none">
+        <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
+        <span class="truncate md:whitespace-normal">{{ activity?.location_name || 'Unknown Location' }}</span>
+    </span>
+    <span class="text-slate-300">•</span>
+    <span class="text-blue-600 font-black">{{ activity?.type || 'Activity' }}</span>
+</p>
             </div>
         </div>
 
