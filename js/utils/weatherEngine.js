@@ -1,90 +1,92 @@
 /**
- * Weather Engine V5 - WMO Code Based
- * Menggunakan data riil weather_code dari Open-Meteo
+ * Weather Engine V7 - Hyper-Detail (Google Fit & Health Style)
+ * Membagi waktu menjadi 8 fase transisi langit untuk Indonesia.
  */
 
 export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null, weatherCode = null) => {
-    // 1. Parsing Jam Lokal (Agar jam 15:00 di DB tetap Sore, bukan Malam)
+    // 1. Parsing Jam (Waktu Lokal/WIB dari DB)
     let hour = 12; 
     if (startDate) {
-        // Mengambil string jam langsung (index 11-13) untuk menghindari auto-timezone browser
         const timePart = startDate.includes(' ') ? startDate.split(' ')[1] : startDate.split('T')[1];
         hour = parseInt(timePart.split(':')[0]);
     }
 
-    const isNight = hour >= 19 || hour <= 4;
-    const isMorning = hour > 4 && hour <= 9;
+    // 2. Definisi 8 Fase Waktu (Threshold Hyper-Detail)
+    let timeCtx = { label: 'Siang', icon: 'sun', color: 'amber', isDark: false };
 
-    // 2. Default Config (Cerah)
+    if (hour >= 0 && hour < 3) {
+        timeCtx = { label: 'Tengah Malam', icon: 'moon-star', color: 'indigo', isDark: true };
+    } else if (hour >= 3 && hour < 5) {
+        timeCtx = { label: 'Dini Hari', icon: 'wind', color: 'slate', isDark: true };
+    } else if (hour >= 5 && hour < 7) {
+        timeCtx = { label: 'Subuh', icon: 'sunrise', color: 'sky', isDark: false };
+    } else if (hour >= 7 && hour < 11) {
+        timeCtx = { label: 'Pagi', icon: 'sun', color: 'amber', isDark: false };
+    } else if (hour >= 11 && hour < 15) {
+        timeCtx = { label: 'Siang', icon: 'sun', color: 'orange', isDark: false };
+    } else if (hour >= 15 && hour < 18) {
+        timeCtx = { label: 'Sore', icon: 'sunset', color: 'orange', isDark: false };
+    } else if (hour >= 18 && hour < 20) {
+        timeCtx = { label: 'Petang', icon: 'cloud-moon', color: 'violet', isDark: true };
+    } else {
+        timeCtx = { label: 'Malam', icon: 'moon', color: 'indigo', isDark: true };
+    }
+
+    // 3. Konfigurasi Dasar Berdasarkan Waktu
     let config = {
-        status: isNight ? 'Malam Cerah' : 'Cerah',
-        icon: isNight ? 'moon' : (isMorning ? 'sunrise' : 'sun'),
-        color: isNight ? 'indigo' : 'amber',
-        desc: 'Cuaca stabil untuk aktivitas'
+        status: 'Cerah',
+        icon: timeCtx.icon,
+        color: timeCtx.color,
+        desc: `Suasana ${timeCtx.label.toLowerCase()} yang stabil`
     };
 
-    // 3. LOGIKA UTAMA: Berdasarkan Weather Code (WMO)
-    // Jika weatherCode ada di DB, gunakan ini sebagai prioritas utama
+    // 4. Integrasi Weather Code (WMO) sebagai Penentu Utama
     if (weatherCode !== null) {
         const code = Number(weatherCode);
-
+        
         if (code === 0) {
             config.status = 'Cerah';
-            // Icon & Color sudah didefinisikan di default
         } 
         else if ([1, 2, 3].includes(code)) {
             config.status = code === 3 ? 'Mendung' : 'Berawan';
-            config.icon = isNight ? 'cloud-moon' : 'cloud-sun';
+            config.icon = timeCtx.isDark ? 'cloud-moon' : 'cloud-sun';
             config.color = 'slate';
-            config.desc = 'Langit tertutup awan';
         } 
         else if ([45, 48].includes(code)) {
             config.status = 'Berkabut';
             config.icon = 'cloud-fog';
             config.color = 'slate';
-            config.desc = 'Jarak pandang terbatas';
         } 
         else if ([51, 53, 55, 56, 57].includes(code)) {
             config.status = 'Gerimis';
             config.icon = 'cloud-drizzle';
             config.color = 'blue';
-            config.desc = 'Hujan rintik-rintik';
         } 
         else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
             config.status = 'Hujan';
             config.icon = 'cloud-rain';
             config.color = 'blue';
-            config.desc = 'Kondisi basah dan licin';
         } 
         else if ([95, 96, 99].includes(code)) {
             config.status = 'Badai Petir';
             config.icon = 'cloud-lightning';
             config.color = 'red';
-            config.desc = 'Waspada petir dan angin';
-        }
-    } 
-    // 4. FALLBACK: Jika weather_code NULL (Logika lama tetap ada sebagai cadangan)
-    else {
-        if (temp > 32) {
-            config.status = 'Panas Terik';
-            config.icon = 'flame';
-            config.color = 'red';
-        } else if (temp <= 22) {
-            config.color = 'blue';
-            config.status = isNight ? 'Malam Dingin' : 'Dingin';
         }
     }
 
-    // 5. Final Mapping ke Dashboard UI
+    // 5. Final Mapping ke Dashboard
+    // Menghasilkan output seperti: "Dini Hari Mendung" atau "Siang Cerah"
+    const finalStatus = `${timeCtx.label} ${config.status}`;
+
     return {
         main: {
             temp: `${temp.toFixed(1)}°C`,
-            status: isNight && !config.status.includes('Malam') ? `Malam ${config.status}` : config.status,
+            status: finalStatus,
             icon: config.icon,
             bg: `bg-${config.color}-50`,
             text: `text-${config.color}-600`,
             border: `border-${config.color}-100`,
-            desc: config.desc
+            desc: `Aktivitas pukul ${hour.toString().padStart(2, '0')}:00 WIB`
         },
         stats: [
             {
