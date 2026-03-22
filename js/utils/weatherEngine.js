@@ -1,77 +1,85 @@
 /**
- * Weather Engine Profesional (Refactored)
- * Memperbaiki masalah konversi timezone UTC ke Lokal agar jam sore tetap sore.
+ * Weather Engine V5 - WMO Code Based
+ * Menggunakan data riil weather_code dari Open-Meteo
  */
 
-export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null) => {
-    // 1. Parsing Jam secara "Raw" (Abaikan Offset Timezone Browser)
-    // Jika startDate "2026-03-06 15:00:00+00", kita ambil angka 15 secara mentah.
+export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null, weatherCode = null) => {
+    // 1. Parsing Jam Lokal (Agar jam 15:00 di DB tetap Sore, bukan Malam)
     let hour = 12; 
     if (startDate) {
+        // Mengambil string jam langsung (index 11-13) untuk menghindari auto-timezone browser
         const timePart = startDate.includes(' ') ? startDate.split(' ')[1] : startDate.split('T')[1];
         hour = parseInt(timePart.split(':')[0]);
     }
 
-    // Tentukan waktu (Malam: 18:30 - 04:30, tapi untuk simplifikasi kita pakai jam 19 - 04)
     const isNight = hour >= 19 || hour <= 4;
     const isMorning = hour > 4 && hour <= 9;
 
-    // 2. State Awal (Default: Cerah)
+    // 2. Default Config (Cerah)
     let config = {
         status: isNight ? 'Malam Cerah' : 'Cerah',
-        icon: isNight ? 'moon' : 'sun',
+        icon: isNight ? 'moon' : (isMorning ? 'sunrise' : 'sun'),
         color: isNight ? 'indigo' : 'amber',
-        desc: isNight ? 'Suasana malam tenang' : 'Cuaca cerah stabil'
+        desc: 'Cuaca stabil untuk aktivitas'
     };
 
-    // 3. Logika Berdasarkan Suhu & Waktu
-    if (temp <= 22) {
-        config.status = isNight ? 'Malam Dingin' : 'Dingin';
-        config.icon = isNight ? 'moon-star' : 'thermometer-snowflake';
-        config.color = 'blue';
-    } 
-    else if (temp <= 25) {
-        config.status = isNight ? 'Malam Sejuk' : 'Sejuk';
-        config.icon = isMorning ? 'sunrise' : (isNight ? 'moon' : 'cloud-sun');
-        config.color = 'sky';
-    } 
-    else if (temp > 28 && temp <= 32) {
-        config.status = isNight ? 'Malam Gerah' : 'Hangat';
-        config.icon = isNight ? 'cloud-moon' : 'cloud-sun';
-        config.color = 'orange';
-    } 
-    else if (temp > 32) {
-        config.status = 'Panas Terik';
-        config.icon = 'flame';
-        config.color = 'red';
-        config.desc = 'Suhu ekstrem, jaga hidrasi';
-    }
+    // 3. LOGIKA UTAMA: Berdasarkan Weather Code (WMO)
+    // Jika weatherCode ada di DB, gunakan ini sebagai prioritas utama
+    if (weatherCode !== null) {
+        const code = Number(weatherCode);
 
-    // 4. Override Kelembapan & Angin
-    let humidityLabel = 'Normal';
-    if (humidity > 85) {
-        humidityLabel = 'Sangat Lembap';
-        if (temp < 27) {
-            config.icon = isNight ? 'cloud-moon' : 'cloud-fog';
-            config.status = isNight ? 'Malam Berembun' : 'Berkabut';
+        if (code === 0) {
+            config.status = 'Cerah';
+            // Icon & Color sudah didefinisikan di default
+        } 
+        else if ([1, 2, 3].includes(code)) {
+            config.status = code === 3 ? 'Mendung' : 'Berawan';
+            config.icon = isNight ? 'cloud-moon' : 'cloud-sun';
+            config.color = 'slate';
+            config.desc = 'Langit tertutup awan';
+        } 
+        else if ([45, 48].includes(code)) {
+            config.status = 'Berkabut';
+            config.icon = 'cloud-fog';
+            config.color = 'slate';
+            config.desc = 'Jarak pandang terbatas';
+        } 
+        else if ([51, 53, 55, 56, 57].includes(code)) {
+            config.status = 'Gerimis';
+            config.icon = 'cloud-drizzle';
+            config.color = 'blue';
+            config.desc = 'Hujan rintik-rintik';
+        } 
+        else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+            config.status = 'Hujan';
+            config.icon = 'cloud-rain';
+            config.color = 'blue';
+            config.desc = 'Kondisi basah dan licin';
+        } 
+        else if ([95, 96, 99].includes(code)) {
+            config.status = 'Badai Petir';
+            config.icon = 'cloud-lightning';
+            config.color = 'red';
+            config.desc = 'Waspada petir dan angin';
+        }
+    } 
+    // 4. FALLBACK: Jika weather_code NULL (Logika lama tetap ada sebagai cadangan)
+    else {
+        if (temp > 32) {
+            config.status = 'Panas Terik';
+            config.icon = 'flame';
+            config.color = 'red';
+        } else if (temp <= 22) {
+            config.color = 'blue';
+            config.status = isNight ? 'Malam Dingin' : 'Dingin';
         }
     }
 
-    let windLabel = 'Tenang';
-    if (windSpeed > 15) {
-        windLabel = 'Berangin';
-        if (windSpeed > 25) {
-            config.icon = 'wind';
-            config.status = 'Angin Kencang';
-            config.color = 'indigo';
-        }
-    }
-
-    // 5. Final Mapping ke UI
+    // 5. Final Mapping ke Dashboard UI
     return {
         main: {
             temp: `${temp.toFixed(1)}°C`,
-            status: config.status,
+            status: isNight && !config.status.includes('Malam') ? `Malam ${config.status}` : config.status,
             icon: config.icon,
             bg: `bg-${config.color}-50`,
             text: `text-${config.color}-600`,
@@ -82,7 +90,7 @@ export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null
             {
                 label: 'Kelembapan',
                 value: `${humidity}%`,
-                sub: humidityLabel,
+                sub: humidity > 85 ? 'Sangat Lembap' : 'Normal',
                 icon: 'droplets',
                 color: 'text-blue-500'
             },
@@ -90,7 +98,7 @@ export const getWeatherEngine = (temp, humidity, windSpeed = 0, startDate = null
                 label: 'Angin',
                 value: `${windSpeed.toFixed(1)}`,
                 unit: 'km/h',
-                sub: windLabel,
+                sub: windSpeed > 15 ? 'Berangin' : 'Tenang',
                 icon: 'wind',
                 color: 'text-slate-500'
             }
