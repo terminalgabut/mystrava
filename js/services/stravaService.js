@@ -43,17 +43,13 @@ export const stravaService = {
         }
     },
 
-    /**
-     * Mengambil data tahunan (PENTING: start_date menggunakan ISO string agar filter akurat)
-     */
     async getActivitiesByYear(activityType, year) {
         try {
             const yearStr = String(year);
             const { data, error } = await supabase
                 .from('activities')
-                .select('start_date, average_speed, name, distance, moving_time, total_elevation_gain')
+                .select('start_date, average_speed, name, distance, moving_time, total_elevation_gain') // SUDAH OK
                 .eq('type', activityType)
-                // Filter menggunakan format ISO yang lebih standar untuk Postgres
                 .gte('start_date', `${yearStr}-01-01T00:00:00Z`)
                 .lte('start_date', `${yearStr}-12-31T23:59:59Z`);
 
@@ -65,18 +61,16 @@ export const stravaService = {
         }
     },
 
-    /**
-     * Ambil log aktivitas mentah dengan penanganan query LIKE yang lebih aman
-     */
     async getFilteredActivities(type, pType, pKey) {
+        // PERBAIKAN: Tambahkan total_elevation_gain agar dashboard tidak "blank" saat difilter
         let query = supabase.from('activities')
-            .select('id, name, distance, type, start_date, moving_time, location_name, weather_temp')
+            .select('id, name, distance, type, start_date, moving_time, location_name, weather_temp, total_elevation_gain')
             .eq('type', type)
             .order('start_date', { ascending: false });
 
-        // Gunakan filter yang sesuai dengan tipe periode
         if (pType === 'year') {
-            query = query.gte('start_date', `${pKey}-01-01`).lte('start_date', `${pKey}-12-31`);
+            // Samakan format dengan getActivitiesByYear agar akurat
+            query = query.gte('start_date', `${pKey}-01-01T00:00:00Z`).lte('start_date', `${pKey}-12-31T23:59:59Z`);
         } else if (pType === 'month') {
             query = query.like('start_date', `${pKey}%`);
         }
