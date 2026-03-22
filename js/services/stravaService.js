@@ -2,6 +2,9 @@ import { supabase } from './supabase.js';
 import { Logger } from './debug.js';
 
 export const stravaService = {
+    /**
+     * Mengambil statistik ringkasan & list aktivitas (digunakan dashboard)
+     */
     async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
             const [snapshotRes, records, activities] = await Promise.all([
@@ -18,6 +21,7 @@ export const stravaService = {
             const snapshot = snapshotRes.data;
             if (!snapshot) return this.getEmptyState();
 
+            // Agregasi Moving Time secara manual dari list aktivitas
             const totalMovingSeconds = activities.reduce((acc, act) => 
                 acc + (Number(act.moving_time) || 0), 0
             );
@@ -39,7 +43,10 @@ export const stravaService = {
         }
     },
 
-    // FIX: Tambahkan total_elevation_gain agar ChartLogic bisa mendeteksi Trail
+    /**
+     * FIX: Mengambil data tahunan dengan kolom total_elevation_gain
+     * Dibutuhkan oleh ChartLogic untuk memisahkan Trail vs Road
+     */
     async getActivitiesByYear(activityType, year) {
         try {
             const yearStr = String(year);
@@ -58,34 +65,54 @@ export const stravaService = {
         }
     },
 
+    /**
+     * Ambil log aktivitas mentah untuk tabel/list
+     */
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase.from('activities')
             .select('id, name, distance, type, start_date, moving_time, location_name, weather_temp')
             .eq('type', type)
             .order('start_date', { ascending: false });
 
-        if (pType !== 'all_time') query = query.like('start_date', `${pKey}%`);
+        if (pType !== 'all_time') {
+            query = query.like('start_date', `${pKey}%`);
+        }
+
         const { data } = await query;
         return data || [];
     },
 
+    /**
+     * Rekor Terbaik
+     */
     async getRecords(activityType) {
-        const { data } = await supabase.from('activities').select('distance, average_speed').eq('type', activityType);
+        const { data } = await supabase.from('activities')
+            .select('distance, average_speed')
+            .eq('type', activityType);
+
         if (!data?.length) return { longestDistance: '0.00', bestEffort: '--:--' };
+
         const longest = data.reduce((max, act) => act.distance > max.distance ? act : max, data[0]);
         const fastest = data.reduce((max, act) => act.average_speed > max.average_speed ? act : max, data[0]);
+
         return {
             longestDistance: (longest.distance / 1000).toFixed(2),
-            bestEffort: activityType === 'Walk' ? Math.round(longest.distance / 0.762).toLocaleString() : this.calculatePace(fastest.average_speed, activityType)
+            bestEffort: activityType === 'Walk' 
+                ? Math.round(longest.distance / 0.762).toLocaleString() 
+                : this.calculatePace(fastest.average_speed, activityType)
         };
     },
+
+    // --- HELPERS ---
 
     formatSecondsToClock(sec) {
         if (!sec || sec < 0) return "00:00";
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
         const s = Math.floor(sec % 60);
-        return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        return h > 0 
+            ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` 
+            : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     },
 
     calculatePace(s, t) {
@@ -96,5 +123,11 @@ export const stravaService = {
     },
 
     calculateSteps: (d) => Math.round(d / 0.762),
-    getEmptyState: () => ({ totalDistance: "0.00", totalDuration: "00:00", totalActivities: 0, avgPace: "00:00", calories: 0, elevation: 0, steps: 0, records: { longestDistance: '0.00', bestEffort: '--:--' }, activities: [] })
+
+    getEmptyState: () => ({ 
+        totalDistance: "0.00", totalDuration: "00:00", totalActivities: 0, 
+        avgPace: "00:00", calories: 0, elevation: 0, steps: 0, 
+        records: { longestDistance: '0.00', bestEffort: '--:--' }, 
+        activities: [] 
+    })
 };
