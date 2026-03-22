@@ -94,26 +94,35 @@ export default {
         // --- NEW WEATHER COMPUTED ---
         // --- NEW WEATHER COMPUTED ---
 const weatherInfo = computed(() => {
-    // Default fallback jika data belum ada
-    if (!activity.value || activity.value.weather_temp === null) {
+    // 1. Cek apakah activity sudah ada datanya
+    if (!activity.value || activity.value.weather_temp === undefined || activity.value.weather_temp === null) {
+        console.warn('Weather Engine: Data activity belum siap');
         return { 
             icon: 'sun', 
             bg: 'bg-slate-50', 
             text: 'text-slate-400', 
-            status: 'N/A' 
+            status: 'Loading...' 
         };
     }
 
-    // Panggil engine
-    const engineData = getWeatherEngine(
-        activity.value.weather_temp,
-        activity.value.weather_humidity,
-        activity.value.weather_wind,
-        activity.value.start_date
-    );
+    try {
+        // 2. Panggil engine
+        const engineData = getWeatherEngine(
+            activity.value.weather_temp,
+            activity.value.weather_humidity,
+            activity.value.weather_wind,
+            activity.value.start_date
+        );
 
-    // KUNCI: Kembalikan bagian .main saja agar template tidak bingung
-    return engineData.main;
+        // 3. DEBUG: Cek isi engineData di console
+        console.log('Weather Engine Result:', engineData);
+
+        // Pastikan kita me-return bagian .main (karena engineData punya .main dan .stats)
+        return engineData.main;
+    } catch (err) {
+        console.error('Weather Engine Error:', err);
+        return { icon: 'alert-circle', bg: 'bg-red-50', text: 'text-red-500', status: 'Error' };
+    }
 });
 
         // Watch weatherInfo untuk trigger Lucide saat data selesai di-calculate
