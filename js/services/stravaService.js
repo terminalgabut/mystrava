@@ -3,7 +3,7 @@ import { Logger } from './debug.js';
 
 export const stravaService = {
     /**
-     * Mengambil statistik ringkasan & list aktivitas (digunakan dashboard)
+     * Mengambil statistik ringkasan & list aktivitas
      */
     async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
@@ -21,13 +21,13 @@ export const stravaService = {
             const snapshot = snapshotRes.data;
             if (!snapshot) return this.getEmptyState();
 
-            // Agregasi Moving Time secara manual dari list aktivitas
+            // Memastikan moving_time dijumlahkan sebagai angka murni
             const totalMovingSeconds = activities.reduce((acc, act) => 
-                acc + (Number(act.moving_time) || 0), 0
+                acc + (parseInt(act.moving_time) || 0), 0
             );
 
             return {
-                totalDistance: (snapshot.total_distance / 1000).toFixed(2),
+                totalDistance: (Number(snapshot.total_distance || 0) / 1000).toFixed(2),
                 totalActivities: snapshot.total_activities || 0,
                 avgPace: this.calculatePace(snapshot.avg_speed, activityType),
                 calories: Math.round(snapshot.total_calories || 0),
@@ -44,8 +44,7 @@ export const stravaService = {
     },
 
     /**
-     * FIX: Mengambil data tahunan dengan kolom total_elevation_gain
-     * Dibutuhkan oleh ChartLogic untuk memisahkan Trail vs Road
+     * Mengambil data tahunan (PENTING: start_date menggunakan ISO string agar filter akurat)
      */
     async getActivitiesByYear(activityType, year) {
         try {
@@ -54,8 +53,9 @@ export const stravaService = {
                 .from('activities')
                 .select('start_date, average_speed, name, distance, moving_time, total_elevation_gain')
                 .eq('type', activityType)
-                .gte('start_date', `${yearStr}-01-01`)
-                .lte('start_date', `${yearStr}-12-31`);
+                // Filter menggunakan format ISO yang lebih standar untuk Postgres
+                .gte('start_date', `${yearStr}-01-01T00:00:00Z`)
+                .lte('start_date', `${yearStr}-12-31T23:59:59Z`);
 
             if (error) throw error;
             return data || [];
@@ -66,7 +66,7 @@ export const stravaService = {
     },
 
     /**
-     * Ambil log aktivitas mentah untuk tabel/list
+     * Ambil log aktivitas mentah dengan penanganan query LIKE yang lebih aman
      */
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase.from('activities')
@@ -74,7 +74,10 @@ export const stravaService = {
             .eq('type', type)
             .order('start_date', { ascending: false });
 
-        if (pType !== 'all_time') {
+        // Gunakan filter yang sesuai dengan tipe periode
+        if (pType === 'year') {
+            query = query.gte('start_date', `${pKey}-01-01`).lte('start_date', `${pKey}-12-31`);
+        } else if (pType === 'month') {
             query = query.like('start_date', `${pKey}%`);
         }
 
@@ -83,7 +86,7 @@ export const stravaService = {
     },
 
     /**
-     * Rekor Terbaik
+     * Rekor Terbaik (Jarak & Pace)
      */
     async getRecords(activityType) {
         const { data } = await supabase.from('activities')
@@ -92,18 +95,19 @@ export const stravaService = {
 
         if (!data?.length) return { longestDistance: '0.00', bestEffort: '--:--' };
 
-        const longest = data.reduce((max, act) => act.distance > max.distance ? act : max, data[0]);
-        const fastest = data.reduce((max, act) => act.average_speed > max.average_speed ? act : max, data[0]);
+        // Pastikan kalkulasi menggunakan angka (Number)
+        const longest = data.reduce((max, act) => Number(act.distance) > Number(max.distance) ? act : max, data[0]);
+        const fastest = data.reduce((max, act) => Number(act.average_speed) > Number(max.average_speed) ? act : max, data[0]);
 
         return {
-            longestDistance: (longest.distance / 1000).toFixed(2),
+            longestDistance: (Number(longest.distance) / 1000).toFixed(2),
             bestEffort: activityType === 'Walk' 
-                ? Math.round(longest.distance / 0.762).toLocaleString() 
+                ? Math.round(Number(longest.distance) / 0.762).toLocaleString() 
                 : this.calculatePace(fastest.average_speed, activityType)
         };
     },
 
-    // --- HELPERS ---
+    // --- UTILS ---
 
     formatSecondsToClock(sec) {
         if (!sec || sec < 0) return "00:00";
@@ -116,13 +120,21 @@ export const stravaService = {
     },
 
     calculatePace(s, t) {
-        if (!s || s <= 0) return t === 'Ride' ? '0.0' : '00:00';
-        if (t === 'Ride') return (s * 3.6).toFixed(1);
-        const p = 1000 / s;
-        return `${Math.floor(p / 60)}:${Math.round(p % 60).toString().padStart(2, '0')}`;
+        const speed = Number(s);
+        if (!speed || speed <= 0) return t === 'Ride' ? '0.0' : '00:00';
+        
+        if (t === 'Ride') return (speed * 3.6).toFixed(1);
+        
+        // Pace (min/km): 1000 / speed / 60
+        const p = 1000 / speed;
+        const mins = Math.floor(p / 60);
+        const secs = Math.round(p % 60);
+        
+        // Proteksi jika detik mencapai 60
+        return `${mins}:${(secs === 60 ? 59 : secs).toString().padStart(2, '0')}`;
     },
 
-    calculateSteps: (d) => Math.round(d / 0.762),
+    calculateSteps: (d) => Math.round(Number(d) / 0.762),
 
     getEmptyState: () => ({ 
         totalDistance: "0.00", totalDuration: "00:00", totalActivities: 0, 
