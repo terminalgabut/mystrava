@@ -130,15 +130,15 @@ export default {
         };
 
         const downloadSnapshot = async () => {
-    const success = await captureElement('activity-detail-wrapper', `Activity-${activity.value.name}`);
-    if (success) {
-        console.log("Snapshot berhasil diunduh!");
-    }
-};
+            console.log("🚀 Tombol Share diklik, memanggil Export Engine...");
+            const success = await captureElement('activity-detail-wrapper', `Activity-${activity.value?.name || 'MyStrava'}`);
+            if (success) {
+                console.log("✅ Snapshot berhasil diunduh!");
+            }
+        };
 
         onMounted(loadActivityDetail);
 
-        // Bersihkan memori Mapbox saat meninggalkan halaman
         onUnmounted(() => {
             if (mapInstance) {
                 mapInstance.remove();
@@ -149,7 +149,7 @@ export default {
         return { 
             activity, loading, performanceValue, 
             weatherInfo, realSplits,
-            formatTime, formatDate 
+            formatTime, formatDate, downloadSnapshot
         };
     }
 };
