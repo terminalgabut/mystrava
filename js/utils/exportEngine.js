@@ -37,7 +37,7 @@ export const captureElement = async (elementClassOrId, fileName = 'activity-pro'
                         // Hilangkan letter-spacing negatif saat foto agar tidak terlihat blur 
                         el.style.letterSpacing = "0"; 
                         el.style.opacity = "1";
-                        el.style.webkitFontSmoothing = "antialiased"; [cite: 7, 18]
+                        el.style.webkitFontSmoothing = "antialiased"; 
 
                         // Injeksi warna solid Slate agar tidak pudar mengikuti variabel CSS
                         if (el.classList.contains('label-muted')) {
