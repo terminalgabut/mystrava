@@ -3,19 +3,23 @@ import detailTemplate from './activityDetailView.js';
 import { supabase } from '../js/services/supabase.js';
 import { stravaService } from '../js/services/stravaService.js';
 import { Logger } from '../js/services/debug.js';
+// 1. Import Weather Engine
+import { getWeatherEngine } from '../js/utils/weatherEngine.js'; 
 
 export default {
     name: 'ActivityDetailView',
     template: detailTemplate,
     setup() {
-        const { ref, onMounted, nextTick, computed } = Vue;
+        const { ref, onMounted, nextTick, computed, watch } = Vue; // Tambahkan watch
         const route = VueRouter.useRoute();
         
         const activity = ref(null);
         const loading = ref(true);
-        let mapInstance = null; // Gunakan nama berbeda agar tidak bentrok dengan id="map"
+        let mapInstance = null;
 
-        const refreshLucide = () => nextTick(() => window.lucide?.createIcons());
+        const refreshLucide = () => nextTick(() => {
+            if (window.lucide) window.lucide.createIcons();
+        });
 
         // --- CORE LOGIC ---
         const loadActivityDetail = async () => {
@@ -25,21 +29,19 @@ export default {
                     .from('activities')
                     .select('*')
                     .eq('id', route.params.id)
-                    .maybeSingle(); // Lebih aman daripada .single()
+                    .maybeSingle();
 
                 if (error) throw error;
                 if (!data) return;
 
                 activity.value = data;
 
-                // Handle Map: Tunggu loading=false agar elemen #map dirender oleh Vue
                 if (data.summary_polyline) {
                     setTimeout(() => {
                         initMap(data.summary_polyline);
-                    }, 100); // Beri jeda sedikit lebih lama dari nextTick untuk render DOM
+                    }, 100);
                 }
 
-                // Background enrichment untuk lokasi jika kosong
                 if (!data.location_name && data.start_lat) {
                     getGeoFallback(data.start_lat, data.start_lng).then(fullAddr => {
                         if (fullAddr) {
@@ -52,45 +54,33 @@ export default {
                 Logger.error('Detail_Load_Error', err);
             } finally {
                 loading.value = false;
+                // Refresh icon setelah data masuk
                 refreshLucide();
             }
         };
 
+        // --- MAP LOGIC (Tetap Sama) ---
         const initMap = (polylineStr) => {
-            // Bersihkan instance lama jika ada
             if (mapInstance) {
                 mapInstance.off();
                 mapInstance.remove();
                 mapInstance = null;
             }
-
             const mapContainer = document.getElementById('map');
             if (!mapContainer || !window.L || !window.polyline) return;
-
             try {
                 const coords = window.polyline.decode(polylineStr); 
                 if (!coords || coords.length === 0) return;
-
                 mapInstance = L.map('map', { 
                     zoomControl: false, 
                     attributionControl: false,
-                    dragging: !L.Browser.mobile, // Disable drag di mobile agar scroll enak
+                    dragging: !L.Browser.mobile,
                     scrollWheelZoom: false 
                 }).setView(coords[0], 13);
-
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapInstance);
-                
-                const path = L.polyline(coords, { 
-                    color: '#3b82f6', 
-                    weight: 5, 
-                    opacity: 0.8, 
-                    lineJoin: 'round' 
-                }).addTo(mapInstance);
-
+                const path = L.polyline(coords, { color: '#3b82f6', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(mapInstance);
                 mapInstance.fitBounds(path.getBounds(), { padding: [30, 30] });
-            } catch (e) {
-                Logger.error('Map_Init_Error', e);
-            }
+            } catch (e) { Logger.error('Map_Init_Error', e); }
         };
 
         const getGeoFallback = async (lat, lng) => {
@@ -102,20 +92,26 @@ export default {
             } catch { return null; }
         };
 
-        // --- COMPUTED (Diberi Guard agar tidak crash saat data null) ---
+        // --- NEW WEATHER COMPUTED ---
+        const weatherInfo = computed(() => {
+            if (!activity.value || activity.value.weather_temp === null) {
+                return { icon: 'sun', bgClass: 'bg-slate-50', iconClass: 'text-slate-400', label: 'N/A' };
+            }
+            return getWeatherEngine(
+                activity.value.weather_temp,
+                activity.value.weather_humidity,
+                activity.value.weather_wind,
+                activity.value.start_date
+            );
+        });
+
+        // Watch weatherInfo untuk trigger Lucide saat data selesai di-calculate
+        watch(weatherInfo, () => refreshLucide());
+
+        // --- OTHER COMPUTED ---
         const locationName = computed(() => activity.value?.location_name || 'Global Area');
-        
-        const performanceValue = computed(() => {
-            if (!activity.value) return '--:--';
-            return stravaService.calculatePace(activity.value.average_speed, activity.value.type);
-        });
-
+        const performanceValue = computed(() => activity.value ? stravaService.calculatePace(activity.value.average_speed, activity.value.type) : '--:--');
         const performanceUnit = computed(() => activity.value?.type === 'Ride' ? 'km/h' : '/km');
-
-        const weatherIcon = computed(() => {
-            const type = activity.value?.type;
-            return type === 'Ride' ? 'zap' : (type === 'Run' ? 'sun' : 'cloud');
-        });
         
         const realSplits = computed(() => {
             const splits = activity.value?.splits_metric;
@@ -128,36 +124,29 @@ export default {
             }));
         });
 
-        // --- FORMATTERS (Null-Safe) ---
+        // --- FORMATTERS ---
         const formatTime = (seconds) => {
             const totalSeconds = Number(seconds) || 0;
             const h = Math.floor(totalSeconds / 3600);
             const m = Math.floor((totalSeconds % 3600) / 60);
             const s = Math.floor(totalSeconds % 60);
-            return h > 0 
-                ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-                : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         };
 
         const formatDate = (dateStr) => {
             if (!dateStr) return '...';
             try {
-                return new Date(dateStr).toLocaleDateString('id-ID', { 
-                    day: 'numeric', month: 'short', year: 'numeric' 
-                });
+                return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
             } catch { return dateStr; }
         };
 
-        const calculateSteps = (dist) => {
-            const d = Number(dist) || 0;
-            return Math.round(d / 0.762).toLocaleString('id-ID'); // Gunakan faktor konversi standar service
-        };
+        const calculateSteps = (dist) => Math.round((Number(dist) || 0) / 0.762).toLocaleString('id-ID');
 
         onMounted(loadActivityDetail);
 
         return { 
             activity, loading, performanceValue, performanceUnit, 
-            locationName, weatherIcon, realSplits,
+            locationName, weatherInfo, realSplits, // weatherIcon diganti weatherInfo
             calculateSteps, formatTime, formatDate 
         };
     }
