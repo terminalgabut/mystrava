@@ -10,80 +10,46 @@
     <link rel="stylesheet" href="css/main.css">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-  /* Reset dasar saat ekspor */
-  .is-exporting {
-    background-color: #F1F5F9 !important;
-  }
+    <style id="export-styles">
+  /* Gaya ini HANYA aktif saat class .is-exporting ditambahkan oleh JS */
   
-  .is-exporting .activity-detail-wrapper {
-    background-color: #F1F5F9 !important;
+  .is-exporting.activity-detail-wrapper {
     width: 600px !important;
-    opacity: 1 !important;
-  }
-
-  /* PAKSA SEMUA TEKS JADI SOLID (Anti-Pudar) */
-  .is-exporting h1, 
-  .is-exporting h2, 
-  .is-exporting p, 
-  .is-exporting span, 
-  .is-exporting div:not([class*="card"]) {
-    opacity: 1 !important;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* Teks Utama (Judul & Angka Statistik) */
-  .is-exporting h1, 
-  .is-exporting .stat-value,
-  .is-exporting .text-main {
-    color: #0F172A !important; /* Slate 900 */
-    font-weight: 800 !important;
-  }
-
-  /* Teks Muted (Label) - Kita pertebal sedikit agar tidak hilang */
-  .is-exporting .text-slate-400, 
-  .is-exporting .text-muted, 
-  .is-exporting .label-muted {
-    color: #475569 !important; /* Slate 600 (lebih gelap dari 400) */
-    opacity: 1 !important;
-  }
-
-  /* KARTU TIME ANALYSIS (Hitam Pekat) */
-  /* Kita targetkan class spesifik atau div yang punya latar gelap */
-  .is-exporting [class*="card-dark"], 
-  .is-exporting .time-analysis-card,
-  .is-exporting .bg-slate-900 { 
-    background-color: #0F172A !important;
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-    border: none !important;
-  }
-
-  /* Paksa teks di dalam kartu gelap jadi putih terang */
-  .is-exporting [class*="card-dark"] *, 
-  .is-exporting .time-analysis-card * {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-  }
-
-  /* FIX MAPBOX & IMAGE */
-  .is-exporting .mapboxgl-canvas,
-  .is-exporting img {
+    background-color: #F1F5F9 !important; /* Slate 50 asli */
+    padding: 30px !important;
+    margin: 0 auto !important;
+    border-radius: 24px !important;
+    display: block !important;
     opacity: 1 !important;
     filter: none !important;
   }
 
-  /* Pastikan teks di dalam kartu gelap dipaksa putih terang */
-.is-exporting .bg-slate-900 *, 
-.is-exporting [class*="card-dark"] * {
-  color: #FFFFFF !important;
-  opacity: 1 !important;
-}
+  .is-exporting .stat-value, 
+  .is-exporting h1 {
+    color: #0F172A !important; /* Hitam Slate 900 */
+    opacity: 1 !important;
+    letter-spacing: 0 !important; /* Cegah blur */
+    -webkit-font-smoothing: antialiased !important;
+  }
 
-/* Pastikan Mapbox Container punya warna dasar jika tile gagal load */
-.is-exporting .mapboxgl-map {
-  background-color: #E5E7EB !important;
-}
+  .is-exporting .label-muted {
+    color: #475569 !important; /* Slate 600 */
+    font-weight: 800 !important;
+    opacity: 1 !important;
+    text-transform: uppercase !important;
+  }
+
+  .is-exporting p, .is-exporting span, .is-exporting div {
+    color: #1E293B !important; /* Slate 800 */
+    opacity: 1 !important;
+  }
+
+  /* Sembunyikan elemen pengganggu di foto */
+  .is-exporting .no-export,
+  .is-exporting button,
+  .is-exporting .nav-menu {
+    display: none !important;
+  }
     </style>
 </head>
 
