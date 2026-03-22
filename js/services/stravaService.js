@@ -4,25 +4,28 @@ import { Logger } from './debug.js';
 
 export const stravaService = {
     /**
-     * Mengambil statistik ringkasan (dari snapshot) & list aktivitas
+     * Mengambil statistik ringkasan (dari snapshot) & list aktivitas terbaru
      */
     async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
             const [snapshotRes, records, activities] = await Promise.all([
+                // 1. Ambil angka agregat dari tabel snapshot (Distance, Elevation, dsb)
                 supabase.from('activity_snapshots')
                     .select('*')
                     .eq('activity_type', activityType)
                     .eq('period_type', periodType)
                     .eq('period_key', periodKey)
                     .maybeSingle(),
+                // 2. Ambil rekor terbaik (Personal Best)
                 this.getRecords(activityType),
+                // 3. Ambil list aktivitas mentah untuk log di bawah dashboard
                 this.getFilteredActivities(activityType, periodType, periodKey)
             ]);
 
             const snapshot = snapshotRes.data;
             if (!snapshot) return this.getEmptyState();
 
-            // Total waktu bergerak dari list aktivitas terkini
+            // Hitung total moving time secara dinamis dari list aktivitas yang terfilter
             const totalMovingSeconds = activities.reduce((acc, act) => 
                 acc + (parseInt(act.moving_time) || 0), 0
             );
@@ -34,8 +37,9 @@ export const stravaService = {
                 calories: Math.round(snapshot.total_calories || 0),
                 elevation: Math.round(snapshot.total_elevation_gain || 0),
                 totalDuration: this.formatSecondsToClock(totalMovingSeconds),
-                recentActivities: activities, // Gunakan nama yang konsisten dengan template
+                recentActivities: activities, 
                 records: records,
+                // Logic steps tetap ada untuk Walk, tapi diambil dari total_distance snapshot
                 steps: activityType === 'Walk' ? this.calculateSteps(snapshot.total_distance) : 0
             };
         } catch (err) {
@@ -45,7 +49,7 @@ export const stravaService = {
     },
 
     /**
-     * Mengambil data mentah tahunan untuk diproses oleh ChartLogic
+     * Fetch aktivitas per tahun untuk kebutuhan ChartLogic (Trend Bulanan)
      */
     async getActivitiesByYear(activityType, year) {
         try {
@@ -66,26 +70,7 @@ export const stravaService = {
     },
 
     /**
-     * Mengambil data mentah bulanan untuk diproses oleh ChartLogic
-     */
-    async getActivitiesByMonth(activityType, monthKey) {
-        try {
-            const { data, error } = await supabase
-                .from('activities')
-                .select('start_date, average_speed, distance')
-                .eq('type', activityType)
-                .like('start_date', `${monthKey}%`);
-
-            if (error) throw error;
-            return data || [];
-        } catch (err) {
-            Logger.error('StravaService_Monthly_Fetch_Error', err);
-            return [];
-        }
-    },
-
-    /**
-     * Ambil list aktivitas untuk tabel/list dashboard
+     * Ambil list aktivitas mentah (Recent Log)
      */
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase.from('activities')
@@ -100,15 +85,21 @@ export const stravaService = {
         } else if (pType === 'month') {
             query = query.like('start_date', `${pKey}%`);
         } else {
-            query = query.limit(10); // Default limit untuk All Time
+            // Jika All Time, batasi pengambilan data untuk performa
+            query = query.limit(20);
         }
 
         const { data } = await query;
-        return data || [];
+        
+        // Konversi distance ke KM di level service agar seragam
+        return (data || []).map(act => ({
+            ...act,
+            distance: (Number(act.distance) / 1000).toFixed(2)
+        }));
     },
 
     /**
-     * Rekor Terbaik
+     * Menghitung Rekor Terjauh dan Tercepat
      */
     async getRecords(activityType) {
         try {
@@ -147,7 +138,7 @@ export const stravaService = {
     calculatePace(speedMs, type) {
         const speed = Number(speedMs);
         if (!speed || speed <= 0) return type === 'Ride' ? '0.0' : '00:00';
-        if (type === 'Ride') return (speed * 3.6).toFixed(1);
+        if (type === 'Ride') return (speed * 3.6).toFixed(1); // km/h
         
         const paceMinPerKm = 1000 / speed / 60;
         const mins = Math.floor(paceMinPerKm);
