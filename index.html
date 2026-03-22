@@ -10,6 +10,47 @@
     <link rel="stylesheet" href="css/main.css">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <style id="export-styles">
+  /* Gaya ini HANYA aktif saat class .is-exporting ditambahkan oleh JS */
+  
+  .is-exporting.activity-detail-wrapper {
+    width: 600px !important;
+    background-color: #F1F5F9 !important; /* Slate 50 asli */
+    padding: 30px !important;
+    margin: 0 auto !important;
+    border-radius: 24px !important;
+    display: block !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .is-exporting .stat-value, 
+  .is-exporting h1 {
+    color: #0F172A !important; /* Hitam Slate 900 */
+    opacity: 1 !important;
+    letter-spacing: 0 !important; /* Cegah blur */
+    -webkit-font-smoothing: antialiased !important;
+  }
+
+  .is-exporting .label-muted {
+    color: #475569 !important; /* Slate 600 */
+    font-weight: 800 !important;
+    opacity: 1 !important;
+    text-transform: uppercase !important;
+  }
+
+  .is-exporting p, .is-exporting span, .is-exporting div {
+    color: #1E293B !important; /* Slate 800 */
+    opacity: 1 !important;
+  }
+
+  /* Sembunyikan elemen pengganggu di foto */
+  .is-exporting .no-export,
+  .is-exporting button,
+  .is-exporting .nav-menu {
+    display: none !important;
+  }
+    </style>
 </head>
 
 <body>
