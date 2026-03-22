@@ -1,34 +1,28 @@
 /* base/export.css */
 
-/* 1. Paksa Lebar agar tidak gepeng di layar HP */
+/* Aturan ini hanya aktif saat di-foto lewat engine */
 .is-exporting.activity-detail-wrapper {
-    width: 600px !important;
-    padding: 30px !important;
-    background-color: #F1F5F9 !important; /* Sesuai --bg-app */
+    width: 600px !important; /* Solusi agar tidak gepeng */
+    padding: 32px !important;
+    background-color: #F1F5F9 !important; /* Paksa warna slate-50 */
     margin: 0 auto !important;
+    border-radius: 0 !important; /* Opsional: agar foto kotak sempurna */
 }
 
-/* 2. Perkuat Kontras Teks (Solusi teks pudar) */
+/* Solusi agar teks TIDAK PUDAR */
 .is-exporting .text-slate-400,
-.is-exporting .label-muted,
-.is-exporting .text-muted {
-    color: #334155 !important; /* Slate 700 (Lebih gelap dari Slate 500) */
+.is-exporting .label-muted {
+    color: #334155 !important; /* Paksa jadi Slate 700 agar hitam tajam */
     opacity: 1 !important;
 }
 
 .is-exporting h1, 
-.is-exporting .stat-value,
-.is-exporting .text-slate-900 {
-    color: #0F172A !important; /* Slate 900 Solid */
+.is-exporting .stat-value {
+    color: #0F172A !important; /* Slate 900 pekat */
 }
 
-/* 3. Pastikan Mapbox & Elemen Visual Terlihat Tajam */
-.is-exporting .mapboxgl-canvas {
-    opacity: 1 !important;
-    border-radius: 2rem !important;
-}
-
-/* 4. Sembunyikan elemen yang mungkin masih lolos */
-.is-exporting .no-export {
+/* Sembunyikan tombol share & navigasi di hasil foto */
+.is-exporting .no-export,
+.is-exporting button {
     display: none !important;
 }
