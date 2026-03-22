@@ -1,70 +1,71 @@
 /**
- * Export Engine V2.0 - Production Stabilized
- * Optimal dengan Internal CSS di index.html untuk mencegah pudar & blur.
+ * Export Engine V2.1 - The "Solid Color" Force
+ * Fokus: Memperbaiki warna pudar pada Card Dark & Mapbox
  */
 export const captureElement = async (elementClassOrId, fileName = 'activity-pro') => {
-    if (!window.html2canvas) {
-        console.error("❌ html2canvas tidak ditemukan!");
-        return false;
-    }
+    if (!window.html2canvas) return false;
 
     const element = document.getElementById(elementClassOrId) || document.querySelector(`.${elementClassOrId}`);
     if (!element) return false;
 
-    // Sembunyikan elemen UI asli sesaat
-    const toHide = document.querySelectorAll('.no-export, .vc-switch, button, .nav-menu');
+    // Sembunyikan UI dan elemen vConsole
+    const toHide = document.querySelectorAll('.no-export, .vc-switch, button, .nav-menu, .v-console, .v-panel');
     toHide.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
     try {
-        console.log("📸 Memulai capture (Resolusi 3x)...");
+        console.log("📸 Memulai capture high-contrast...");
 
         const canvas = await window.html2canvas(element, {
             useCORS: true,
-            allowTaint: false,
-            scale: 3,                 // High-res untuk teks tajam
-            backgroundColor: '#F1F5F9', // Paksa Slate 50 (bg-app)
-            logging: false,
-            windowWidth: 600,         // Lebar kanvas bayangan 600px
-            scrollX: 0,
-            scrollY: -window.scrollY,
+            allowTaint: true,
+            scale: 3,                 // 3x Density agar teks Inter tajam
+            backgroundColor: '#F1F5F9', // Paksa latar Slate 50
+            windowWidth: 600,         
             onclone: (clonedDoc) => {
                 const clonedEl = clonedDoc.querySelector(`.${elementClassOrId}`) || clonedDoc.getElementById(elementClassOrId);
                 
                 if (clonedEl) {
-                    /**
-                     * 1. AKTIFKAN MODE EXPORT
-                     * Menghubungkan ke <style> di index.html
-                     */
                     clonedEl.classList.add('is-exporting');
 
-                    /**
-                     * 2. FORCE STYLING (Brute Force untuk Anti-Pudar)
-                     * Memastikan elemen kloning tidak mewarisi opacity rendah.
-                     */
+                    // 1. FORCE BACKGROUND UTAMA
+                    clonedEl.style.backgroundColor = "#F1F5F9";
                     clonedEl.style.opacity = "1";
-                    clonedEl.style.display = "block";
-                    clonedEl.style.visibility = "visible";
 
-                    // Injeksi warna langsung untuk elemen kritis jika CSS internal terhambat
-                    const stats = clonedEl.querySelectorAll('.stat-value, h1');
-                    stats.forEach(s => {
-                        s.style.color = "#0F172A"; // Slate 900
-                        s.style.letterSpacing = "0"; // Anti-blur
+                    // 2. FIX CARD GELAP (Time Analysis) - Solusi agar tidak abu-abu pudar
+                    // Cari semua elemen yang seharusnya berwarna gelap pekat
+                    const darkCards = clonedEl.querySelectorAll('[class*="card-dark"], [class*="time-analysis"], .analysis-card');
+                    darkCards.forEach(card => {
+                        card.style.setProperty('background-color', '#0F172A', 'important'); // Slate 900
+                        card.style.setProperty('color', '#FFFFFF', 'important');
+                        card.style.opacity = "1";
                     });
 
-                    const labels = clonedEl.querySelectorAll('.label-muted');
-                    labels.forEach(l => {
-                        l.style.color = "#475569"; // Slate 600
-                        l.style.fontWeight = "900";
+                    // 3. FIX TEKS STATISTIK (Agar Hitam Pekat)
+                    const mainTexts = clonedEl.querySelectorAll('h1, .stat-value, .text-main');
+                    mainTexts.forEach(t => {
+                        t.style.setProperty('color', '#0F172A', 'important');
+                        t.style.setProperty('opacity', '1', 'important');
+                        t.style.letterSpacing = "0"; // Anti-blur
                     });
 
+                    // 4. FIX MAPBOX (Agar Peta Terlihat Jelas)
                     const mapCanvas = clonedEl.querySelector('.mapboxgl-canvas');
-                    if (mapCanvas) mapCanvas.style.opacity = "1";
+                    if (mapCanvas) {
+                        mapCanvas.style.setProperty('opacity', '1', 'important');
+                        mapCanvas.style.setProperty('visibility', 'visible', 'important');
+                    }
+
+                    // 5. FIX SPLITS & MUTED TEXT
+                    const mutedTexts = clonedEl.querySelectorAll('.label-muted, .text-muted');
+                    mutedTexts.forEach(m => {
+                        m.style.setProperty('color', '#475569', 'important'); // Slate 600
+                        m.style.setProperty('font-weight', '900', 'important');
+                    });
                 }
             }
         });
 
-        // 3. PROSES DOWNLOAD
+        // Generate PNG (PNG jauh lebih tajam untuk dashboard daripada JPG)
         const dataUrl = canvas.toDataURL("image/png", 1.0);
         const link = document.createElement('a');
         link.download = `${fileName.replace(/\s+/g, '-').toLowerCase()}.png`;
@@ -74,14 +75,13 @@ export const captureElement = async (elementClassOrId, fileName = 'activity-pro'
         link.click();
         document.body.removeChild(link);
 
-        console.log("✅ Export Berhasil!");
         return true;
 
     } catch (err) {
         console.error("❌ Export Error:", err);
         return false;
     } finally {
-        // Kembalikan UI ke kondisi semula
+        // Kembalikan UI normal
         toHide.forEach(el => el.style.display = '');
     }
 };
