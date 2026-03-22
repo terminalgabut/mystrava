@@ -2,7 +2,9 @@ import { supabase } from './supabase.js';
 import { Logger } from './debug.js';
 
 export const stravaService = {
-    // 1. Ambil Statistik Ringkasan & List Aktivitas
+    /**
+     * Mengambil statistik ringkasan dan daftar aktivitas mentah
+     */
     async getStats(activityType = 'Run', periodType = 'all_time', periodKey = 'total') {
         try {
             const [snapshotRes, records, activities] = await Promise.all([
@@ -19,7 +21,7 @@ export const stravaService = {
             const snapshot = snapshotRes.data;
             if (!snapshot) return this.getEmptyState();
 
-            // AGREGASI MOVING TIME (Waktu Bergerak murni)
+            // Kalkulasi Moving Time (Waktu Bergerak Murni)
             const totalMovingSeconds = activities.reduce((acc, act) => 
                 acc + (Number(act.moving_time) || 0), 0
             );
@@ -41,86 +43,30 @@ export const stravaService = {
         }
     },
 
-    // 2. TREND DATA (PENGISI CHART 1 & CHART 2)
-    async getTrendData(activityType, year) {
+    /**
+     * Mengambil data aktivitas mentah berdasarkan tahun (Untuk diolah Logic Chart Terpisah)
+     */
+    async getActivitiesByYear(activityType, year) {
         try {
-            // Pastikan year adalah string untuk query LIKE
             const yearStr = String(year);
-            Logger.info(`Fetching Trend Data for ${activityType} Year ${yearStr}`);
-
             const { data, error } = await supabase
                 .from('activities')
-                .select('start_date, average_speed, name, distance')
+                .select('start_date, average_speed, name, distance, moving_time')
                 .eq('type', activityType)
-                .like('start_date', `${yearStr}%`);
+                .gte('start_date', `${yearStr}-01-01`)
+                .lte('start_date', `${yearStr}-12-31`);
 
             if (error) throw error;
-
-            const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const monthlyStats = Array.from({ length: 12 }, () => ({
-                totalValue: 0, count: 0,
-                roadValue: 0, roadCount: 0,
-                trailValue: 0, trailCount: 0
-            }));
-
-            data?.forEach(act => {
-                const date = new Date(act.start_date);
-                const monthIdx = date.getMonth(); 
-                
-                // Konversi speed ke Pace (min/km) atau Speed (km/h untuk Ride)
-                let val = 0;
-                if (activityType === 'Ride') {
-                    val = act.average_speed * 3.6;
-                } else {
-                    // Pace: 1000 / (m/s) / 60 = min/km
-                    val = act.average_speed > 0 ? (1000 / act.average_speed / 60) : 0;
-                }
-
-                if (val > 0) {
-                    monthlyStats[monthIdx].totalValue += val;
-                    monthlyStats[monthIdx].count++;
-
-                    // Pemisahan Trail vs Road berdasarkan substring nama
-                    if (act.name.toLowerCase().includes('trail')) {
-                        monthlyStats[monthIdx].trailValue += val;
-                        monthlyStats[monthIdx].trailCount++;
-                    } else {
-                        monthlyStats[monthIdx].roadValue += val;
-                        monthlyStats[monthIdx].roadCount++;
-                    }
-                }
-            });
-
-            // Dataset Chart Utama (Rata-rata Gabungan)
-            const mainDataset = monthlyStats.map(m => 
-                m.count > 0 ? parseFloat((m.totalValue / m.count).toFixed(2)) : 0
-            );
-
-            // Dataset Chart Pembanding (Road vs Trail)
-            const comparisonDatasets = [];
-            if (activityType === 'Run') {
-                comparisonDatasets.push(
-                    { 
-                        label: 'Road', 
-                        data: monthlyStats.map(m => m.roadCount > 0 ? parseFloat((m.roadValue / m.roadCount).toFixed(2)) : 0), 
-                        color: '#3b82f6' 
-                    },
-                    { 
-                        label: 'Trail', 
-                        data: monthlyStats.map(m => m.trailCount > 0 ? parseFloat((m.trailValue / m.trailCount).toFixed(2)) : 0), 
-                        color: '#10b981' 
-                    }
-                );
-            }
-
-            return { labels, mainDataset, comparisonDatasets };
+            return data || [];
         } catch (err) {
-            Logger.error('TrendData_Error', err);
-            return { labels: [], mainDataset: [], comparisonDatasets: [] };
+            Logger.error('StravaService_Yearly_Fetch_Error', err);
+            return [];
         }
     },
 
-    // 3. AMBIL LOG AKTIVITAS (Untuk Recent Log)
+    /**
+     * Helper untuk mengambil log aktivitas berdasarkan filter periode
+     */
     async getFilteredActivities(type, pType, pKey) {
         let query = supabase.from('activities')
             .select('id, name, distance, type, start_date, moving_time, location_name, weather_temp')
@@ -135,7 +81,9 @@ export const stravaService = {
         return data || [];
     },
 
-    // 4. AMBIL REKOR TERBAIK
+    /**
+     * Mengambil rekor terjauh dan tercepat
+     */
     async getRecords(activityType) {
         const { data } = await supabase.from('activities')
             .select('distance, average_speed')
@@ -154,7 +102,8 @@ export const stravaService = {
         };
     },
 
-    // --- HELPERS ---
+    // --- UTILS ---
+
     formatSecondsToClock(sec) {
         if (!sec || sec < 0) return "00:00";
         const h = Math.floor(sec / 3600);
