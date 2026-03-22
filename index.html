@@ -10,45 +10,36 @@
     <link rel="stylesheet" href="css/main.css">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <style id="export-styles">
-  /* Gaya ini HANYA aktif saat class .is-exporting ditambahkan oleh JS */
+    <style>
+  /* Hanya aktif saat proses pengambilan gambar */
+  .is-exporting {
+    background-color: #F1F5F9 !important; /* Force Slate 50 */
+  }
   
-  .is-exporting.activity-detail-wrapper {
+  .is-exporting .activity-detail-wrapper {
+    background-color: #F1F5F9 !important;
     width: 600px !important;
-    background-color: #F1F5F9 !important; /* Slate 50 asli */
-    padding: 30px !important;
-    margin: 0 auto !important;
-    border-radius: 24px !important;
-    display: block !important;
-    opacity: 1 !important;
-    filter: none !important;
   }
 
-  .is-exporting .stat-value, 
-  .is-exporting h1 {
-    color: #0F172A !important; /* Hitam Slate 900 */
-    opacity: 1 !important;
-    letter-spacing: 0 !important; /* Cegah blur */
-    -webkit-font-smoothing: antialiased !important;
+  /* Perbaikan Kartu Waktu yang Hitam Pudar */
+  .is-exporting [class*="card-dark"], 
+  .is-exporting .time-analysis-card { 
+    background-color: #0F172A !important; /* Force Slate 900 */
+    color: #FFFFFF !important;
   }
 
-  .is-exporting .label-muted {
-    color: #475569 !important; /* Slate 600 */
-    font-weight: 800 !important;
+  /* Perbaikan Teks Utama agar Hitam Pekat */
+  .is-exporting h1, 
+  .is-exporting .stat-value {
+    color: #0F172A !important;
     opacity: 1 !important;
-    text-transform: uppercase !important;
+    -webkit-font-smoothing: antialiased;
   }
 
-  .is-exporting p, .is-exporting span, .is-exporting div {
-    color: #1E293B !important; /* Slate 800 */
+  /* Perbaikan Peta agar tidak transparan */
+  .is-exporting .mapboxgl-canvas {
     opacity: 1 !important;
-  }
-
-  /* Sembunyikan elemen pengganggu di foto */
-  .is-exporting .no-export,
-  .is-exporting button,
-  .is-exporting .nav-menu {
-    display: none !important;
+    background-color: #e5e7eb !important;
   }
     </style>
 </head>
