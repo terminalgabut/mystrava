@@ -1,6 +1,6 @@
 /**
- * Export Engine V2.1 - The "Solid Color" Force
- * Fokus: Memperbaiki warna pudar pada Card Dark & Mapbox
+ * Export Engine V2.2 - The "Blackout" Edition
+ * Fokus: Menghancurkan transparansi & filter yang menyebabkan hasil pudar
  */
 export const captureElement = async (elementClassOrId, fileName = 'activity-pro') => {
     if (!window.html2canvas) return false;
@@ -8,80 +8,80 @@ export const captureElement = async (elementClassOrId, fileName = 'activity-pro'
     const element = document.getElementById(elementClassOrId) || document.querySelector(`.${elementClassOrId}`);
     if (!element) return false;
 
-    // Sembunyikan UI dan elemen vConsole
+    // Sembunyikan UI pengganggu
     const toHide = document.querySelectorAll('.no-export, .vc-switch, button, .nav-menu, .v-console, .v-panel');
     toHide.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
     try {
-        console.log("📸 Memulai capture high-contrast...");
+        console.log("🚀 Menjalankan Deep-Solidify Capture...");
 
         const canvas = await window.html2canvas(element, {
             useCORS: true,
             allowTaint: true,
-            scale: 3,                 // 3x Density agar teks Inter tajam
-            backgroundColor: '#F1F5F9', // Paksa latar Slate 50
+            scale: 3,                 
+            backgroundColor: '#F1F5F9', 
             windowWidth: 600,         
             onclone: (clonedDoc) => {
                 const clonedEl = clonedDoc.querySelector(`.${elementClassOrId}`) || clonedDoc.getElementById(elementClassOrId);
                 
                 if (clonedEl) {
                     clonedEl.classList.add('is-exporting');
+                    
+                    // BRUTE FORCE: Ambil SEMUA elemen di dalam kloningan
+                    const allElements = clonedEl.querySelectorAll('*');
+                    
+                    allElements.forEach(el => {
+                        // 1. Hancurkan semua filter (Blur, Grayscale, Backdrop-filter)
+                        el.style.filter = "none";
+                        el.style.backdropFilter = "none";
+                        el.style.webkitBackdropFilter = "none";
+                        
+                        // 2. Paksa Opacity menjadi Solid
+                        el.style.opacity = "1";
 
-                    // 1. FORCE BACKGROUND UTAMA
-                    clonedEl.style.backgroundColor = "#F1F5F9";
-                    clonedEl.style.opacity = "1";
+                        // 3. Perbaikan Kartu Gelap (Time Analysis)
+                        // Jika elemen adalah kartu gelap, paksa background Slate 900
+                        if (el.classList.contains('time-analysis-card') || el.classList.contains('bg-slate-900') || el.className.includes('card-dark')) {
+                            el.style.setProperty('background-color', '#0F172A', 'important');
+                            el.style.setProperty('color', '#FFFFFF', 'important');
+                        }
 
-                    // 2. FIX CARD GELAP (Time Analysis) - Solusi agar tidak abu-abu pudar
-                    // Cari semua elemen yang seharusnya berwarna gelap pekat
-                    const darkCards = clonedEl.querySelectorAll('[class*="card-dark"], [class*="time-analysis"], .analysis-card');
-                    darkCards.forEach(card => {
-                        card.style.setProperty('background-color', '#0F172A', 'important'); // Slate 900
-                        card.style.setProperty('color', '#FFFFFF', 'important');
-                        card.style.opacity = "1";
+                        // 4. Perbaikan Teks (Anti-Pudar)
+                        if (el.classList.contains('stat-value') || el.tagName === 'H1') {
+                            el.style.setProperty('color', '#0F172A', 'important');
+                            el.style.letterSpacing = "0";
+                        }
+
+                        // 5. Perbaikan Label (Distance, Pace, dll)
+                        if (el.classList.contains('label-muted') || el.classList.contains('text-slate-400')) {
+                            el.style.setProperty('color', '#475569', 'important'); // Slate 600
+                            el.style.fontWeight = "800";
+                        }
                     });
 
-                    // 3. FIX TEKS STATISTIK (Agar Hitam Pekat)
-                    const mainTexts = clonedEl.querySelectorAll('h1, .stat-value, .text-main');
-                    mainTexts.forEach(t => {
-                        t.style.setProperty('color', '#0F172A', 'important');
-                        t.style.setProperty('opacity', '1', 'important');
-                        t.style.letterSpacing = "0"; // Anti-blur
-                    });
-
-                    // 4. FIX MAPBOX (Agar Peta Terlihat Jelas)
+                    // Fix khusus Mapbox agar tidak bolong
                     const mapCanvas = clonedEl.querySelector('.mapboxgl-canvas');
                     if (mapCanvas) {
                         mapCanvas.style.setProperty('opacity', '1', 'important');
-                        mapCanvas.style.setProperty('visibility', 'visible', 'important');
+                        mapCanvas.style.setProperty('background', '#e5e7eb', 'important');
                     }
-
-                    // 5. FIX SPLITS & MUTED TEXT
-                    const mutedTexts = clonedEl.querySelectorAll('.label-muted, .text-muted');
-                    mutedTexts.forEach(m => {
-                        m.style.setProperty('color', '#475569', 'important'); // Slate 600
-                        m.style.setProperty('font-weight', '900', 'important');
-                    });
                 }
             }
         });
 
-        // Generate PNG (PNG jauh lebih tajam untuk dashboard daripada JPG)
         const dataUrl = canvas.toDataURL("image/png", 1.0);
         const link = document.createElement('a');
         link.download = `${fileName.replace(/\s+/g, '-').toLowerCase()}.png`;
         link.href = dataUrl;
-        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         return true;
-
     } catch (err) {
-        console.error("❌ Export Error:", err);
+        console.error("❌ Export Engine Error:", err);
         return false;
     } finally {
-        // Kembalikan UI normal
         toHide.forEach(el => el.style.display = '');
     }
 };
