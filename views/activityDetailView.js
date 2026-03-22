@@ -2,61 +2,67 @@ export default `
 <div class="activity-detail-wrapper animate-in pb-12">
     <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div class="flex items-center gap-4">
-            <button @click="$router.back()" class="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
+            <button @click="$router.back()" class="no-export p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
                 <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
             </button>
             <div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ activity?.name || 'Loading...' }}</h1>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ activity?.name || 'Loading...' }}</h1>
+                    
+                    <button @click="downloadSnapshot" 
+                            class="no-export p-1.5 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 transition-all active:scale-90 shadow-sm group">
+                        <i data-lucide="share-2" class="w-4 h-4 text-blue-600"></i>
+                    </button>
+                </div>
+
                 <p class="text-slate-500 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
-    <span>{{ formatDate(activity?.start_date) }}</span>
-    <span class="text-slate-300">•</span>
-    <span class="flex items-center gap-1 text-slate-700 max-w-[250px] md:max-w-none">
-        <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
-        <span class="truncate md:whitespace-normal">{{ activity?.location_name || 'Unknown Location' }}</span>
-    </span>
-    <span class="text-slate-300">•</span>
-    <span class="text-blue-600 font-black">{{ activity?.type || 'Activity' }}</span>
-</p>
+                    <span>{{ formatDate(activity?.start_date) }}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="flex items-center gap-1 text-slate-700 max-w-[250px] md:max-w-none">
+                        <i data-lucide="map-pin" class="w-3 h-3 text-red-500 shrink-0"></i> 
+                        <span class="truncate md:whitespace-normal">{{ activity?.location_name || 'Unknown Location' }}</span>
+                    </span>
+                    <span class="text-slate-300">•</span>
+                    <span class="text-blue-600 font-black">{{ activity?.type || 'Activity' }}</span>
+                </p>
             </div>
         </div>
 
         <div v-if="!loading && activity" 
-     class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm transition-all">
-    
-    <div class="flex items-center gap-3 border-r border-slate-100 pr-4">
-        <div :class="weatherInfo?.bg || 'bg-slate-50'" 
-             class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors">
-            
-            <i :key="weatherInfo?.icon"
-               :data-lucide="weatherInfo?.icon || 'sun'" 
-               :class="weatherInfo?.text || 'text-slate-400'" 
-               class="w-6 h-6 stroke-[2.5px]"></i>
-        </div>
-        <div>
-            <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">
-                {{ weatherInfo?.status || 'Temp' }}
-            </p>
-            <p class="text-sm font-black text-slate-900 leading-none">
-                {{ activity.weather_temp }}°C
-            </p>
-        </div>
-    </div>
+             class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm transition-all">
+            <div class="flex items-center gap-3 border-r border-slate-100 pr-4">
+                <div :class="weatherInfo?.bg || 'bg-slate-50'" 
+                     class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors">
+                    <i :key="weatherInfo?.icon"
+                       :data-lucide="weatherInfo?.icon || 'sun'" 
+                       :class="weatherInfo?.text || 'text-slate-400'" 
+                       class="w-6 h-6 stroke-[2.5px]"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">
+                        {{ weatherInfo?.status || 'Temp' }}
+                    </p>
+                    <p class="text-sm font-black text-slate-900 leading-none">
+                        {{ activity.weather_temp }}°C
+                    </p>
+                </div>
+            </div>
 
-    <div class="flex gap-5">
-        <div class="text-center group">
-            <i data-lucide="wind" class="w-4 h-4 text-slate-300 mx-auto mb-1 group-hover:text-slate-500 transition-colors"></i>
-            <p class="text-[10px] font-bold text-slate-700">
-                {{ activity.weather_wind }} <span class="text-[8px] text-slate-400 uppercase">km/h</span>
-            </p>
+            <div class="flex gap-5">
+                <div class="text-center group">
+                    <i data-lucide="wind" class="w-4 h-4 text-slate-300 mx-auto mb-1 group-hover:text-slate-500 transition-colors"></i>
+                    <p class="text-[10px] font-bold text-slate-700">
+                        {{ activity.weather_wind }} <span class="text-[8px] text-slate-400 uppercase">km/h</span>
+                    </p>
+                </div>
+                <div class="text-center group">
+                    <i data-lucide="droplets" class="w-4 h-4 text-blue-200 mx-auto mb-1 group-hover:text-blue-500 transition-colors"></i>
+                    <p class="text-[10px] font-bold text-slate-700">
+                        {{ activity.weather_humidity }} <span class="text-[8px] text-slate-400 uppercase">%</span>
+                    </p>
+                </div>
+            </div>
         </div>
-        <div class="text-center group">
-            <i data-lucide="droplets" class="w-4 h-4 text-blue-200 mx-auto mb-1 group-hover:text-blue-500 transition-colors"></i>
-            <p class="text-[10px] font-bold text-slate-700">
-                {{ activity.weather_humidity }} <span class="text-[8px] text-slate-400 uppercase">%</span>
-            </p>
-        </div>
-    </div>
-</div>
     </header>
 
     <div v-if="loading" class="space-y-6">
@@ -156,7 +162,6 @@ export default `
                             </div>
                         </div>
                     </template>
-                    
                     <div v-else class="py-4 text-center">
                         <p class="text-[10px] text-slate-400 font-bold uppercase italic">Data split tidak tersedia</p>
                     </div>
