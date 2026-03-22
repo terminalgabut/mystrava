@@ -23,6 +23,7 @@ export const initActivityMap = (containerId, activity) => {
             center: [activity.start_lng, activity.start_lat], 
             zoom: 14,
             attributionControl: false
+            preserveDrawingBuffer: true
         });
 
         map.on('load', () => {
