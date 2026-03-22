@@ -89,7 +89,7 @@ export default `
                 {{ stats.totalDuration || '00:00' }}
             </h2>
             <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
-                Elapsed time
+                Moving time
             </p>
         </div>
     </div>
