@@ -41,3 +41,16 @@
     --radius-2xl: 24px;
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* variables.css */
+
+/* ... kode asli Anda ... */
+
+/* Variabel Khusus Saat Sesi Foto */
+.is-exporting {
+    --bg-app: #F1F5F9;           /* Tetap Slate 50 [cite: 37] */
+    --text-main: #000000;        /* Paksa Hitam Pekat untuk Header [cite: 38] */
+    --text-body: #1E293B;        /* Slate 800 untuk teks isi [cite: 39] */
+    --text-muted: #475569;       /* Slate 600 untuk label agar kontras naik [cite: 40] */
+    --shadow-premium: none;      /* Hapus shadow kompleks agar tidak blur [cite: 42] */
+}
