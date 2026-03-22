@@ -4,7 +4,8 @@ import { supabase } from '../js/services/supabase.js';
 import { stravaService } from '../js/services/stravaService.js';
 import { Logger } from '../js/services/debug.js';
 import { getWeatherEngine } from '../js/utils/weatherEngine.js'; 
-import { initActivityMap } from '../js/utils/mapEngine.js'; // Import Engine Baru
+import { initActivityMap } from '../js/utils/mapEngine.js';
+import { captureElement } from '../js/utils/exportEngine.js';
 
 export default {
     name: 'ActivityDetailView',
@@ -127,6 +128,13 @@ export default {
             if (!dateStr) return '...';
             return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         };
+
+        const downloadSnapshot = async () => {
+    const success = await captureElement('activity-detail-wrapper', `Activity-${activity.value.name}`);
+    if (success) {
+        console.log("Snapshot berhasil diunduh!");
+    }
+};
 
         onMounted(loadActivityDetail);
 
