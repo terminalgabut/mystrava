@@ -74,3 +74,20 @@ a:hover {
     font-weight: 450;
     letter-spacing: -0.01em;
 }
+
+/* typography.css */
+
+/* ... kode asli Anda ... */
+
+/* Penyesuaian Tipografi Saat Foto */
+.is-exporting h1, 
+.is-exporting .stat-value {
+    letter-spacing: 0 !important;      /* Matikan rapat huruf agar tidak blur  */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility; [cite: 7]
+}
+
+.is-exporting .label-muted {
+    font-weight: 900 !important;       /* Pertebal label kecil [cite: 29] */
+    color: var(--text-muted) !important;
+}
