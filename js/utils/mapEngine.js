@@ -22,7 +22,7 @@ export const initActivityMap = (containerId, activity) => {
             // Koordinat Mapbox: [Longitude, Latitude]
             center: [activity.start_lng, activity.start_lat], 
             zoom: 14,
-            attributionControl: false
+            attributionControl: false,
             preserveDrawingBuffer: true
         });
 
