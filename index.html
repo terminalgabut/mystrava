@@ -72,6 +72,18 @@
     opacity: 1 !important;
     filter: none !important;
   }
+
+  /* Pastikan teks di dalam kartu gelap dipaksa putih terang */
+.is-exporting .bg-slate-900 *, 
+.is-exporting [class*="card-dark"] * {
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+}
+
+/* Pastikan Mapbox Container punya warna dasar jika tile gagal load */
+.is-exporting .mapboxgl-map {
+  background-color: #E5E7EB !important;
+}
     </style>
 </head>
 
