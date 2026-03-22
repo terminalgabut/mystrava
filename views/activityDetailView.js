@@ -24,12 +24,18 @@ export default `
      class="flex items-center gap-4 bg-white p-2 pr-6 rounded-2xl border border-slate-100 shadow-sm transition-all">
     
     <div class="flex items-center gap-3 border-r border-slate-100 pr-4">
-        <div :class="weatherInfo.bgClass" 
+        <div :class="weatherInfo?.bg || 'bg-slate-50'" 
              class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors">
-            <i :data-lucide="weatherInfo.icon" :class="weatherInfo.iconClass" class="w-6 h-6 stroke-[2.5px]"></i>
+            
+            <i :key="weatherInfo?.icon"
+               :data-lucide="weatherInfo?.icon || 'sun'" 
+               :class="weatherInfo?.text || 'text-slate-400'" 
+               class="w-6 h-6 stroke-[2.5px]"></i>
         </div>
         <div>
-            <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Temp</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">
+                {{ weatherInfo?.status || 'Temp' }}
+            </p>
             <p class="text-sm font-black text-slate-900 leading-none">
                 {{ activity.weather_temp }}°C
             </p>
