@@ -12,17 +12,50 @@ export default {
     name: 'ActivityDetailView',
     template: detailTemplate,
     setup() {
-        const { ref, onMounted, onUnmounted, nextTick, computed, watch } = Vue;
+        const { ref, onMounted, onUnmounted, nextTick, computed, watch, createApp } = Vue;
         const route = VueRouter.useRoute();
         
         const activity = ref(null);
         const loading = ref(true);
+        const isExportReady = ref(false); // Status kesiapan peta ekspor
         let mapInstance = null;
+        let exportApp = null; // Instance Vue untuk ekspor
 
         // --- UI HELPERS ---
         const refreshLucide = () => nextTick(() => {
             if (window.lucide) window.lucide.createIcons();
         });
+
+        // --- PRE-RENDER EXPORT ENGINE ---
+        // Fungsi ini menyiapkan komponen ekspor di latar belakang
+        const prepareExportComponent = () => {
+            const container = document.getElementById('export-mount');
+            if (!container || !activity.value) return;
+
+            console.log("⏳ Menyiapkan peta ekspor di latar belakang...");
+
+            // Hapus instance lama jika ada
+            if (exportApp) {
+                exportApp.unmount();
+                container.innerHTML = "";
+            }
+
+            exportApp = createApp({
+                components: { ActivityExportComponent },
+                template: `<ActivityExportComponent :activity="activity" />`,
+                setup() {
+                    return { activity: activity.value };
+                }
+            });
+
+            exportApp.mount(container);
+
+            // Beri waktu Mapbox untuk loading tiles (3-4 detik cukup aman)
+            setTimeout(() => {
+                isExportReady.value = true;
+                console.log("✅ Peta ekspor siap digunakan.");
+            }, 4000);
+        };
 
         // --- DATA LOADING ---
         const loadActivityDetail = async () => {
@@ -39,20 +72,20 @@ export default {
 
                 activity.value = data;
 
-                // INISIALISASI MAPBOX via Engine
+                // INISIALISASI MAP UTAMA (View)
                 if (data.summary_polyline) {
                     nextTick(() => {
-                        // Bersihkan map lama jika ada (Safety check)
                         if (mapInstance) {
                             mapInstance.remove();
                             mapInstance = null;
                         }
-                        // Panggil Engine: ID kontainer di template harus 'map'
                         mapInstance = initActivityMap('map', data);
+                        
+                        // 🔥 TRIGGER PRE-RENDER EKSPOR
+                        prepareExportComponent();
                     });
                 }
 
-                // Fallback Nama Lokasi jika kosong
                 if (!data.location_name && data.start_lat) {
                     fetchReverseGeocode(data.start_lat, data.start_lng);
                 }
@@ -79,28 +112,23 @@ export default {
             } catch (e) { return null; }
         };
 
-        // --- WEATHER ENGINE COMPUTED ---
+        // --- WEATHER & STATS COMPUTED ---
         const weatherInfo = computed(() => {
             if (!activity.value || activity.value.weather_temp === null) {
                 return { icon: 'cloud', bg: 'bg-slate-50', text: 'text-slate-400', status: 'N/A' };
             }
-
-            // Panggil Engine V8 (Support Konteks Waktu + WMO Code)
             const engine = getWeatherEngine(
                 activity.value.weather_temp,
                 activity.value.weather_humidity,
                 activity.value.weather_wind,
                 activity.value.start_date,
-                activity.value.weather_code // Gunakan weather_code dari DB
+                activity.value.weather_code
             );
-
             return engine.main;
         });
 
-        // Watch weatherInfo untuk update icon Lucide secara reaktif
         watch(weatherInfo, () => refreshLucide());
 
-        // --- PERFORMANCE COMPUTED ---
         const performanceValue = computed(() => 
             activity.value ? stravaService.calculatePace(activity.value.average_speed, activity.value.type) : '--:--'
         );
@@ -130,57 +158,36 @@ export default {
             return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         };
 
+        // --- DOWNLOAD ACTION ---
         const downloadSnapshot = async () => {
-    console.log("🚀 Export mode terpisah...");
+            if (!isExportReady.value) {
+                alert("Sedang menyiapkan peta ekspor, tunggu beberapa detik...");
+                return;
+            }
 
-    const container = document.getElementById('export-mount');
-    if (!container) {
-        console.error("❌ export-mount tidak ditemukan");
-        return;
-    }
+            console.log("📸 Memulai ekspor dari pre-rendered component...");
+            
+            // captureElement mengambil 'export-root' yang sudah di-mount oleh prepareExportComponent
+            const success = await captureElement(
+                'export-root',
+                `Activity-${activity.value?.name || 'Export'}`
+            );
 
-    const app = Vue.createApp({
-        components: { ActivityExportComponent },
-        template: `<ActivityExportComponent :activity="activity" />`,
-        setup() {
-            return {
-                activity: activity.value // ✅ FIX PENTING
-            };
-        }
-    });
-
-    app.mount(container);
-
-    await nextTick();
-
-    // ⏳ biar layout stabil (WAJIB)
-    await new Promise(r => setTimeout(r, 300));
-
-    const success = await captureElement(
-        'export-root',
-        `Activity-${activity.value?.name || 'Export'}`
-    );
-
-    app.unmount();
-    container.innerHTML = "";
-
-    if (success) {
-        console.log("✅ Export berhasil!");
-    }
-};
+            if (success) {
+                console.log("✅ Export berhasil!");
+            }
+        };
         
         onMounted(loadActivityDetail);
 
         onUnmounted(() => {
-            if (mapInstance) {
-                mapInstance.remove();
-                mapInstance = null;
-            }
+            if (mapInstance) mapInstance.remove();
+            if (exportApp) exportApp.unmount();
         });
 
         return { 
             activity, loading, performanceValue, 
-            weatherInfo, realSplits,
+            weatherInfo, realSplits, isExportReady,
             formatTime, formatDate, downloadSnapshot
         };
     }
