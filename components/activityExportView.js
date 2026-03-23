@@ -1,103 +1,112 @@
 export default `
-<div id="export-root" class="w-[600px] bg-[#F8FAFC] p-8 flex flex-col gap-6 font-sans relative overflow-hidden">
+<div id="export-root" class="w-[600px] bg-[#0F172A] p-0 flex flex-col font-sans relative overflow-hidden">
   
-  <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"></div>
-
-  <div class="flex justify-between items-start">
-    <div class="flex flex-col gap-1">
-      <h1 class="text-2xl font-[900] text-slate-900 tracking-tight leading-tight uppercase">
-        {{ activity?.name || 'Daily Run' }}
-      </h1>
-      <div class="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-        <span>{{ formatDate(activity?.start_date) }}</span>
-        <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-        <span>{{ activity?.location_name || 'Outdoor Track' }}</span>
-      </div>
-    </div>
-    <div class="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-black italic tracking-tighter">
-      MYSTRAVA<span class="text-blue-400">PRO</span>
-    </div>
+  <div class="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-blue-600 rounded-full blur-[120px]"></div>
+    <div class="absolute top-1/2 -right-24 w-80 h-80 bg-purple-600 rounded-full blur-[100px]"></div>
   </div>
 
-  <div class="w-full aspect-square rounded-[48px] overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-[8px] border-white relative">
-    <div id="export-map" class="w-full h-full"></div>
-    <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-  </div>
-
-  <div class="grid grid-cols-3 gap-4">
-    <div class="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</span>
-      <div class="flex items-baseline gap-1">
-        <span class="text-2xl font-black text-slate-900">{{ ((activity?.distance || 0)/1000).toFixed(2) }}</span>
-        <span class="text-xs font-bold text-slate-500">KM</span>
-      </div>
-    </div>
+  <div class="relative z-10 p-8 flex flex-col gap-6">
     
-    <div class="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Pace</span>
-      <span class="text-2xl font-black text-slate-900">{{ performanceValue }}</span>
-    </div>
-
-    <div class="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Elevation</span>
-      <div class="flex items-baseline gap-1">
-        <span class="text-2xl font-black text-slate-900">{{ Math.round(activity?.total_elevation_gain || 0) }}</span>
-        <span class="text-xs font-bold text-slate-500">M</span>
+    <div class="flex justify-between items-start">
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+           <span class="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter">
+             {{ activity?.type || 'RUN' }}
+           </span>
+           <span class="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase">
+             Premium Activity
+           </span>
+        </div>
+        <h1 class="text-3xl font-[900] text-white tracking-tighter leading-none uppercase italic">
+          {{ activity?.name || 'Daily Session' }}
+        </h1>
+        <div class="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+          <i class="fas fa-calendar-alt text-blue-500"></i>
+          <span>{{ formatDate(activity?.start_date) }}</span>
+          <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+          <i class="fas fa-map-marker-alt text-blue-500"></i>
+          <span>{{ activity?.location_name || 'Outdoor' }}</span>
+        </div>
+      </div>
+      <div class="flex flex-col items-end">
+         <div class="bg-white/10 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-xl text-[10px] font-black italic tracking-tighter shadow-xl">
+           MYSTRAVA<span class="text-blue-400">PRO</span>
+         </div>
       </div>
     </div>
-  </div>
 
-  <div class="flex items-center justify-between px-2">
-    <div class="flex items-center gap-4">
-       <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center">
-             <i class="fas fa-fire text-orange-500 text-xs"></i>
-          </div>
-          <span class="text-xs font-bold text-slate-600">{{ Math.round(activity?.calories || 0) }} kcal</span>
-       </div>
-       <div class="flex items-center gap-2" v-if="activity?.weather_temp">
-          <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-             <i class="fas fa-cloud-sun text-blue-500 text-xs"></i>
-          </div>
-          <span class="text-xs font-bold text-slate-600">{{ activity?.weather_temp }}°C</span>
-       </div>
-    </div>
-    <div class="text-[11px] font-bold text-slate-400 uppercase italic">
-       Moving Time: {{ formatTime(activity?.moving_time) }}
-    </div>
-  </div>
-
-  <div class="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm flex flex-col gap-4">
-    <div class="flex justify-between items-center px-1">
-      <h3 class="text-xs font-[900] text-slate-900 uppercase tracking-[0.2em]">Splits Analysis</h3>
-      <div class="h-[1px] flex-1 mx-4 bg-slate-100"></div>
-      <span class="text-[10px] font-bold text-slate-400 uppercase">Min/KM</span>
-    </div>
-
-    <div class="grid grid-cols-1 gap-2">
-      <div v-for="split in displayedSplits" :key="split.number"
-           class="flex justify-between items-center bg-slate-50/50 hover:bg-slate-50 px-4 py-3 rounded-2xl transition-colors border border-transparent hover:border-slate-100">
-        
-        <div class="flex items-center gap-4">
-          <span class="w-6 text-[10px] font-black text-slate-300">#{{ split.number }}</span>
-          <div class="h-8 w-[2px] bg-blue-500 rounded-full"></div>
-          <div class="flex flex-col">
-            <span class="text-xs font-black text-slate-900">Kilometer {{ split.number }}</span>
-            <span class="text-[9px] font-bold text-emerald-500">{{ split.elevation > 0 ? '+' : '' }}{{ split.elevation }}m gain</span>
-          </div>
-        </div>
-
-        <div class="text-sm font-black text-slate-900 tabular-nums">
-          {{ split.pace }}
-        </div>
-
+    <div class="w-full aspect-square rounded-[40px] overflow-hidden bg-slate-800 shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-[1px] border-white/10 relative">
+      <div id="export-map" class="w-full h-full opacity-90"></div>
+      <div class="absolute inset-0 pointer-events-none border-[12px] border-black/5 rounded-[40px]"></div>
+      <div class="absolute bottom-6 right-6 opacity-40">
+         <div class="text-[8px] text-white font-black tracking-widest uppercase bg-black/20 backdrop-blur-md px-2 py-1 rounded">Verified GPS</div>
       </div>
     </div>
-  </div>
 
-  <div class="text-center mt-2">
-    <p class="text-[10px] font-bold text-slate-300 italic">"Consistency is the key to excellence"</p>
-  </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center shadow-2xl">
+        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1 text-center">Distance</span>
+        <div class="flex items-baseline gap-1">
+          <span class="text-3xl font-black text-white italic tracking-tighter">{{ ((activity?.distance || 0)/1000).toFixed(2) }}</span>
+          <span class="text-[10px] font-black text-slate-500 uppercase italic">KM</span>
+        </div>
+      </div>
+      
+      <div class="bg-blue-600 rounded-[28px] p-5 flex flex-col items-center shadow-[0_10px_30px_rgba(37,99,235,0.3)]">
+        <span class="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-1 text-center">Avg Pace</span>
+        <span class="text-3xl font-black text-white italic tracking-tighter">{{ performanceValue }}</span>
+      </div>
 
+      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center shadow-2xl">
+        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1 text-center">Elevation</span>
+        <div class="flex items-baseline gap-1 text-center">
+          <span class="text-3xl font-black text-white italic tracking-tighter">{{ Math.round(activity?.total_elevation_gain || 0) }}</span>
+          <span class="text-[10px] font-black text-slate-500 uppercase italic">M</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between px-4 py-4 bg-white/[0.03] rounded-3xl border border-white/5">
+      <div class="flex gap-6">
+        <div class="flex flex-col">
+          <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Calories</span>
+          <span class="text-xs font-black text-slate-200">{{ Math.round(activity?.calories || 0) }} kcal</span>
+        </div>
+        <div class="flex flex-col" v-if="activity?.weather_temp">
+          <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Weather</span>
+          <span class="text-xs font-black text-slate-200">{{ activity?.weather_temp }}°C Clear</span>
+        </div>
+      </div>
+      <div class="h-8 w-[1px] bg-white/10"></div>
+      <div class="flex flex-col items-end">
+        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Moving Time</span>
+        <span class="text-xs font-black text-slate-200 tabular-nums">{{ formatTime(activity?.moving_time) }}</span>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center gap-3">
+        <h3 class="text-[10px] font-black text-white uppercase tracking-[0.3em]">Lap Splits</h3>
+        <div class="h-[1px] flex-1 bg-gradient-to-r from-blue-500/50 to-transparent"></div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2">
+        <div v-for="split in displayedSplits" :key="split.number"
+             class="bg-white/[0.03] border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center transition-all">
+          <span class="text-[8px] font-black text-slate-500 mb-0.5 uppercase tracking-tighter">KM {{ split.number }}</span>
+          <span class="text-[11px] font-black text-white tabular-nums tracking-tighter">{{ split.pace }}</span>
+          <div class="w-6 h-[2px] bg-blue-600/50 mt-1 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-center items-center gap-4 mt-2 opacity-30">
+       <div class="h-[1px] w-12 bg-white"></div>
+       <span class="text-[8px] font-bold text-white uppercase tracking-[0.5em]">No Pain No Gain</span>
+       <div class="h-[1px] w-12 bg-white"></div>
+    </div>
+
+  </div>
 </div>
 `;
