@@ -2,6 +2,7 @@
 
 import template from './activityExportView.js';
 import { stravaService } from '../js/services/stravaService.js';
+import { initActivityMap } from '../js/utils/mapEngine.js';
 
 export default {
   name: 'ActivityExportComponent',
@@ -9,7 +10,9 @@ export default {
   template,
 
   setup(props) {
-    const { computed } = Vue;
+    const { computed, onMounted, nextTick } = Vue;
+
+    let mapInstance = null;
 
     // 🔹 Pace / speed
     const performanceValue = computed(() => {
@@ -46,6 +49,21 @@ export default {
     const remainingSplits = computed(() => {
       const splits = props.activity?.splits_metric || [];
       return Math.max(0, splits.length - 5);
+    });
+
+    // 🔥 INIT MAP (WAJIB untuk export premium)
+    onMounted(() => {
+      if (!props.activity?.summary_polyline) return;
+
+      nextTick(() => {
+        // cleanup dulu (safety)
+        if (mapInstance) {
+          mapInstance.remove();
+          mapInstance = null;
+        }
+
+        mapInstance = initActivityMap('export-map', props.activity);
+      });
     });
 
     return {
