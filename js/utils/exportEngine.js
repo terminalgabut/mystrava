@@ -1,82 +1,63 @@
+/**
+ * Export Engine Premium menggunakan html-to-image
+ * Lebih akurat dalam merender teks, backdrop-filter, dan Mapbox.
+ */
 export const captureElement = async (elementId, fileName = 'activity-pro') => {
-    if (!window.html2canvas) return false;
-
     const element = document.getElementById(elementId);
-    if (!element) {
-        console.error("❌ Element tidak ditemukan:", elementId);
+    
+    // Pastikan library html-to-image sudah terpasang di index.html
+    if (!element || !window.htmlToImage) {
+        console.error("❌ Element tidak ditemukan atau library html-to-image belum dimuat.");
         return false;
     }
 
     try {
-        console.log("📸 Memulai capture (Premium Dark Mode)...");
+        console.log("🚀 Memulai Export (High Fidelity Mode)...");
 
-        // Paksa scroll ke atas agar koordinat capture tidak meleset
-        window.scrollTo(0, 0);
-
-        const canvas = await window.html2canvas(element, {
-            useCORS: true,
-            allowTaint: false, // Ubah ke false untuk keamanan CORS pada Mapbox
-
-            // 🔥 Kualitas 2x agar tajam di layar Retina/HP High-end
-            scale: 2,
-
-            // 🌑 WAJIB GANTI: Agar background dasar foto mengikuti tema Navy Dark
-            backgroundColor: '#0F172A', 
-
-            // 🔒 Kunci layout sesuai lebar container desain kita
+        // Opsi konfigurasi untuk hasil maksimal
+        const options = {
+            quality: 1.0,
+            pixelRatio: 2, // Hasil 2x lebih tajam (Retina/4K Ready)
+            backgroundColor: '#0F172A', // Paksa background Navy Dark
             width: 600,
-            windowWidth: 600,
-
-            // Biarkan html2canvas menghitung tinggi otomatis berdasarkan konten
-            scrollX: 0,
-            scrollY: -window.scrollY,
-
-            onclone: (clonedDoc) => {
-                const clonedEl = clonedDoc.getElementById(elementId);
-                if (!clonedEl) return;
-
-                // 🔥 1. Fix CSS: Memastikan font-family dan ikon muncul
-                const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-                styles.forEach(style => {
-                    clonedDoc.head.appendChild(style.cloneNode(true));
-                });
-
-                // 🔥 2. Paksa Warna Teks & BG (Override inline styles jika ada)
-                clonedEl.style.backgroundColor = '#0F172A';
-                clonedEl.style.width = '600px';
-                clonedEl.style.display = 'block';
-
-                // 🔥 3. Fix untuk Mapbox & Font
-                const all = clonedEl.querySelectorAll('*');
-                all.forEach(el => {
-                    // Pastikan teks putih terlihat jelas
-                    el.style.webkitFontSmoothing = 'antialiased';
-                    
-                    // Hilangkan backdrop-filter karena html2canvas belum mendukungnya (bikin kotak hitam)
-                    if (getComputedStyle(el).backdropFilter !== 'none') {
-                        el.style.backdropFilter = 'none';
-                        el.style.backgroundColor = 'rgba(255,255,255,0.05)'; // Fallback glass effect
-                    }
-                });
+            height: element.offsetHeight,
+            style: {
+                // Pastikan transformasi CSS bersih saat capture
+                transform: 'scale(1)',
+                transformOrigin: 'top left',
+                // Matikan filter yang berat jika diperlukan, 
+                // tapi html-to-image biasanya mendukung backdrop-filter lebih baik
+            },
+            // Memastikan font eksternal dan gambar CORS termuat
+            cacheBust: true,
+            // Lewati elemen yang tidak ingin diekspor (jika ada class .no-export)
+            filter: (node) => {
+                return !node.classList?.contains('no-export');
             }
-        });
+        };
 
-        // 🔥 Export ke PNG dengan kualitas tinggi
-        const dataUrl = canvas.toDataURL("image/png", 1.0);
+        // 1. Generate PNG Data URL
+        // Kita gunakan toPng untuk hasil terbaik tanpa kompresi pecah
+        const dataUrl = await window.htmlToImage.toPng(element, options);
 
+        // 2. Proses Download otomatis
         const link = document.createElement('a');
-        link.download = `${fileName.replace(/\s+/g, '-').toLowerCase()}.png`;
+        const cleanFileName = fileName.replace(/\s+/g, '-').toLowerCase();
+        
+        link.download = `${cleanFileName}.png`;
         link.href = dataUrl;
-
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        console.log("✅ Export Premium Selesai");
+        console.log("✅ Export Selesai dengan Presisi Tinggi!");
         return true;
 
     } catch (err) {
         console.error("❌ Export Error:", err);
+        // Fallback jika terjadi error pada font/image loading
+        alert("Gagal mengekspor gambar. Pastikan semua aset (peta/ikon) sudah termuat sempurna.");
         return false;
     }
 };
