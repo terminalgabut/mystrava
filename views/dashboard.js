@@ -16,11 +16,10 @@ export default {
         const selectedPeriodKey = ref('total'); 
         const isLoading = ref(true);
         
-        // Data untuk grafik
         const trendData = ref({ 
             labels: [], 
             paceDatasets: [], 
-            comparisonDatasets: [] // Tetap diinisialisasi kosong agar tidak error di template
+            comparisonDatasets: [] 
         });
         
         // State Statistik Utama
@@ -32,6 +31,10 @@ export default {
             avgPace: "00:00", 
             calories: 0, 
             steps: 0,
+            // --- TAMBAHAN BARU UNTUK RIDE ---
+            avgWatts: 0,
+            totalKilojoules: 0,
+            // -------------------------------
             records: { longestDistance: '0.00', bestEffort: '--:--' },
             recentActivities: []
         });
@@ -60,40 +63,32 @@ export default {
         const loadData = async () => {
             isLoading.value = true;
             const pKey = selectedPeriodKey.value;
-            
-            // Tentukan tipe periode untuk query ke snapshot
             const pType = pKey.includes('-') ? 'month' : (pKey === 'total' ? 'all_time' : 'year');
-            
-            // Tentukan tahun untuk fetch data mentah (untuk keperluan chart tahunan)
             const chartYear = pKey === 'total' ? new Date().getFullYear() : pKey.split('-')[0];
 
             try {
-                // 1. Ambil data secara paralel
-                // getStats: Mengambil ringkasan dari tabel activity_snapshots & list detail
-                // getActivitiesByYear: Mengambil data mentah activities untuk diolah ChartLogic
+                // Fetch data dari Service yang sudah kita refactor
                 const [rawData, yearlyActivities] = await Promise.all([
                     stravaService.getStats(selectedType.value, pType, pKey),
                     stravaService.getActivitiesByYear(selectedType.value, chartYear)
                 ]);
                 
-                // 2. Map Stats & Recent Log
+                // Map Stats ke State
                 stats.value = {
                     ...rawData,
                     recentActivities: (rawData.recentActivities || []).map(act => ({
                         ...act,
-                        // distance sudah dihitung di service dalam km string
                         date: formatDate(act.start_date),
                         location_name: act.location_name || 'Training Ground'
                     }))
                 };
 
-                // 3. JALANKAN LOGIKA CHART (VERSI BERSIH)
+                // Proses Chart
                 const trend = ChartLogic.process(yearlyActivities, selectedType.value);
-
                 trendData.value = {
                     labels: trend.labels,
-                    paceDatasets: trend.paceDatasets, // Langsung ambil dari hasil olahan ChartLogic
-                    comparisonDatasets: [] // Paksa kosong untuk mematikan fitur Road vs Trail
+                    paceDatasets: trend.paceDatasets,
+                    comparisonDatasets: [] 
                 };
 
             } catch (err) {
