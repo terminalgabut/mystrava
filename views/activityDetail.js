@@ -131,13 +131,44 @@ export default {
         };
 
         const downloadSnapshot = async () => {
-            console.log("🚀 Tombol Share diklik, memanggil Export Engine...");
-            const success = await captureElement('activity-detail-wrapper', `Activity-${activity.value?.name || 'MyStrava'}`);
-            if (success) {
-                console.log("✅ Snapshot berhasil diunduh!");
-            }
-        };
+    console.log("🚀 Export mode terpisah...");
 
+    const container = document.getElementById('export-mount');
+    if (!container) {
+        console.error("❌ export-mount tidak ditemukan");
+        return;
+    }
+
+    // 🔥 Buat Vue instance khusus export
+    const app = Vue.createApp({
+        components: { ActivityExportComponent },
+        template: `<ActivityExportComponent :activity="activity" />`,
+        setup() {
+            return {
+                activity: activity.value
+            };
+        }
+    });
+
+    // 🔹 mount ke hidden DOM
+    const vm = app.mount(container);
+
+    await nextTick(); // tunggu render selesai
+
+    // 🔥 capture export view
+    const success = await captureElement(
+        'export-root',
+        `Activity-${activity.value?.name || 'Export'}`
+    );
+
+    // 🔥 cleanup
+    app.unmount();
+    container.innerHTML = "";
+
+    if (success) {
+        console.log("✅ Export berhasil!");
+    }
+};
         onMounted(loadActivityDetail);
 
         onUnmounted(() => {
