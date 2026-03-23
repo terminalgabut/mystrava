@@ -15,7 +15,7 @@ export default `
              {{ activity?.type || 'RUN' }}
            </span>
            <span class="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase leading-none -translate-y-[1px]">
-             Premium Activity
+             Nganggur Activity
            </span>
         </div>
         <h1 class="text-3xl font-[900] text-white tracking-tighter leading-none uppercase italic -mt-1">
