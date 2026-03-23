@@ -11,17 +11,17 @@ export default `
     <div class="flex justify-between items-start">
       <div class="flex flex-col gap-2">
         <div class="flex items-center gap-2">
-           <span class="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter leading-none flex items-center h-5">
+           <span class="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter leading-none flex items-center h-5 -translate-y-[1px]">
              {{ activity?.type || 'RUN' }}
            </span>
-           <span class="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase">
+           <span class="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase leading-none -translate-y-[1px]">
              Premium Activity
            </span>
         </div>
-        <h1 class="text-3xl font-[900] text-white tracking-tighter leading-none uppercase italic">
+        <h1 class="text-3xl font-[900] text-white tracking-tighter leading-none uppercase italic -mt-1">
           {{ activity?.name || 'Daily Session' }}
         </h1>
-        <div class="flex items-center gap-2 text-[11px] font-bold text-slate-300 uppercase tracking-widest mt-1">
+        <div class="flex items-center gap-2 text-[11px] font-bold text-slate-300 uppercase tracking-widest mt-1 -translate-y-[1px]">
           <i class="fas fa-calendar-alt text-blue-500 text-[10px]"></i>
           <span class="leading-none">{{ formatDate(activity?.start_date) }}</span>
           <span class="w-1 h-1 bg-slate-700 rounded-full mx-1"></span>
@@ -30,7 +30,7 @@ export default `
         </div>
       </div>
       <div class="flex flex-col items-end">
-         <div class="bg-white/10 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-xl text-[10px] font-black italic tracking-tighter shadow-xl">
+         <div class="bg-white/10 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-xl text-[10px] font-black italic tracking-tighter shadow-xl -translate-y-[2px]">
            MYSTRAVA<span class="text-blue-400">PRO</span>
          </div>
       </div>
@@ -40,64 +40,64 @@ export default `
       <div id="export-map" class="w-full h-full opacity-90"></div>
       <div class="absolute inset-0 pointer-events-none border-[12px] border-black/5 rounded-[40px]"></div>
       <div class="absolute bottom-6 right-6 opacity-40">
-         <div class="text-[8px] text-white font-black tracking-widest uppercase bg-black/20 backdrop-blur-md px-2 py-1 rounded">Verified GPS</div>
+         <div class="text-[8px] text-white font-black tracking-widest uppercase bg-black/20 backdrop-blur-md px-2 py-1 rounded leading-none flex items-center h-5">Verified GPS</div>
       </div>
     </div>
 
     <div class="grid grid-cols-3 gap-3">
-      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center justify-center shadow-2xl h-24">
-        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1 leading-none">Distance</span>
-        <div class="flex items-baseline gap-1">
-          <span class="text-3xl font-black text-white italic tracking-tighter leading-none">{{ ((activity?.distance || 0)/1000).toFixed(2) }}</span>
+      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] flex flex-col items-center justify-center shadow-2xl h-24 pt-4 pb-6">
+        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1.5 leading-none">Distance</span>
+        <div class="flex items-baseline gap-1 -translate-y-[1px]">
+          <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">{{ ((activity?.distance || 0)/1000).toFixed(2) }}</span>
           <span class="text-[10px] font-black text-slate-500 uppercase italic leading-none">KM</span>
         </div>
       </div>
       
-      <div class="bg-blue-600 rounded-[28px] p-5 flex flex-col items-center justify-center shadow-[0_10px_30px_rgba(37,99,235,0.3)] h-24">
-        <span class="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-1 leading-none">Avg Pace</span>
-        <span class="text-3xl font-black text-white italic tracking-tighter leading-none">{{ performanceValue }}</span>
+      <div class="bg-blue-600 rounded-[28px] flex flex-col items-center justify-center shadow-[0_10px_30px_rgba(37,99,235,0.3)] h-24 pt-4 pb-6">
+        <span class="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-1.5 leading-none">Avg Pace</span>
+        <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums -translate-y-[1px]">{{ performanceValue }}</span>
       </div>
 
-      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center justify-center shadow-2xl h-24">
-        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1 leading-none text-center">Elevation</span>
-        <div class="flex items-baseline gap-1">
-          <span class="text-3xl font-black text-white italic tracking-tighter leading-none">{{ Math.round(activity?.total_elevation_gain || 0) }}</span>
+      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] flex flex-col items-center justify-center shadow-2xl h-24 pt-4 pb-6">
+        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1.5 leading-none text-center px-2">Elevation</span>
+        <div class="flex items-baseline gap-1 -translate-y-[1px]">
+          <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">{{ Math.round(activity?.total_elevation_gain || 0) }}</span>
           <span class="text-[10px] font-black text-slate-500 uppercase italic leading-none">M</span>
         </div>
       </div>
     </div>
 
     <div class="flex items-center justify-between px-5 py-4 bg-white/[0.03] rounded-3xl border border-white/5">
-      <div class="flex gap-8">
+      <div class="flex gap-8 items-center">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+          <div class="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center -translate-y-[1px]">
             <i class="fas fa-fire text-orange-500 text-xs"></i>
           </div>
-          <div class="flex flex-col">
-            <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Calories</span>
-            <span class="text-xs font-black text-slate-200 leading-none">{{ Math.round(activity?.calories || 0) }} kcal</span>
+          <div class="flex flex-col pt-[1px] pb-[3px]">
+            <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">Calories</span>
+            <span class="text-xs font-black text-slate-200 leading-none tabular-nums">{{ Math.round(activity?.calories || 0) }} kcal</span>
           </div>
         </div>
         
         <div class="flex items-center gap-3" v-if="activity?.weather_temp">
-          <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+          <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center -translate-y-[1px]">
             <i class="fas fa-cloud-sun text-blue-400 text-xs"></i>
           </div>
-          <div class="flex flex-col">
-            <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Weather</span>
+          <div class="flex flex-col pt-[1px] pb-[3px]">
+            <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">Weather</span>
             <span class="text-xs font-black text-slate-200 leading-none">{{ activity?.weather_temp }}°C Clear</span>
           </div>
         </div>
       </div>
 
-      <div class="h-8 w-[1px] bg-white/10"></div>
+      <div class="h-8 w-[1px] bg-white/10 opacity-50"></div>
 
       <div class="flex items-center gap-3">
-        <div class="flex flex-col items-end">
-          <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Moving Time</span>
+        <div class="flex flex-col items-end pt-[1px] pb-[3px]">
+          <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">Moving Time</span>
           <span class="text-xs font-black text-slate-200 tabular-nums leading-none">{{ formatTime(activity?.moving_time) }}</span>
         </div>
-        <div class="w-8 h-8 rounded-full bg-slate-500/10 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full bg-slate-500/10 flex items-center justify-center -translate-y-[1px]">
            <i class="fas fa-stopwatch text-slate-400 text-xs"></i>
         </div>
       </div>
@@ -105,15 +105,15 @@ export default `
 
     <div class="flex flex-col gap-3">
       <div class="flex items-center gap-3 px-1">
-        <h3 class="text-[10px] font-black text-white uppercase tracking-[0.3em] leading-none">Lap Splits</h3>
+        <h3 class="text-[10px] font-black text-white uppercase tracking-[0.3em] leading-none -translate-y-[1px]">Lap Splits</h3>
         <div class="h-[1px] flex-1 bg-gradient-to-r from-blue-500/50 to-transparent"></div>
       </div>
 
       <div class="grid grid-cols-4 gap-2">
         <div v-for="split in displayedSplits" :key="split.number"
-             class="bg-white/[0.03] border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center transition-all h-[54px]">
-          <span class="text-[8px] font-black text-slate-500 mb-1 uppercase tracking-tighter leading-none">KM {{ split.number }}</span>
-          <span class="text-[11px] font-black text-white tabular-nums tracking-tighter leading-none">{{ split.pace }}</span>
+             class="bg-white/[0.03] border border-white/5 rounded-2xl flex flex-col items-center justify-center transition-all h-[56px] pt-3 pb-4">
+          <span class="text-[8px] font-black text-slate-500 mb-1.5 uppercase tracking-tighter leading-none">KM {{ split.number }}</span>
+          <span class="text-[11px] font-black text-white tabular-nums tracking-tighter leading-none -translate-y-[1px]">{{ split.pace }}</span>
           <div class="w-4 h-[1.5px] bg-blue-600/40 mt-1.5 rounded-full"></div>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default `
 
     <div class="flex justify-center items-center gap-4 mt-1 opacity-20">
        <div class="h-[0.5px] w-12 bg-white"></div>
-       <span class="text-[8px] font-bold text-white uppercase tracking-[0.5em] leading-none">No Pain No Gain</span>
+       <span class="text-[8px] font-bold text-white uppercase tracking-[0.5em] leading-none -translate-y-[1px]">No Pain No Gain</span>
        <div class="h-[0.5px] w-12 bg-white"></div>
     </div>
 
