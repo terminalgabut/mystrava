@@ -10,20 +10,20 @@
     <link rel="stylesheet" href="css/main.css">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style id="export-styles"> 
-    /* 1. GLOBAL CALIBRATION */
+    /* 1. GLOBAL RESET & CALIBRATION */
     .is-exporting * {
         box-sizing: border-box;
-        /* Kunci line-height agar tidak ada 'bantalan hantu' di bawah teks */
-        line-height: 1.1 !important; 
+        /* Line-height 1 adalah wajib agar tidak ada padding hantu */
+        line-height: 1 !important; 
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
     }
 
-    /* 2. ROOT & CONTAINER FIX */
     .is-exporting { 
-        background: #0F172A !important; /* Navy Dark Base */
+        background: #0F172A !important; 
         padding: 0 !important;
         margin: 0 !important;
     } 
@@ -32,61 +32,62 @@
         width: 600px;
         background: #0F172A;
         height: auto !important;
-        min-height: auto !important; 
         display: flex;
         flex-direction: column;
         overflow: hidden;
     }
 
-    /* 3. OPTICAL ALIGNMENT (Kunci agar teks tidak turun) */
-    /* Menarik semua elemen teks naik 1px untuk melawan baseline font */
+    /* 2. THE FIX: ANTI-GRAVITY CALIBRATION */
+    /* Kita tarik semua teks naik secara fisik. 
+       Jika di gambar masih turun, naikkan angka -3px ke -4px atau -5px */
     .is-exporting span, 
     .is-exporting p, 
     .is-exporting h1,
-    .is-exporting div:not(.mapboxgl-canvas-container) {
-        transform: translateY(-0.5px);
+    .is-exporting div:not(.mapboxgl-canvas-container):not(#export-map) {
+        position: relative;
+        top: -3px !important; 
     }
 
-    /* Khusus untuk angka statistik agar benar-benar di tengah */
+    /* Khusus angka (Tabular Nums) biasanya turun lebih parah */
     .is-exporting .tabular-nums {
         font-variant-numeric: tabular-nums;
         display: inline-flex;
         align-items: center;
-        margin-top: -1px; /* Koreksi tambahan khusus angka */
+        top: -4px !important; /* Tarikan lebih kuat khusus angka */
     }
 
-    /* 4. MAP FIX */
+    /* 3. ASYMMETRIC PADDING (Kompensasi Visual) */
+    /* Kita buat bantalan bawah jauh lebih besar untuk 'menopang' teks */
+    
+    /* Stats Box (Distance, Pace, Elevation) */
+    .is-exporting .bg-white\/5, 
+    .is-exporting .bg-blue-600 {
+        padding-top: 12px !important;
+        padding-bottom: 24px !important; /* 2x lipat lebih besar dari atas */
+    }
+
+    /* Lap Splits KM Box */
+    .is-exporting v-for-split, /* selector jika menggunakan class custom */
+    .is-exporting .grid div { 
+        padding-top: 8px !important;
+        padding-bottom: 16px !important;
+    }
+
+    /* 4. MAPBOX FIX */
     .is-exporting .export-map {
         width: 100%;
         aspect-ratio: 1 / 1;
         border-radius: 40px;
         overflow: hidden;
-        position: relative;
     }
 
-    /* Memastikan pojok peta Mapbox tetap rounded saat dicapture */
     .is-exporting .mapboxgl-canvas {
         border-radius: 40px !important;
+        /* Jangan beri 'top' pada canvas agar peta tidak potong */
+        top: 0 !important; 
     }
 
-    /* 5. DYNAMIC PADDING UNTUK KONTEN (Simetris visual) */
-    /* Kotak stats (Distance, Pace, Elevation) */
-    .is-exporting .stat-box {
-        padding-top: 18px;
-        padding-bottom: 22px; /* Bottom sedikit lebih besar agar teks terlihat di center */
-    }
-
-    /* Kotak Split KM */
-    .is-exporting .split-item {
-        padding-top: 10px;
-        padding-bottom: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* 6. CLEANUP ELEMENTS */
+    /* 5. CLEANUP */
     .is-exporting .no-export,
     .is-exporting button,
     .is-exporting .nav-menu,
@@ -94,16 +95,10 @@
         display: none !important;
     } 
 
-    .is-exporting img,
-    .is-exporting canvas {
-        max-width: 100% !important;
-        display: block;
-    }
-
-    /* Matikan filter yang sering bikin glitch di html2canvas */
     .is-exporting * {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
+        box-shadow: none !important; /* Kadang shadow bikin teks terlihat turun */
     }
     </style>
 </head>
