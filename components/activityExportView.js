@@ -131,7 +131,7 @@ export default `
 
     <div class="flex justify-center items-center gap-4 mt-1 opacity-20">
        <div class="h-[0.5px] w-12 bg-white"></div>
-       <span class="text-[8px] font-bold text-white uppercase tracking-[0.5em] leading-none -translate-y-[1px]">No Pain No Gain</span>
+       <span class="text-[8px] font-bold text-white uppercase tracking-[0.5em] leading-none -translate-y-[1px]">+0.1% for safety & health</span>
        <div class="h-[0.5px] w-12 bg-white"></div>
     </div>
 
