@@ -11,6 +11,20 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="export-styles">
+/* ============================= */
+/* EXPORT PREMIUM SYSTEM         */
+/* ============================= */
+
+/* Root container feel */
+.is-exporting {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  padding: 24px;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide unwanted UI */
 .is-exporting .no-export,
 .is-exporting button,
 .is-exporting .nav-menu,
@@ -18,36 +32,152 @@
   display: none !important;
 }
 
-        .is-exporting body {
-  background: #f8fafc;
-        }
-/* 2. Stabilkan layout dasar (tanpa override brutal) */
-.is-exporting * {
-  box-sizing: border-box !important;
+/* ============================= */
+/* CARD SYSTEM                   */
+/* ============================= */
+
+.is-exporting .export-container {
+  width: 600px;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  /* Premium shadow */
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.06),
+    0 4px 10px rgba(0, 0, 0, 0.04);
 }
 
-/* 3. Perbaikan Map (biar tidak pecah saat capture) */
+/* ============================= */
+/* HEADER                        */
+/* ============================= */
+
+.is-exporting .export-header h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.is-exporting .export-header p {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ============================= */
+/* MAP                           */
+/* ============================= */
+
+.is-exporting .export-map {
+  width: 100%;
+  height: 220px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5f5);
+  position: relative;
+}
+
 .is-exporting .mapboxgl-map {
-  border-radius: 16px !important;
-  overflow: hidden !important;
+  border-radius: 20px !important;
 }
 
-/* 4. Anti blur text (khusus mobile / Android) */
-.is-exporting {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ============================= */
+/* HERO STAT                     */
+/* ============================= */
+
+.is-exporting .export-hero {
+  text-align: center;
+  padding: 12px 0;
 }
 
-/* 5. Hindari efek yang sering bikin html2canvas glitch */
-.is-exporting * {
-  backdrop-filter: none !important;
+.is-exporting .distance {
+  font-size: 44px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
-/* 6. Safety: cegah elemen lompat */
+.is-exporting .distance span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.is-exporting .meta {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+/* ============================= */
+/* SPLITS CARD                   */
+/* ============================= */
+
+.is-exporting .export-splits {
+  background: #f9fafb;
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  border: 1px solid #f1f5f9;
+}
+
+/* Split row */
+.is-exporting .split-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+
+  transition: all 0.2s ease;
+}
+
+/* subtle alternating */
+.is-exporting .split-row:nth-child(odd) {
+  background: #ffffff;
+}
+
+.is-exporting .split-row:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* "more" indicator */
+.is-exporting .more {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* ============================= */
+/* MEDIA FIX                     */
+/* ============================= */
+
 .is-exporting img,
 .is-exporting canvas {
   max-width: 100% !important;
   display: block;
+}
+
+/* Prevent html2canvas glitch */
+.is-exporting * {
+  backdrop-filter: none !important;
+  box-sizing: border-box;
 }
     </style>
 </head>
