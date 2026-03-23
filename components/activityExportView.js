@@ -45,27 +45,37 @@ export default `
     </div>
 
     <div class="grid grid-cols-3 gap-3">
-      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] flex flex-col items-center justify-center shadow-2xl h-24 pt-4 pb-6">
-        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1.5 leading-none">Distance</span>
-        <div class="flex items-baseline gap-1 -translate-y-[1px]">
-          <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">{{ ((activity?.distance || 0)/1000).toFixed(2) }}</span>
-          <span class="text-[10px] font-black text-slate-500 uppercase italic leading-none">KM</span>
-        </div>
-      </div>
-      
-      <div class="bg-blue-600 rounded-[28px] flex flex-col items-center justify-center shadow-[0_10px_30px_rgba(37,99,235,0.3)] h-24 pt-4 pb-6">
-        <span class="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-1.5 leading-none">Avg Pace</span>
-        <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums -translate-y-[1px]">{{ performanceValue }}</span>
-      </div>
-
-      <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] flex flex-col items-center justify-center shadow-2xl h-24 pt-4 pb-6">
-        <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1.5 leading-none text-center px-2">Elevation</span>
-        <div class="flex items-baseline gap-1 -translate-y-[1px]">
-          <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">{{ Math.round(activity?.total_elevation_gain || 0) }}</span>
-          <span class="text-[10px] font-black text-slate-500 uppercase italic leading-none">M</span>
-        </div>
-      </div>
+  <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] flex flex-col items-center justify-center shadow-2xl h-24 pt-4 pb-6">
+    <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1.5 leading-none">Distance</span>
+    <div class="flex items-baseline gap-1 -translate-y-[1px]">
+      <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">{{ ((activity?.distance || 0)/1000).toFixed(2) }}</span>
+      <span class="text-[10px] font-black text-slate-500 uppercase italic leading-none">KM</span>
     </div>
+  </div>
+  
+  <div :class="[
+      'rounded-[28px] flex flex-col items-center justify-center h-24 pt-4 pb-6 transition-colors duration-300',
+      activity?.type === 'Ride' ? 'bg-emerald-600 shadow-[0_10px_30px_rgba(16,185,129,0.3)]' : 'bg-blue-600 shadow-[0_10px_30px_rgba(37,99,235,0.3)]'
+  ]">
+    <span class="text-[9px] font-black text-white/80 uppercase tracking-[0.2em] mb-1.5 leading-none">
+      {{ activity?.type === 'Ride' ? 'Avg Speed' : 'Avg Pace' }}
+    </span>
+    <div class="flex items-baseline gap-1 -translate-y-[1px]">
+      <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">
+        {{ performanceValue }}
+      </span>
+      <span v-if="activity?.type === 'Ride'" class="text-[9px] font-black text-white/60 uppercase italic leading-none">KM/H</span>
+    </div>
+  </div>
+
+  <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] flex flex-col items-center justify-center shadow-2xl h-24 pt-4 pb-6">
+    <span class="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1.5 leading-none text-center px-2">Elevation</span>
+    <div class="flex items-baseline gap-1 -translate-y-[1px]">
+      <span class="text-3xl font-black text-white italic tracking-tighter leading-none tabular-nums">{{ Math.round(activity?.total_elevation_gain || 0) }}</span>
+      <span class="text-[10px] font-black text-slate-500 uppercase italic leading-none">M</span>
+    </div>
+  </div>
+</div>
 
     <div class="flex items-center justify-between px-5 py-4 bg-white/[0.03] rounded-3xl border border-white/5">
       <div class="flex gap-8 items-center">
