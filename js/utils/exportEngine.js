@@ -8,64 +8,61 @@ export const captureElement = async (elementId, fileName = 'activity-pro') => {
     }
 
     try {
-        console.log("📸 Memulai capture (clean export mode)...");
+        console.log("📸 Memulai capture (Premium Dark Mode)...");
 
-        const height = element.scrollHeight;
+        // Paksa scroll ke atas agar koordinat capture tidak meleset
+        window.scrollTo(0, 0);
 
         const canvas = await window.html2canvas(element, {
             useCORS: true,
-            allowTaint: true,
+            allowTaint: false, // Ubah ke false untuk keamanan CORS pada Mapbox
 
-            // 🔥 kualitas optimal (tajam tapi tidak berat)
-            scale: Math.min(2, window.devicePixelRatio * 1.5),
+            // 🔥 Kualitas 2x agar tajam di layar Retina/HP High-end
+            scale: 2,
 
-            backgroundColor: '#F8FAFC',
+            // 🌑 WAJIB GANTI: Agar background dasar foto mengikuti tema Navy Dark
+            backgroundColor: '#0F172A', 
 
-            // 🔒 kunci layout export
+            // 🔒 Kunci layout sesuai lebar container desain kita
             width: 600,
-            height,
             windowWidth: 600,
-            windowHeight: height,
 
+            // Biarkan html2canvas menghitung tinggi otomatis berdasarkan konten
             scrollX: 0,
-            scrollY: 0,
+            scrollY: -window.scrollY,
 
             onclone: (clonedDoc) => {
                 const clonedEl = clonedDoc.getElementById(elementId);
                 if (!clonedEl) return;
 
-                // 🔥 1. Copy semua style (FIX CSS HILANG)
+                // 🔥 1. Fix CSS: Memastikan font-family dan ikon muncul
                 const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
                 styles.forEach(style => {
                     clonedDoc.head.appendChild(style.cloneNode(true));
                 });
 
-                // 🔥 2. Paksa layout stabil
-                clonedEl.style.height = 'auto';
-                clonedEl.style.minHeight = height + 'px';
-                clonedEl.style.boxSizing = 'border-box';
+                // 🔥 2. Paksa Warna Teks & BG (Override inline styles jika ada)
+                clonedEl.style.backgroundColor = '#0F172A';
+                clonedEl.style.width = '600px';
+                clonedEl.style.display = 'block';
 
-                // 🔥 3. Fix efek yang bikin glitch
+                // 🔥 3. Fix untuk Mapbox & Font
                 const all = clonedEl.querySelectorAll('*');
                 all.forEach(el => {
-                    const style = clonedDoc.defaultView.getComputedStyle(el);
-
-                    if (style.backdropFilter !== 'none') {
-                        el.style.backdropFilter = 'none';
-                    }
-
-                    if (style.filter !== 'none') {
-                        el.style.filter = 'none';
-                    }
-
-                    // 🔥 anti blur text mobile
+                    // Pastikan teks putih terlihat jelas
                     el.style.webkitFontSmoothing = 'antialiased';
+                    
+                    // Hilangkan backdrop-filter karena html2canvas belum mendukungnya (bikin kotak hitam)
+                    if (getComputedStyle(el).backdropFilter !== 'none') {
+                        el.style.backdropFilter = 'none';
+                        el.style.backgroundColor = 'rgba(255,255,255,0.05)'; // Fallback glass effect
+                    }
                 });
             }
         });
 
-        // 🔥 export ke file
-        const dataUrl = canvas.toDataURL("image/png", 0.95);
+        // 🔥 Export ke PNG dengan kualitas tinggi
+        const dataUrl = canvas.toDataURL("image/png", 1.0);
 
         const link = document.createElement('a');
         link.download = `${fileName.replace(/\s+/g, '-').toLowerCase()}.png`;
@@ -75,7 +72,7 @@ export const captureElement = async (elementId, fileName = 'activity-pro') => {
         link.click();
         document.body.removeChild(link);
 
-        console.log("✅ Export selesai");
+        console.log("✅ Export Premium Selesai");
         return true;
 
     } catch (err) {
