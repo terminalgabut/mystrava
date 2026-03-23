@@ -13,7 +13,7 @@ export default `
   </div>
 
   <!-- MAP -->
-  <<div class="w-full aspect-square rounded-[40px] overflow-hidden bg-slate-200 relative shadow-inner border-[6px] border-white">
+  <div class="w-full aspect-square rounded-[40px] overflow-hidden bg-slate-200 relative shadow-inner border-[6px] border-white">
   
   <div class="absolute inset-0 z-10 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.05)]"></div>
   
