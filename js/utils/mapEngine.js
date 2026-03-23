@@ -1,33 +1,47 @@
 // js/utils/mapEngine.js
 
-// 1. Pastikan Token Benar
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaG1teiIsImEiOiJjbW4xbGxqc3QwdzUzMzFvcWxzb2Y2N3MxIn0.1qI1EQRdNTj5JYyP9T8QGw'; // Ganti dengan token asli Anda
+// 1. Mapbox Token
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaG1teiIsImEiOiJjbW4xbGxqc3QwdzUzMzFvcWxzb2Y2N3MxIn0.1qI1EQRdNTj5JYyP9T8QGw';
 
 export const initActivityMap = (containerId, activity) => {
-    // 2. Gunakan window.mapboxgl untuk menghindari ReferenceError
     if (typeof window.mapboxgl === 'undefined') {
         console.error('Library Mapbox belum termuat di window!');
         return null;
     }
 
-    const mapboxgl = window.mapboxgl; // Ambil dari global
+    const mapboxgl = window.mapboxgl;
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    if (!activity.summary_polyline) return null;
+    if (!activity?.summary_polyline) return null;
 
     try {
+        // 🔥 LOGIKA DETEKSI EKSPOR
+        const isExportMode = containerId === 'export-map';
+
+        // Pilih Style: Dark untuk ekspor, Outdoors untuk dashboard biasa
+        const mapStyle = isExportMode 
+            ? 'mapbox://styles/mapbox/dark-v11' 
+            : 'mapbox://styles/mapbox/outdoors-v12';
+
+        // Pilih Warna Rute: Cyan Neon untuk Dark Mode, Strava Orange untuk Light Mode
+        const routeColor = isExportMode ? '#00f2ff' : '#fc4c02';
+        const lineWidth = isExportMode ? 5 : 4;
+
         const map = new mapboxgl.Map({
             container: containerId,
-            style: 'mapbox://styles/mapbox/outdoors-v12',
-            // Koordinat Mapbox: [Longitude, Latitude]
-            center: [activity.start_lng, activity.start_lat], 
+            style: mapStyle,
+            center: [activity.start_lng || 0, activity.start_lat || 0], 
             zoom: 14,
             attributionControl: false,
-            preserveDrawingBuffer: true
+            // 🚨 PENTING: Wajib true agar html2canvas bisa membaca buffer gambar Mapbox
+            preserveDrawingBuffer: true,
+            // Nonaktifkan interaksi jika untuk ekspor agar lebih ringan
+            interactive: !isExportMode 
         });
 
         map.on('load', () => {
             const coordinates = decodePolyline(activity.summary_polyline);
+            if (!coordinates.length) return;
             
             map.addSource('route', {
                 'type': 'geojson',
@@ -40,22 +54,46 @@ export const initActivityMap = (containerId, activity) => {
                 }
             });
 
+            // Menambahkan Layer Rute
             map.addLayer({
                 'id': 'route',
                 'type': 'line',
                 'source': 'route',
-                'layout': { 'line-join': 'round', 'line-cap': 'round' },
+                'layout': { 
+                    'line-join': 'round', 
+                    'line-cap': 'round' 
+                },
                 'paint': {
-                    'line-color': '#fc4c02', // Strava Orange
-                    'line-width': 4,
-                    'line-opacity': 0.8
+                    'line-color': routeColor,
+                    'line-width': lineWidth,
+                    'line-opacity': 1
                 }
             });
+
+            // Menambahkan Glow Effect (Hanya untuk Export Mode agar lebih Premium)
+            if (isExportMode) {
+                map.addLayer({
+                    'id': 'route-glow',
+                    'type': 'line',
+                    'source': 'route',
+                    'paint': {
+                        'line-color': routeColor,
+                        'line-width': lineWidth * 2,
+                        'line-blur': 8,
+                        'line-opacity': 0.4
+                    }
+                }, 'route'); // Taruh di bawah layer rute utama
+            }
 
             // Auto-fit rute ke layar
             const bounds = new mapboxgl.LngLatBounds();
             coordinates.forEach(coord => bounds.extend(coord));
-            map.fitBounds(bounds, { padding: 40, duration: 1000 });
+            
+            map.fitBounds(bounds, { 
+                padding: isExportMode ? 60 : 40, 
+                duration: isExportMode ? 0 : 1000, // Langsung pas jika ekspor
+                animate: !isExportMode
+            });
         });
 
         return map;
@@ -65,8 +103,11 @@ export const initActivityMap = (containerId, activity) => {
     }
 };
 
-// Fungsi decode harus menghasilkan [lng, lat] untuk Mapbox
+/**
+ * Decode Google Polyline ke [lng, lat]
+ */
 function decodePolyline(encoded) {
+    if (!encoded) return [];
     let points = [];
     let index = 0, len = encoded.length;
     let lat = 0, lng = 0;
@@ -77,7 +118,7 @@ function decodePolyline(encoded) {
         shift = 0; result = 0;
         do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
         lng += ((result & 1) ? ~(result >> 1) : (result >> 1));
-        points.push([lng / 1e5, lat / 1e5]); // [Longitude, Latitude]
+        points.push([lng / 1e5, lat / 1e5]);
     }
     return points;
 }
