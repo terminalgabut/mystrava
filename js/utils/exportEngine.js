@@ -1,3 +1,5 @@
+// root/js/utils/exportEngine.js
+
 export const captureElement = async (elementClassOrId, fileName = 'activity-pro') => {
     if (!window.html2canvas) return false;
 
