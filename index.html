@@ -11,61 +11,46 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="export-styles">
-  /* 1. Kunci Container Utama */
-  .is-exporting.activity-detail-wrapper {
-    width: 600px !important;
-    background-color: #F1F5F9 !important;
-    padding: 30px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 20px !important; /* Kunci gap antar section */
-  }
+/* ============================= */
+/* EXPORT MODE (MINIMAL CLEAN)   */
+/* ============================= */
 
-  /* 2. Kunci Teks Statistik (Hitam & Tengah) */
-  .is-exporting .stat-value {
-    color: #0F172A !important;
-    font-size: 32px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0 !important;
-    line-height: 1.2 !important;
-  }
+/* 1. Sembunyikan elemen UI yang tidak perlu saat export */
+.is-exporting .no-export,
+.is-exporting button,
+.is-exporting .nav-menu,
+.is-exporting #__vconsole {
+  display: none !important;
+}
 
-  .is-exporting .label-muted {
-    color: #475569 !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    margin-bottom: 4px !important;
-  }
+/* 2. Stabilkan layout dasar (tanpa override brutal) */
+.is-exporting * {
+  box-sizing: border-box !important;
+}
 
-  /* 3. PERBAIKAN KARTU GELAP (Time Analysis) */
-  .is-exporting .time-analysis-card,
-  .is-exporting [class*="bg-slate-900"] {
-    background-color: #0F172A !important;
-    border-radius: 20px !important;
-    padding: 24px !important;
-    color: #FFFFFF !important;
-  }
+/* 3. Perbaikan Map (biar tidak pecah saat capture) */
+.is-exporting .mapboxgl-map {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
 
-  /* Paksa semua teks di dalam kartu gelap tetap putih */
-  .is-exporting .time-analysis-card *,
-  .is-exporting [class*="bg-slate-900"] * {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-  }
+/* 4. Anti blur text (khusus mobile / Android) */
+.is-exporting {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  /* 4. Perbaikan Map (Kunci Posisi) */
-  .is-exporting .mapboxgl-map {
-    border-radius: 20px !important;
-    margin-bottom: 10px !important;
-  }
+/* 5. Hindari efek yang sering bikin html2canvas glitch */
+.is-exporting * {
+  backdrop-filter: none !important;
+}
 
-  /* 5. Sembunyikan UI */
-  .is-exporting .no-export, 
-  .is-exporting button, 
-  .is-exporting .nav-menu,
-  .is-exporting #__vconsole {
-    display: none !important;
-  }
+/* 6. Safety: cegah elemen lompat */
+.is-exporting img,
+.is-exporting canvas {
+  max-width: 100% !important;
+  display: block;
+}
     </style>
 </head>
 
