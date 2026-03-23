@@ -8,43 +8,44 @@ export const captureElement = async (elementId, fileName = 'activity-pro') => {
         console.log("📸 Memulai capture (clean export mode)...");
 
         const canvas = await window.html2canvas(element, {
-            useCORS: true,
-            allowTaint: true,
+    useCORS: true,
+    allowTaint: true,
 
-            // 🔥 kualitas tajam (lebih adaptif)
-            scale: window.devicePixelRatio * 1.5,
+    scale: window.devicePixelRatio * 1.5,
+    backgroundColor: '#F8FAFC',
 
-            backgroundColor: '#F8FAFC',
+    // 🔥 FIX UTAMA
+    width: 600,
+    height: element.scrollHeight,
+    windowWidth: 600,
+    windowHeight: element.scrollHeight,
 
-            // 🔒 kunci layout export
-            width: 600,
-            windowWidth: 600,
+    scrollX: 0,
+    scrollY: 0,
 
-            scrollX: 0,
-            scrollY: 0,
+    onclone: (clonedDoc) => {
+        const clonedEl = clonedDoc.getElementById(elementId);
+        if (!clonedEl) return;
 
-            onclone: (clonedDoc) => {
-                const clonedEl = clonedDoc.getElementById(elementId);
-                if (!clonedEl) return;
+        // 🔥 PAKSA HEIGHT DI CLONE
+        clonedEl.style.height = 'auto';
+        clonedEl.style.minHeight = '800px';
 
-                // 🔥 minimal fix (jangan overkill)
-                const all = clonedEl.querySelectorAll('*');
+        const all = clonedEl.querySelectorAll('*');
 
-                all.forEach(el => {
-                    const style = clonedDoc.defaultView.getComputedStyle(el);
+        all.forEach(el => {
+            const style = clonedDoc.defaultView.getComputedStyle(el);
 
-                    // hanya hapus efek yang bermasalah
-                    if (style.backdropFilter && style.backdropFilter !== 'none') {
-                        el.style.backdropFilter = 'none';
-                    }
+            if (style.backdropFilter && style.backdropFilter !== 'none') {
+                el.style.backdropFilter = 'none';
+            }
 
-                    if (style.filter && style.filter !== 'none') {
-                        el.style.filter = 'none';
-                    }
-                });
+            if (style.filter && style.filter !== 'none') {
+                el.style.filter = 'none';
             }
         });
-
+    }
+});
         const dataUrl = canvas.toDataURL("image/png", 0.95);
 
         const link = document.createElement('a');
