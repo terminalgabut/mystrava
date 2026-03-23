@@ -11,30 +11,42 @@ export default {
 
   setup(props) {
     const { computed, onMounted, nextTick } = Vue;
-
     let mapInstance = null;
 
-    // 🔹 Format Pace (Rata-rata)
+    /**
+     * 🔹 PERFORMANCE VALUE (Dynamic Logic)
+     * Mengikuti konsep: Run/Walk = Pace (00:00), Ride = Speed (km/h)
+     */
     const performanceValue = computed(() => {
       if (!props.activity) return '--:--';
-      return stravaService.calculatePace(
-        props.activity.average_speed,
-        props.activity.type
-      );
+      
+      const type = props.activity.type?.toLowerCase();
+      const speed = props.activity.average_speed; // m/s dari Strava
+
+      if (type === 'ride') {
+        // Konversi m/s ke km/h untuk bersepeda
+        const kmh = speed * 3.6;
+        return kmh.toFixed(1);
+      } else {
+        // Gunakan service existing untuk format Pace (min/km)
+        return stravaService.calculatePace(speed, props.activity.type);
+      }
     });
 
-    // 🔹 Format Durasi (HH:MM:SS)
+    // 🔹 DURATION FORMAT (HH:MM:SS)
     const formatTime = (seconds) => {
         const total = Number(seconds) || 0;
         const h = Math.floor(total / 3600);
         const m = Math.floor((total % 3600) / 60);
         const s = Math.floor(total % 60);
-        return h > 0 
-            ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` 
-            : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        
+        if (h > 0) {
+            return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     };
 
-    // 🔹 Format Tanggal
+    // 🔹 DATE FORMAT
     const formatDate = (dateStr) => {
       if (!dateStr) return '';
       return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -44,42 +56,46 @@ export default {
       });
     };
 
-    // 🔥 SPLITS FULL (Refactor untuk tampilan Profesional)
-    // Menghapus .slice(0, 5) agar memuat SEMUA data pace
+    /**
+     * 🔥 SPLITS DATA REFACTOR
+     * Menampilkan semua data KM dengan format yang sesuai tipe aktivitas
+     */
     const displayedSplits = computed(() => {
       const splits = props.activity?.splits_metric || [];
+      const type = props.activity?.type?.toLowerCase();
 
-      return splits.map(s => ({
-        number: s.split,
-        // Tambahkan elevasi agar data di ekspor seakurat screenshot manual
-        elevation: Math.round(s.elevation_difference || 0),
-        pace: stravaService.calculatePace(
-          s.average_speed,
-          props.activity?.type
-        )
-      }));
+      return splits.map(s => {
+        let displayPace;
+        
+        if (type === 'ride') {
+            // Untuk sepeda, tampilkan Speed per KM (km/h)
+            displayPace = (s.average_speed * 3.6).toFixed(1);
+        } else {
+            // Untuk lari/jalan, tampilkan Pace (min/km)
+            displayPace = stravaService.calculatePace(s.average_speed, props.activity?.type);
+        }
+
+        return {
+          number: s.split,
+          elevation: Math.round(s.elevation_difference || 0),
+          pace: displayPace
+        };
+      });
     });
 
-    // Tetap pertahankan ini sebagai fallback jika template membutuhkan
-    const remainingSplits = computed(() => {
-      return 0; // Set 0 karena semua sudah ditampilkan di atas
-    });
-
-    // 🔥 INIT MAP (WAJIB untuk export premium)
+    // 🔹 INIT MAP (Export Premium)
     onMounted(() => {
       if (!props.activity?.summary_polyline) return;
 
       nextTick(() => {
-        // cleanup dulu (safety)
         if (mapInstance) {
           mapInstance.remove();
           mapInstance = null;
         }
 
-        // Inisialisasi peta ke ID 'export-map' yang ada di view
+        // Inisialisasi peta ke ID 'export-map'
         mapInstance = initActivityMap('export-map', props.activity);
         
-        // Pastikan map menyesuaikan ukuran container square yang baru
         if (mapInstance) {
             setTimeout(() => {
                 mapInstance.resize();
@@ -92,8 +108,7 @@ export default {
       performanceValue,
       formatTime,
       formatDate,
-      displayedSplits,
-      remainingSplits
+      displayedSplits
     };
   }
 };
