@@ -2,50 +2,69 @@ export const captureElement = async (elementId, fileName = 'activity-pro') => {
     if (!window.html2canvas) return false;
 
     const element = document.getElementById(elementId);
-    if (!element) return false;
+    if (!element) {
+        console.error("❌ Element tidak ditemukan:", elementId);
+        return false;
+    }
 
     try {
         console.log("📸 Memulai capture (clean export mode)...");
 
+        const height = element.scrollHeight;
+
         const canvas = await window.html2canvas(element, {
-    useCORS: true,
-    allowTaint: true,
+            useCORS: true,
+            allowTaint: true,
 
-    scale: window.devicePixelRatio * 1.5,
-    backgroundColor: '#F8FAFC',
+            // 🔥 kualitas optimal (tajam tapi tidak berat)
+            scale: Math.min(2, window.devicePixelRatio * 1.5),
 
-    // 🔥 FIX UTAMA
-    width: 600,
-    height: element.scrollHeight,
-    windowWidth: 600,
-    windowHeight: element.scrollHeight,
+            backgroundColor: '#F8FAFC',
 
-    scrollX: 0,
-    scrollY: 0,
+            // 🔒 kunci layout export
+            width: 600,
+            height,
+            windowWidth: 600,
+            windowHeight: height,
 
-    onclone: (clonedDoc) => {
-        const clonedEl = clonedDoc.getElementById(elementId);
-        if (!clonedEl) return;
+            scrollX: 0,
+            scrollY: 0,
 
-        // 🔥 PAKSA HEIGHT DI CLONE
-        clonedEl.style.height = 'auto';
-        clonedEl.style.minHeight = '800px';
+            onclone: (clonedDoc) => {
+                const clonedEl = clonedDoc.getElementById(elementId);
+                if (!clonedEl) return;
 
-        const all = clonedEl.querySelectorAll('*');
+                // 🔥 1. Copy semua style (FIX CSS HILANG)
+                const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+                styles.forEach(style => {
+                    clonedDoc.head.appendChild(style.cloneNode(true));
+                });
 
-        all.forEach(el => {
-            const style = clonedDoc.defaultView.getComputedStyle(el);
+                // 🔥 2. Paksa layout stabil
+                clonedEl.style.height = 'auto';
+                clonedEl.style.minHeight = height + 'px';
+                clonedEl.style.boxSizing = 'border-box';
 
-            if (style.backdropFilter && style.backdropFilter !== 'none') {
-                el.style.backdropFilter = 'none';
-            }
+                // 🔥 3. Fix efek yang bikin glitch
+                const all = clonedEl.querySelectorAll('*');
+                all.forEach(el => {
+                    const style = clonedDoc.defaultView.getComputedStyle(el);
 
-            if (style.filter && style.filter !== 'none') {
-                el.style.filter = 'none';
+                    if (style.backdropFilter !== 'none') {
+                        el.style.backdropFilter = 'none';
+                    }
+
+                    if (style.filter !== 'none') {
+                        el.style.filter = 'none';
+                    }
+
+                    // 🔥 anti blur text mobile
+                    el.style.webkitFontSmoothing = 'antialiased';
+                });
             }
         });
-    }
-});
+
+        // 🔥 export ke file
         const dataUrl = canvas.toDataURL("image/png", 0.95);
 
         const link = document.createElement('a');
@@ -56,6 +75,7 @@ export const captureElement = async (elementId, fileName = 'activity-pro') => {
         link.click();
         document.body.removeChild(link);
 
+        console.log("✅ Export selesai");
         return true;
 
     } catch (err) {
