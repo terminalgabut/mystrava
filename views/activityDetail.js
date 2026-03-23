@@ -145,7 +145,7 @@ export default {
         template: `<ActivityExportComponent :activity="activity" />`,
         setup() {
             return {
-                activity: activity.value
+                activity
             };
         }
     });
