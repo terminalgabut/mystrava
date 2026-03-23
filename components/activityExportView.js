@@ -13,9 +13,9 @@ export default `
   </div>
 
   <!-- MAP -->
-  <div class="w-full h-[220px] rounded-2xl overflow-hidden bg-slate-200">
-    <div id="export-map" class="w-full h-full"></div>
-  </div>
+  <div class="w-full aspect-square rounded-[32px] overflow-hidden bg-slate-200 shadow-inner border-4 border-white">
+  <div id="export-map" class="w-full h-full"></div>
+</div>
 
   <!-- HERO -->
   <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 text-center">
