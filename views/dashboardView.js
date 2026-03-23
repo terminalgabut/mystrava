@@ -92,6 +92,32 @@ export default `
                 Moving time
             </p>
         </div>
+
+        <div v-if="selectedType === 'Ride'" class="bento-card animate-in bg-slate-50/50 border-blue-100/50">
+            <div class="card-header">
+                <span class="label-muted">Average Power</span>
+                <div class="icon-box"><i data-lucide="zap" class="w-4 h-4 text-blue-500"></i></div>
+            </div>
+            <h2 class="stat-value text-2xl">
+                {{ stats.avgWatts || 0 }} <span class="text-xs font-medium text-slate-400">W</span>
+            </h2>
+            <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
+                Avg Wattage
+            </p>
+        </div>
+
+        <div v-if="selectedType === 'Ride'" class="bento-card animate-in bg-slate-50/50 border-amber-100/50">
+            <div class="card-header">
+                <span class="label-muted">Energy Output</span>
+                <div class="icon-box"><i data-lucide="battery-charging" class="w-4 h-4 text-amber-500"></i></div>
+            </div>
+            <h2 class="stat-value text-2xl">
+                {{ (stats.totalKilojoules || 0).toLocaleString('id-ID') }} <span class="text-xs font-medium text-slate-400">kJ</span>
+            </h2>
+            <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
+                Total Work Done
+            </p>
+        </div>
     </div>
 
     <div class="bento-grid-detailed">
