@@ -139,29 +139,28 @@ export default {
         return;
     }
 
-    // 🔥 Buat Vue instance khusus export
     const app = Vue.createApp({
         components: { ActivityExportComponent },
         template: `<ActivityExportComponent :activity="activity" />`,
         setup() {
             return {
-                activity
+                activity: activity.value // ✅ FIX PENTING
             };
         }
     });
 
-    // 🔹 mount ke hidden DOM
-    const vm = app.mount(container);
+    app.mount(container);
 
-    await nextTick(); // tunggu render selesai
+    await nextTick();
 
-    // 🔥 capture export view
+    // ⏳ biar layout stabil (WAJIB)
+    await new Promise(r => setTimeout(r, 300));
+
     const success = await captureElement(
         'export-root',
         `Activity-${activity.value?.name || 'Export'}`
     );
 
-    // 🔥 cleanup
     app.unmount();
     container.innerHTML = "";
 
@@ -169,6 +168,7 @@ export default {
         console.log("✅ Export berhasil!");
     }
 };
+        
         onMounted(loadActivityDetail);
 
         onUnmounted(() => {
