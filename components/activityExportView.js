@@ -13,8 +13,12 @@ export default `
   </div>
 
   <!-- MAP -->
-  <div class="w-full aspect-square rounded-[32px] overflow-hidden bg-slate-200 shadow-inner border-4 border-white">
+  <<div class="w-full aspect-square rounded-[40px] overflow-hidden bg-slate-200 relative shadow-inner border-[6px] border-white">
+  
+  <div class="absolute inset-0 z-10 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.05)]"></div>
+  
   <div id="export-map" class="w-full h-full"></div>
+  
 </div>
 
   <!-- HERO -->
@@ -26,7 +30,7 @@ export default `
     </div>
 
     <div class="mt-2 text-sm font-bold text-slate-600">
-      {{ performanceValue }} • {{ Math.round(activity?.calories || 0) }} kcal
+      {{ performanceValue }} Moving Time • {{ Math.round(activity?.calories || 0) }} kcal
     </div>
 
   </div>
