@@ -6,7 +6,7 @@ import { Logger } from '../js/services/debug.js';
 import { getWeatherEngine } from '../js/utils/weatherEngine.js'; 
 import { initActivityMap } from '../js/utils/mapEngine.js';
 import { captureElement } from '../js/utils/exportEngine.js';
-import ActivityExportComponent from './activityExportComponent.js';
+import ActivityExportComponent from '../components/activityExportComponent.js';
 
 export default {
     name: 'ActivityDetailView',
