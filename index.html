@@ -11,11 +11,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style id="export-styles">
-/* ============================= */
-/* EXPORT MODE (MINIMAL CLEAN)   */
-/* ============================= */
-
-/* 1. Sembunyikan elemen UI yang tidak perlu saat export */
 .is-exporting .no-export,
 .is-exporting button,
 .is-exporting .nav-menu,
@@ -58,6 +53,15 @@
 </head>
 
 <body>
+
+    <div id="export-mount" style="
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 600px;
+    z-index: -1;
+        ">
+    </div>
 
     <div id="app"></div> 
 
