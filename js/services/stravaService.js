@@ -137,7 +137,7 @@ export const stravaService = {
         const speed = Number(speedMs);
         if (!speed || speed <= 0) return type === 'Ride' ? '0.0' : '00:00';
 
-        // Jika Ride: Konversi m/s ke km/h (9.41 * 3.6 = 33.9)
+        // Jika Ride: Konversi m/s ke km/h
         if (type === 'Ride') {
             return (speed * 3.6).toFixed(1);
         }
@@ -149,10 +149,21 @@ export const stravaService = {
         return `${mins}:${(secs >= 60 ? 59 : secs).toString().padStart(2, '0')}`;
     },
 
+    // Alias untuk kompatibilitas dengan activityDetail.js
+    calculatePace(speedMs, type) {
+        return this.formatPerformanceMetric(speedMs, type);
+    },
+
     getEmptyState: () => ({ 
-        totalDistance: "0.00", totalDuration: "00:00", totalActivities: 0, 
-        avgPace: "00:00", calories: 0, elevation: 0, steps: 0, 
-        avgWatts: 0, totalKilojoules: 0,
+        totalDistance: "0.00", 
+        totalDuration: "00:00", 
+        totalActivities: 0, 
+        avgPace: "00:00", 
+        calories: 0, 
+        elevation: 0, 
+        steps: 0, 
+        avgWatts: 0, 
+        totalKilojoules: 0,
         records: { longestDistance: '0.00', bestEffort: '--:--' }, 
         recentActivities: [] 
     })
