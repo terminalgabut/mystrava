@@ -110,6 +110,21 @@ export default `
                     </template>
                 </div>
             </div>
+
+            <div v-if="activity?.type === 'Ride'" class="grid grid-cols-2 gap-4 mt-4">
+            <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-blue-500">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Power</p>
+            <p class="text-xl font-black text-slate-900 leading-none">
+            {{ Math.round(activity?.average_watts || 0) }} <span class="text-xs text-slate-400 font-bold">W</span>
+        </p>
+    </div>
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-orange-500">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Energy Output</p>
+        <p class="text-xl font-black text-slate-900 leading-none">
+            {{ Math.round(activity?.kilojoules || 0) }} <span class="text-xs text-slate-400 font-bold">kJ</span>
+        </p>
+    </div>
+</div>
         </div>
 
         <div class="space-y-6">
