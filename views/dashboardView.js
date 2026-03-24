@@ -93,7 +93,7 @@ export default `
             </p>
         </div>
 
-        <div v-if="selectedType === 'Ride'" class="bento-card animate-in bg-slate-50/50 border-blue-100/50">
+        <div v-if="selectedType === 'Ride'" class="bento-card animate-in">
             <div class="card-header">
                 <span class="label-muted">Average Power</span>
                 <div class="icon-box"><i data-lucide="zap" class="w-4 h-4 text-blue-500"></i></div>
@@ -106,7 +106,7 @@ export default `
             </p>
         </div>
 
-        <div v-if="selectedType === 'Ride'" class="bento-card animate-in bg-slate-50/50 border-amber-100/50">
+        <div v-if="selectedType === 'Ride'" class="bento-card animate-in">
             <div class="card-header">
                 <span class="label-muted">Energy Output</span>
                 <div class="icon-box"><i data-lucide="battery-charging" class="w-4 h-4 text-amber-500"></i></div>
