@@ -8,7 +8,7 @@ export default {
                     <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
                         <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                     </div>
-                    <span class="text-xl font-black italic text-slate-900 tracking-tighter">DS.PRO</span>
+                    <span class="text-xl font-black italic text-slate-900 tracking-tighter">FRD.PRO</span>
                 </div>
             </div>
 
