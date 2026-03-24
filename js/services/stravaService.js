@@ -70,25 +70,40 @@ export const stravaService = {
      * Recent Log: Ditambahkan average_watts & kilojoules agar list detail lebih lengkap
      */
     async getFilteredActivities(type, pType, pKey) {
-        let query = supabase.from('activities')
-            .select('id, name, distance, type, start_date, moving_time, location_name, weather_temp, total_elevation_gain, average_watts, kilojoules')
-            .eq('type', type)
-            .order('start_date', { ascending: false });
+    let query = supabase.from('activities')
+        .select(`
+            id, 
+            name, 
+            distance, 
+            type, 
+            start_date, 
+            moving_time, 
+            location_name, 
+            weather_temp, 
+            total_elevation_gain, 
+            average_watts, 
+            kilojoules,
+            steps
+        `) // <-- Tambahkan 'steps' di sini agar tersedia di halaman Detail
+        .eq('type', type)
+        .order('start_date', { ascending: false });
 
-        if (pType === 'year') {
-            query = query.gte('start_date', `${pKey}-01-01T00:00:00Z`).lte('start_date', `${pKey}-12-31T23:59:59Z`);
-        } else if (pType === 'month') {
-            query = query.like('start_date', `${pKey}%`);
-        } else {
-            query = query.limit(20);
-        }
+    if (pType === 'year') {
+        query = query.gte('start_date', `${pKey}-01-01T00:00:00Z`).lte('start_date', `${pKey}-12-31T23:59:59Z`);
+    } else if (pType === 'month') {
+        query = query.like('start_date', `${pKey}%`);
+    } else {
+        query = query.limit(20);
+    }
 
-        const { data } = await query;
-        return (data || []).map(act => ({
-            ...act,
-            distance: (Number(act.distance) / 1000).toFixed(2)
-        }));
-    },
+    const { data } = await query;
+    return (data || []).map(act => ({
+        ...act,
+        distance: (Number(act.distance) / 1000).toFixed(2),
+        // Pastikan steps disertakan dalam objek yang dikembalikan
+        steps: act.steps || 0 
+    }));
+},
 
     /**
      * Refactor: Mencari rekor tercepat & terjauh langsung via SQL (Lebih Cepat)
