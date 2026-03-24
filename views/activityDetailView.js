@@ -100,7 +100,7 @@ export default `
                 <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
                     <template v-if="activity?.type === 'Walk'">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Steps</p>
-                        <p class="text-xl font-black text-slate-900 leading-none">{{ calculateSteps(activity?.distance || 0) }}</p>
+                        <p class="text-xl font-black text-slate-900 leading-none">{{ activity?.steps?.toLocaleString('id-ID') || 0 }}</p>
                     </template>
                     <template v-else>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Calories</p>
