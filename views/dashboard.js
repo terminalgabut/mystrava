@@ -117,13 +117,34 @@ export default {
         });
 
         const performanceConfig = computed(() => {
-            const configs = {
-                'Ride': { label: 'Avg Speed', unit: 'km/h', icon: 'zap', showSteps: false },
-                'Walk': { label: 'Total Steps', unit: 'steps', icon: 'footprints', showSteps: true },
-                'Run':  { label: 'Avg Pace', unit: '/km', icon: 'timer', showSteps: false }
-            };
-            return configs[selectedType.value] || configs['Run'];
-        });
+    const configs = {
+        'Ride': { 
+            label: 'Avg Speed', 
+            unit: 'km/h', 
+            recordLabel: 'Top Speed', 
+            recordUnit: 'km/h', 
+            icon: 'zap', 
+            showSteps: false 
+        },
+        'Walk': { 
+            label: 'Total Steps', 
+            unit: 'steps', 
+            recordLabel: 'Most Steps', 
+            recordUnit: 'steps', 
+            icon: 'footprints', 
+            showSteps: true 
+        },
+        'Run':  { 
+            label: 'Avg Pace', 
+            unit: '/km', 
+            recordLabel: 'Best 1K Pace', 
+            recordUnit: '/km', 
+            icon: 'timer', 
+            showSteps: false 
+        }
+    };
+    return configs[selectedType.value] || configs['Run'];
+});
 
         // Watchers
         watch([selectedType, selectedPeriodKey], loadData);
