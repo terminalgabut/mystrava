@@ -106,34 +106,88 @@ export const stravaService = {
 },
 
     /**
-     * Refactor: Mencari rekor tercepat & terjauh langsung via SQL (Lebih Cepat)
+     * Refactor: Mengambil Rekor Murni (Pace dari Splits, Speed dari Max, Steps dari Max)
      */
     async getRecords(activityType) {
         try {
+            // 1. Ambil Jarak Terjauh (Berlaku untuk semua)
             const { data: longest } = await supabase.from('activities')
                 .select('distance')
                 .eq('type', activityType)
                 .order('distance', { ascending: false })
                 .limit(1).maybeSingle();
 
-            const { data: fastest } = await supabase.from('activities')
-                .select('average_speed')
-                .eq('type', activityType)
-                .order('average_speed', { ascending: false })
-                .limit(1).maybeSingle();
+            let bestEffort = '--:--';
 
-            if (!longest && !fastest) return { longestDistance: '0.00', bestEffort: '--:--' };
+            // 2. Jalur Data Spesifik per Tipe
+            if (activityType === 'Run') {
+                // Ambil splits_metric dari aktivitas lari
+                const { data: runs } = await supabase.from('activities')
+                    .select('splits_metric')
+                    .eq('type', 'Run')
+                    .not('splits_metric', 'is', null);
+                
+                bestEffort = this.calculateBestPaceFromSplits(runs || []);
+            } 
+            else if (activityType === 'Ride') {
+                // Ambil max_speed tertinggi (km/h)
+                const { data: fastest } = await supabase.from('activities')
+                    .select('max_speed')
+                    .eq('type', 'Ride')
+                    .order('max_speed', { ascending: false })
+                    .limit(1).maybeSingle();
+                
+                bestEffort = fastest?.max_speed ? (fastest.max_speed * 3.6).toFixed(1) : '0.0';
+            } 
+            else if (activityType === 'Walk') {
+                // Ambil steps terbanyak
+                const { data: mostSteps } = await supabase.from('activities')
+                    .select('steps')
+                    .eq('type', 'Walk')
+                    .order('steps', { ascending: false })
+                    .limit(1).maybeSingle();
+                
+                bestEffort = mostSteps?.steps ? mostSteps.steps.toLocaleString('id-ID') : '0';
+            }
 
             return {
                 longestDistance: (Number(longest?.distance || 0) / 1000).toFixed(2),
-                bestEffort: this.formatPerformanceMetric(fastest?.average_speed, activityType)
+                bestEffort: bestEffort
             };
         } catch (err) {
+            Logger.error('StravaService_Records_Error', err);
             return { longestDistance: '0.00', bestEffort: '--:--' };
         }
     },
 
     // --- UTILS ---
+
+    /**
+     * Membedah JSONB splits_metric untuk mencari 1KM tercepat (Pace Murni)
+     */
+    calculateBestPaceFromSplits(activities) {
+        let minSeconds = Infinity;
+
+        activities.forEach(act => {
+            if (act.splits_metric && Array.isArray(act.splits_metric)) {
+                act.splits_metric.forEach(split => {
+                    // Filter split yang mendekati 1km (mencegah split sisa di akhir lari)
+                    if (split.distance >= 950 && split.distance <= 1050) {
+                        if (split.moving_time < minSeconds) {
+                            minSeconds = split.moving_time;
+                        }
+                    }
+                });
+            }
+        });
+
+        if (minSeconds === Infinity) return '--:--';
+        
+        // Mengubah detik ke format MM:SS
+        const m = Math.floor(minSeconds / 60);
+        const s = Math.floor(minSeconds % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    },
 
     formatSecondsToClock(sec) {
         if (!sec || sec < 0) return "00:00";
