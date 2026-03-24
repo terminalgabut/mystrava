@@ -79,38 +79,47 @@ export default `
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</p>
-                    <p class="text-xl font-black text-slate-900 leading-none">
-                        {{ ((activity?.distance || 0) / 1000).toFixed(2) }} <span class="text-xs text-slate-400 font-bold">km</span>
-                    </p>
-                </div>
-                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ activity?.type === 'Ride' ? 'Avg Speed' : 'Avg Pace' }}</p>
-                    <p class="text-xl font-black text-slate-900 leading-none">
-                        {{ performanceValue || '00:00' }} <span class="text-xs text-slate-400 font-bold">{{ performanceUnit }}</span>
-                    </p>
-                </div>
-                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Elevation</p>
-                    <p class="text-xl font-black text-slate-900 leading-none">
-                        {{ Math.round(activity?.total_elevation_gain || 0) }} <span class="text-xs text-slate-400 font-bold">m</span>
-                    </p>
-                </div>
-                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                    <template v-if="activity?.type === 'Walk'">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Steps</p>
-                        <p class="text-xl font-black text-slate-900 leading-none">{{ activity?.steps?.toLocaleString('id-ID') || 0 }}</p>
-                    </template>
-                    <template v-else>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Calories</p>
-                        <p class="text-xl font-black text-slate-900 leading-none">
-                            {{ Math.round(activity?.calories || 0) }} <span class="text-xs text-slate-400 font-bold">kcal</span>
-                        </p>
-                    </template>
-                </div>
-            </div>
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</p>
+        <p class="text-xl font-black text-slate-900 leading-none">
+            {{ ((activity?.distance || 0) / 1000).toFixed(2) }} <span class="text-xs text-slate-400 font-bold">km</span>
+        </p>
+    </div>
 
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+        <template v-if="activity?.type === 'Walk'">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Steps</p>
+            <p class="text-xl font-black text-slate-900 leading-none">
+                {{ activity?.steps?.toLocaleString('id-ID') || 0 }}
+            </p>
+        </template>
+        <template v-else>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                {{ activity?.type === 'Ride' ? 'Avg Speed' : 'Avg Pace' }}
+            </p>
+            <p class="text-xl font-black text-slate-900 leading-none">
+                {{ performanceValue || '00:00' }} 
+                <span class="text-xs text-slate-400 font-bold">
+                    {{ activity?.type === 'Ride' ? 'km/h' : '/km' }}
+                </span>
+            </p>
+        </template>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Elevation</p>
+        <p class="text-xl font-black text-slate-900 leading-none">
+            {{ Math.round(activity?.total_elevation_gain || 0) }} <span class="text-xs text-slate-400 font-bold">m</span>
+        </p>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Calories</p>
+        <p class="text-xl font-black text-slate-900 leading-none">
+            {{ Math.round(activity?.calories || 0) }} <span class="text-xs text-slate-400 font-bold">kcal</span>
+        </p>
+    </div>
+</div>
             <div v-if="activity?.type === 'Ride'" class="grid grid-cols-2 gap-4 mt-4">
             <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-blue-500">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Power</p>
