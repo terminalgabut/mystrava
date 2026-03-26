@@ -87,11 +87,13 @@ export default `
     </div>
 
     <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-        <template v-elas="activity?.type === 'Hike'">
-            {{ activity?.type === 'Hike' ? 'Ascent Speed' : 'Avg Pace' }}
+        <template v-elas>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                {{ activity?.type === 'Hike' ? 'Ascent Speed' : 'Avg Pace' }}
+            </p>
             <p class="text-xl font-black text-slate-900 leading-none">
                 {{ Math.round(activity?.total_elevation_gain / (activity?.moving_time / 3600)) || 0 }} 
-            <span class="text-xs text-slate-400 font-bold">
+                <span class="text-xs text-slate-400 font-bold">
                     {{ activity?.type === 'Hike' ? 'm/h' : '/km' }}
                 </span>
             </p>
