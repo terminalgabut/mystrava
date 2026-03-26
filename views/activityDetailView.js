@@ -96,7 +96,7 @@ export default `
                 </span>
             </p>
         </template>
-        <template v-if="activity?.type === 'Walk'">
+        <template v-elsa-if="activity?.type === 'Walk'">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Steps</p>
             <p class="text-xl font-black text-slate-900 leading-none">
                 {{ activity?.steps?.toLocaleString('id-ID') || 0 }}
