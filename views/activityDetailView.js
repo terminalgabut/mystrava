@@ -87,8 +87,8 @@ export default `
     </div>
 
     <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-        <template v-if="activity?.type === 'Hike'">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ascent Speed</p>
+        <template v-elas="activity?.type === 'Hike'">
+            {{ activity?.type === 'Hike' ? 'Ascent Speed' : 'Avg Pace' }}
             <p class="text-xl font-black text-slate-900 leading-none">
                 {{ Math.round(activity?.total_elevation_gain / (activity?.moving_time / 3600)) || 0 }} 
             <span class="text-xs text-slate-400 font-bold">
@@ -96,7 +96,7 @@ export default `
                 </span>
             </p>
         </template>
-        <template v-elsa-if="activity?.type === 'Walk'">
+        <template v-if="activity?.type === 'Walk'">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Steps</p>
             <p class="text-xl font-black text-slate-900 leading-none">
                 {{ activity?.steps?.toLocaleString('id-ID') || 0 }}
