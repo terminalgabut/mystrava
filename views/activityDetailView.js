@@ -91,7 +91,9 @@ export default `
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ascent Speed</p>
             <p class="text-xl font-black text-slate-900 leading-none">
                 {{ Math.round(activity?.total_elevation_gain / (activity?.moving_time / 3600)) || 0 }} 
-            <span class="text-xs text-slate-400 font-bold">m/h</span>
+            <span class="text-xs text-slate-400 font-bold">
+                    {{ activity?.type === 'Hike' ? 'm/h' : '/km' }}
+                </span>
             </p>
         </template>
         <template v-if="activity?.type === 'Walk'">
