@@ -170,9 +170,9 @@ export default `
             </div>
 
             <PaceZoneChart 
-    v-if="activity?.type === 'Run' && activity?.splits_metric" 
+    v-if="activity?.type === 'Run' && activity?.splits_metric?.length" 
     :splits="activity.splits_metric" 
-    :threshold="threshold" 
+    :threshold="Number(threshold)" 
 />
 
             <div class="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
