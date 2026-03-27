@@ -174,6 +174,12 @@ export default `
                 <i data-lucide="clock" class="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12"></i>
             </div>
 
+            <PaceZoneChart
+                v-if="activity?.type === 'Run' && activity?.splits_metric"
+                :splits="activity.splits_metric"
+                :threshold="threshold" 
+            />
+
             <div class="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
                 <div class="flex items-center justify-between mb-4 px-2">
                     <h3 class="font-black text-slate-900">Splits Metric</h3>
