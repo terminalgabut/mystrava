@@ -67,11 +67,11 @@ export default {
             const ranges = PerformanceLogic.getZoneRanges(this.threshold);
 
             const stats = {
-                6: { id: 6, label: 'Neuromuscular', time: 0, color: '#0F172A', range: ranges[6].display },
-                5: { id: 5, label: 'Anaerobic', time: 0, color: '#EF4444', range: ranges[5].display },
+                6: { id: 6, label: 'Anaerobic', time: 0, color: '#0F172A', range: ranges[6].display },
+                5: { id: 5, label: 'VO2MAX', time: 0, color: '#EF4444', range: ranges[5].display },
                 4: { id: 4, label: 'Ambang Batas', time: 0, color: '#0052FF', range: ranges[4].display },
                 3: { id: 3, label: 'Tempo', time: 0, color: '#EAB308', range: ranges[3].display },
-                2: { id: 2, label: 'Endurance', time: 0, color: '#22C55E', range: ranges[2].display },
+                2: { id: 2, label: 'Daya Tahan', time: 0, color: '#22C55E', range: ranges[2].display },
                 1: { id: 1, label: 'Recovery', time: 0, color: '#64748B', range: ranges[1].display }
             };
 
