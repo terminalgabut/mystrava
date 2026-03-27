@@ -62,11 +62,11 @@ export const PerformanceLogic = {
     getZoneSettings(zone, type = 'Run') {
         const settings = {
             Run: {
-                6: { label: 'Neuromuscular', color: '#0F172A', desc: 'Sprint' },
-                5: { label: 'Anaerobic', color: '#EF4444', desc: 'Sangat Keras' },
+                6: { label: 'Anaerobic', color: '#0F172A', desc: 'Sprint' },
+                5: { label: 'VOMAX2', color: '#EF4444', desc: 'Sangat Keras' },
                 4: { label: 'Ambang Batas', color: '#0052FF', desc: 'Threshold' },
                 3: { label: 'Tempo', color: '#EAB308', desc: 'Cukup Keras' },
-                2: { label: 'Endurance', color: '#22C55E', desc: 'Lari Santai' },
+                2: { label: 'Daya Tahan', color: '#22C55E', desc: 'Lari Santai' },
                 1: { label: 'Recovery', color: '#64748B', desc: 'Pemulihan' }
             }
         };
