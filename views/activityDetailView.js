@@ -77,13 +77,8 @@ export default `
             <div class="bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden h-[450px] relative">
                 <div id="map" class="w-full h-full rounded-[2rem] z-10">
                 </div>
-                
-        <div v-if="activity?.type === 'Run' && activity?.splits_metric">          
-            <PaceZoneChart :splits="activity.splits_metric" :threshold="threshold" />
-        </div>
-    </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+   <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
     <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</p>
         <p class="text-xl font-black text-slate-900 leading-none">
@@ -174,11 +169,11 @@ export default `
                 <i data-lucide="clock" class="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12"></i>
             </div>
 
-            <PaceZoneChart
-                v-if="activity?.type === 'Run' && activity?.splits_metric"
-                :splits="activity.splits_metric"
-                :threshold="threshold" 
-            />
+            <PaceZoneChart 
+    v-if="activity?.type === 'Run' && activity?.splits_metric" 
+    :splits="activity.splits_metric" 
+    :threshold="threshold" 
+/>
 
             <div class="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
                 <div class="flex items-center justify-between mb-4 px-2">
