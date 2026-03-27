@@ -7,10 +7,13 @@ import { getWeatherEngine } from '../js/utils/weatherEngine.js';
 import { initActivityMap } from '../js/utils/mapEngine.js';
 import { captureElement } from '../js/utils/exportEngine.js';
 import ActivityExportComponent from '../components/activityExportComponent.js';
+import { PerformanceLogic } from '../js/utils/performanceLogic.js';
+import PaceZoneChart from '../js/utils/PaceZoneChart.js';
 
 export default {
     name: 'ActivityDetailView',
     template: detailTemplate,
+    components: { ActivityExportComponent, PaceZoneChart },
     setup() {
         const { ref, onMounted, onUnmounted, nextTick, computed, watch, createApp } = Vue;
         const route = VueRouter.useRoute();
@@ -112,6 +115,31 @@ export default {
             } catch (e) { return null; }
         };
 
+        const threshold = computed(() => 
+            activity.value?.athlete_pace_threshold_snapshot || 455
+        );
+
+        const realSplits = computed(() => {
+            const splits = activity.value?.splits_metric;
+            if (!splits || !Array.isArray(splits)) return [];
+            
+            return splits.map(s => {
+                const paceSec = PerformanceLogic.speedToPaceSeconds(s.average_speed);
+                const zone = PerformanceLogic.getRunZone(paceSec, threshold.value);
+                const zoneInfo = PerformanceLogic.getZoneSettings(zone, 'Run');
+
+                return {
+                    number: s.split,
+                    distance: (Number(s.distance || 0) / 1000).toFixed(2),
+                    pace: stravaService.calculatePace(s.average_speed, activity.value?.type),
+                    elevation: Math.round(s.elevation_difference || 0),
+                    // Tambahan untuk warna di tabel UI
+                    zoneColor: zoneInfo.color,
+                    zoneLabel: zoneInfo.label
+                };
+            });
+        });
+
         // --- WEATHER & STATS COMPUTED ---
         const weatherInfo = computed(() => {
             if (!activity.value || activity.value.weather_temp === null) {
@@ -187,7 +215,7 @@ export default {
 
         return { 
             activity, loading, performanceValue, 
-            weatherInfo, realSplits, isExportReady,
+            weatherInfo, realSplits, isExportReady,threshold,
             formatTime, formatDate, downloadSnapshot
         };
     }
