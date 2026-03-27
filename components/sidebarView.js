@@ -38,6 +38,14 @@ export default {
                     <span class="font-semibold text-sm">Analytics</span>
                     <div class="active-indicator"></div>
                 </router-link>
+
+                <router-link to="/performance-settings" class="sidebar-item group" active-class="is-active">
+                <div class="sidebar-icon-box">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+                </div>
+                <span class="font-semibold text-sm">Settings</span>
+                <div class="active-indicator"></div>
+                </router-link>
             </nav>
 
             <div class="mt-auto p-4 px-6 border-t border-slate-50">
