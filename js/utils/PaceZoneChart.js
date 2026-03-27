@@ -8,39 +8,31 @@ export default {
         threshold: { type: Number, required: true }
     },
     template: `
-    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-visible">
+    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div class="flex items-center justify-between mb-6 px-1">
-            <h3 class="font-black text-slate-900 flex items-center gap-2">
-                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i>
+            <h3 class="font-black text-slate-900 flex items-center gap-2 text-sm uppercase tracking-tight">
+                <i data-lucide="gauge" class="w-4 h-4 text-blue-500"></i>
                 Pace Zones
             </h3>
-            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Time In Zone</span>
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Time Distribution</span>
         </div>
 
         <div class="space-y-4">
-            <div v-for="zone in zoneDistribution" :key="zone.id" class="relative group">
+            <div v-for="zone in zoneDistribution" :key="zone.id" class="group relative">
                 <div class="flex justify-between items-end mb-1.5 px-1">
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black text-slate-900 w-4">Z{{ zone.id }}</span>
+                        <span class="text-[10px] font-black text-slate-900">Z{{ zone.id }}</span>
                         <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{{ zone.label }}</span>
                     </div>
-                    <span class="text-[10px] font-black text-slate-900 tabular-nums">{{ zone.percentage }}%</span>
-                </div>
-                
-                <div class="h-2.5 bg-slate-50 rounded-full overflow-hidden relative cursor-help">
-                    <div class="h-full transition-all duration-1000 ease-out rounded-full"
-                         :style="{ 
-                            width: zone.percentage + '%', 
-                            backgroundColor: zone.color 
-                         }">
+                    <div class="text-right">
+                        <span class="text-[10px] font-black text-slate-900 tabular-nums">{{ zone.percentage }}%</span>
+                        <p class="text-[8px] font-bold text-slate-400 leading-none">{{ formatDuration(zone.time) }}</p>
                     </div>
                 </div>
-
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50">
-                    <div class="bg-slate-900 text-white text-[10px] font-black py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap flex items-center gap-2">
-                         <span class="text-white/60 uppercase" style="font-size: 8px;">Duration:</span>
-                         {{ formatDuration(zone.time) }}
-                         <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                
+                <div class="h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                    <div class="h-full transition-all duration-700 ease-out rounded-full"
+                         :style="{ width: zone.percentage + '%', backgroundColor: zone.color }">
                     </div>
                 </div>
             </div>
@@ -63,16 +55,16 @@ export default {
             let totalMovingTime = 0;
 
             this.splits.forEach(s => {
-                const pace = 1000 / s.average_speed;
-                const zoneId = PerformanceLogic.getRunZone(pace, this.threshold);
-                // Kita gunakan moving_time dari split strava
+                const paceSec = 1000 / s.average_speed;
+                const zoneId = PerformanceLogic.getRunZone(paceSec, this.threshold);
                 const duration = s.moving_time || 0;
                 
-                stats[zoneId].time += duration;
-                totalMovingTime += duration;
+                if(stats[zoneId]) {
+                    stats[zoneId].time += duration;
+                    totalMovingTime += duration;
+                }
             });
 
-            // Urutkan dari Z6 ke Z1 (seperti Strava)
             return Object.values(stats).reverse().map(z => ({
                 ...z,
                 percentage: totalMovingTime > 0 ? Math.round((z.time / totalMovingTime) * 100) : 0
@@ -80,10 +72,9 @@ export default {
         }
     },
     methods: {
-        formatDuration(seconds) {
-            if (seconds === 0) return '0s';
-            const m = Math.floor(seconds / 60);
-            const s = Math.round(seconds % 60);
+        formatDuration(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.round(sec % 60);
             return m > 0 ? `${m}m ${s}s` : `${s}s`;
         }
     },
