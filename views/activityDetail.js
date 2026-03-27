@@ -115,9 +115,9 @@ export default {
             } catch (e) { return null; }
         };
 
-        const threshold = computed(() => 
-            activity.value?.athlete_pace_threshold_snapshot || 455
-        );
+        const threshold = computed(() => {
+        return Number(activity.value?.athlete_pace_threshold_snapshot || 455);
+    });
 
         // --- WEATHER & STATS COMPUTED ---
         const weatherInfo = computed(() => {
