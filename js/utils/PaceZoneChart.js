@@ -25,35 +25,36 @@ export default {
         </div>
 
         <div class="space-y-6">
-            <div v-for="zone in zoneDistribution" 
-                 :key="zone.id" 
-                 class="group relative transition-all duration-300 hover:translate-x-1"
-                 v-if="zone.time > 0 || zone.id <= 4"> <div class="flex justify-between items-end mb-2 px-1">
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: zone.color }"></div>
-                            <span class="text-[11px] font-black text-slate-900 tracking-tight">Z{{ zone.id }}</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ zone.label }}</span>
+            <template v-for="zone in zoneDistribution" :key="zone.id">
+                <div v-if="zone.time > 0 || zone.id <= 4" 
+                     class="group relative transition-all duration-300 hover:translate-x-1">
+                    <div class="flex justify-between items-end mb-2 px-1">
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: zone.color }"></div>
+                                <span class="text-[11px] font-black text-slate-900 tracking-tight">Z{{ zone.id }}</span>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ zone.label }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-end">
+                            <span class="text-[11px] font-black text-slate-900 tabular-nums">
+                                {{ zone.percentage }}%
+                            </span>
+                            <span class="text-[9px] font-bold text-slate-400 tabular-nums leading-none mt-0.5">
+                                {{ formatDuration(zone.time) }}
+                            </span>
                         </div>
                     </div>
                     
-                    <div class="flex flex-col items-end">
-                        <span class="text-[11px] font-black text-slate-900 tabular-nums">
-                            {{ zone.percentage }}%
-                        </span>
-                        <span class="text-[9px] font-bold text-slate-400 tabular-nums leading-none mt-0.5">
-                            {{ formatDuration(zone.time) }}
-                        </span>
+                    <div class="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-50/50 shadow-inner p-[2px]">
+                        <div class="h-full transition-all duration-1000 rounded-full shadow-sm relative"
+                             :style="{ width: zone.percentage + '%', backgroundColor: zone.color }">
+                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-50/50 shadow-inner p-[2px]">
-                    <div class="h-full transition-all duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1) rounded-full shadow-sm relative"
-                         :style="{ width: zone.percentage + '%', backgroundColor: zone.color }">
-                        <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </div>
-                </div>
-            </div>
+            </template>
         </div>
 
         <div class="mt-8 pt-5 border-t border-slate-50 flex justify-between items-center px-1">
@@ -66,78 +67,72 @@ export default {
             </button>
         </div>
     </div>
-    `,
-    
-// js/utils/PaceZoneChart.js
-computed: {
-    // 1. Kita buat satu computed utama untuk memproses semua data
-    processedStats() {
-        if (!Array.isArray(this.splits) || !this.threshold) {
-            return { zones: [], total: 0 };
-        }
+    `, // Komanya jangan lupa di sini
 
-        const stats = {
-            6: { id: 6, label: 'Neuromuscular', time: 0, color: '#0F172A' },
-            5: { id: 5, label: 'Anaerobic', time: 0, color: '#EF4444' },
-            4: { id: 4, label: 'Threshold', time: 0, color: '#0052FF' },
-            3: { id: 3, label: 'Tempo', time: 0, color: '#EAB308' },
-            2: { id: 2, label: 'Endurance', time: 0, color: '#22C55E' },
-            1: { id: 1, label: 'Recovery', time: 0, color: '#64748B' }
-        };
-
-        let totalTime = 0;
-
-        this.splits.forEach(s => {
-            if (!s.average_speed || s.average_speed <= 0) return;
-
-            const paceSec = 1000 / s.average_speed;
-            const zoneId = PerformanceLogic.getRunZone(paceSec, this.threshold);
-            const duration = s.moving_time || 0;
-            
-            if (stats[zoneId]) {
-                stats[zoneId].time += duration;
-                totalTime += duration;
+    computed: {
+        processedStats() {
+            if (!Array.isArray(this.splits) || !this.threshold) {
+                return { zones: [], total: 0 };
             }
-        });
 
-        // Map hasil dengan perhitungan persentase
-        const zones = Object.values(stats).reverse().map(z => ({
-            ...z,
-            percentage: totalTime > 0 ? Math.round((z.time / totalTime) * 100) : 0
-        }));
+            const stats = {
+                6: { id: 6, label: 'Neuromuscular', time: 0, color: '#0F172A' },
+                5: { id: 5, label: 'Anaerobic', time: 0, color: '#EF4444' },
+                4: { id: 4, label: 'Threshold', time: 0, color: '#0052FF' },
+                3: { id: 3, label: 'Tempo', time: 0, color: '#EAB308' },
+                2: { id: 2, label: 'Endurance', time: 0, color: '#22C55E' },
+                1: { id: 1, label: 'Recovery', time: 0, color: '#64748B' }
+            };
 
-        return { zones, total: totalTime };
+            let totalTime = 0;
+
+            this.splits.forEach(s => {
+                if (!s.average_speed || s.average_speed <= 0) return;
+
+                const paceSec = 1000 / s.average_speed;
+                const zoneId = PerformanceLogic.getRunZone(paceSec, this.threshold);
+                const duration = s.moving_time || 0;
+                
+                if (stats[zoneId]) {
+                    stats[zoneId].time += duration;
+                    totalTime += duration;
+                }
+            });
+
+            const zones = Object.values(stats).reverse().map(z => ({
+                ...z,
+                percentage: totalTime > 0 ? Math.round((z.time / totalTime) * 100) : 0
+            }));
+
+            return { zones, total: totalTime };
+        },
+
+        zoneDistribution() {
+            return this.processedStats.zones;
+        },
+
+        totalTimeDisplay() {
+            return this.formatDuration(this.processedStats.total);
+        }
     },
 
-    // 2. Gunakan hasil dari processedStats untuk distribusi zona
-    zoneDistribution() {
-        return this.processedStats.zones;
+    data() {
+        return {}; 
     },
 
-    // 3. Gunakan hasil dari processedStats untuk display waktu total
-    totalTimeDisplay() {
-        const sec = this.processedStats.total;
-        if (!sec) return '0s';
-        const m = Math.floor(sec / 60);
-        const s = Math.round(sec % 60);
-        return m > 0 ? `${m}m ${s}s` : `${s}s`;
-    }
-},
-// Kita tidak butuh lagi this.totalSeconds di dalam data()
-data() {
-    return {}; 
-},
-methods: {
-    formatDuration(sec) {
-        if (!sec) return '0s';
-        const m = Math.floor(sec / 60);
-        const s = Math.round(sec % 60);
-        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    methods: {
+        formatDuration(sec) {
+            if (!sec) return '0s';
+            const m = Math.floor(sec / 60);
+            const s = Math.round(sec % 60);
+            return m > 0 ? `${m}m ${s}s` : `${s}s`;
+        },
+        refreshChart() {
+            if (window.lucide) window.lucide.createIcons();
+        }
     },
-    refreshChart() {
+
+    mounted() {
         if (window.lucide) window.lucide.createIcons();
     }
-},
-mounted() {
-    if (window.lucide) window.lucide.createIcons();
-}
+}; // Penutup object export default
