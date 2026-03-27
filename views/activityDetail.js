@@ -7,7 +7,7 @@ import { getWeatherEngine } from '../js/utils/weatherEngine.js';
 import { initActivityMap } from '../js/utils/mapEngine.js';
 import { captureElement } from '../js/utils/exportEngine.js';
 import ActivityExportComponent from '../components/activityExportComponent.js';
-import { PerformanceLogic } from '../js/utils/performanceLogic.js';
+import { PerformanceLogic } from '../js/utils/PerformanceLogic.js';
 import PaceZoneChart from '../js/utils/PaceZoneChart.js';
 
 export default {
