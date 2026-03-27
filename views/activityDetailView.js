@@ -75,8 +75,13 @@ export default `
     <div v-else-if="activity" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden h-[450px] relative">
-                <div id="map" class="w-full h-full rounded-[2rem] z-10"></div>
-            </div>
+                <div id="map" class="w-full h-full rounded-[2rem] z-10">
+                </div>
+                
+        <div v-if="activity?.type === 'Run' && activity?.splits_metric">          
+            <PaceZoneChart :splits="activity.splits_metric" :threshold="threshold" />
+        </div>
+    </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
     <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
