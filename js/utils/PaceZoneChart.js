@@ -1,5 +1,5 @@
 // js/utils/PaceZoneChart.js
-import { PerformanceLogic } from './performanceLogic.js';
+import { PerformanceLogic } from './PerformanceLogic.js';
 
 export default {
     name: 'PaceZoneChart',
