@@ -8,90 +8,69 @@ export default {
         threshold: { type: Number, required: true }
     },
     template: `
-    <div class="pace-zone-card bento-card p-6 shadow-premium">
-        <div class="card-header mb-6">
-            <span class="label-muted">Distribusi Zona Pace</span>
-            <div class="icon-box"><i data-lucide="bar-chart-2" class="w-4 h-4"></i></div>
+    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-black text-slate-900 flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i>
+                Pace Zones
+            </h3>
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Time Distribution</span>
         </div>
 
-        <div class="space-y-4">
-            <div v-for="zone in sortedZones" :key="zone.id" class="zone-row group">
-                <div class="flex justify-between items-end mb-1">
+        <div class="space-y-3">
+            <div v-for="zone in zoneDistribution" :key="zone.id" class="group">
+                <div class="flex justify-between items-end mb-1 px-1">
                     <div class="flex items-center gap-2">
-                        <span class="stat-value text-xs w-4">Z{{ zone.id }}</span>
-                        <span class="text-caption" style="font-size: 10px; font-weight: 700;">
-                            {{ zone.label }}
-                        </span>
+                        <span class="text-[10px] font-black text-slate-900 w-4">Z{{ zone.id }}</span>
+                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{{ zone.label }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="label-muted" style="letter-spacing: 0;">{{ zone.range }}</span>
-                        <span class="stat-value text-sm">{{ zone.percentage }}%</span>
-                    </div>
+                    <span class="text-[10px] font-black text-slate-900">{{ zone.percentage }}%</span>
                 </div>
                 
-                <div class="h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                    <div class="transition-all duration-1000 ease-out rounded-full"
+                <div class="h-2 bg-slate-50 rounded-full overflow-hidden">
+                    <div class="h-full transition-all duration-1000 ease-out rounded-full"
                          :style="{ 
                             width: zone.percentage + '%', 
-                            backgroundColor: zone.color,
-                            boxShadow: '0 0 10px ' + zone.color + '40'
+                            backgroundColor: zone.color 
                          }">
                     </div>
                 </div>
             </div>
         </div>
-        
-        <p class="text-caption mt-6 pt-4 border-t border-slate-50 italic">
-            Berdasarkan ambang batas lari {{ formatPace(threshold) }} /km
-        </p>
     </div>
     `,
     computed: {
-        sortedZones() {
-            // 1. Inisialisasi 6 Zona
-            const zoneStats = {
-                6: { id: 6, label: 'Neuromuscular', seconds: 0, color: '#0F172A' }, // Slate 900
-                5: { id: 5, label: 'Anaerobic', seconds: 0, color: '#EF4444' },    // Red
-                4: { id: 4, label: 'Ambang Batas', seconds: 0, color: '#0052FF' }, // Brand Primary
-                3: { id: 3, label: 'Tempo', seconds: 0, color: '#EAB308' },       // Yellow
-                2: { id: 2, label: 'Endurance', seconds: 0, color: '#22C55E' },    // Green
-                1: { id: 1, label: 'Recovery', seconds: 0, color: '#64748B' }     // Slate 500
+        zoneDistribution() {
+            if (!this.splits || !this.threshold) return [];
+
+            // Inisialisasi total waktu per zona (Z1 - Z6)
+            const stats = {
+                6: { id: 6, label: 'Neuromuscular', time: 0, color: '#0F172A' },
+                5: { id: 5, label: 'Anaerobic', time: 0, color: '#EF4444' },
+                4: { id: 4, label: 'Threshold', time: 0, color: '#0052FF' },
+                3: { id: 3, label: 'Tempo', time: 0, color: '#EAB308' },
+                2: { id: 2, label: 'Endurance', time: 0, color: '#22C55E' },
+                1: { id: 1, label: 'Recovery', time: 0, color: '#64748B' }
             };
 
-            // 2. Kalkulasi Durasi per Zona dari Splits
-            let totalSeconds = 0;
-            this.splits.forEach(split => {
-                const pace = 1000 / split.average_speed;
-                const zoneId = PerformanceLogic.getZone(pace, this.threshold);
-                zoneStats[zoneId].seconds += split.moving_time;
-                totalSeconds += split.moving_time;
+            let totalMovingTime = 0;
+
+            this.splits.forEach(s => {
+                const pace = 1000 / s.average_speed;
+                const zoneId = PerformanceLogic.getRunZone(pace, this.threshold);
+                const duration = s.moving_time || 0;
+                
+                stats[zoneId].time += duration;
+                totalMovingTime += duration;
             });
 
-            // 3. Mapping ke Array untuk Display
-            return Object.values(zoneStats).reverse().map(zone => ({
-                ...zone,
-                percentage: totalSeconds > 0 ? Math.round((zone.seconds / totalSeconds) * 100) : 0,
-                range: this.getZoneRangeLabel(zone.id)
+            return Object.values(stats).reverse().map(z => ({
+                ...z,
+                percentage: totalMovingTime > 0 ? Math.round((z.time / totalMovingTime) * 100) : 0
             }));
         }
     },
-    methods: {
-        formatPace(sec) {
-            const m = Math.floor(sec / 60);
-            const s = Math.round(sec % 60).toString().padStart(2, '0');
-            return `${m}:${s}`;
-        },
-        getZoneRangeLabel(id) {
-            const t = this.threshold;
-            const ranges = {
-                6: `< ${this.formatPace(t * 0.81)}`,
-                5: `${this.formatPace(t * 0.81)}-${this.formatPace(t * 0.90)}`,
-                4: `${this.formatPace(t * 0.90)}-${this.formatPace(t * 0.95)}`,
-                3: `${this.formatPace(t * 0.95)}-${this.formatPace(t * 1.00)}`,
-                2: `${this.formatPace(t * 1.00)}-${this.formatPace(t * 1.15)}`,
-                1: `> ${this.formatPace(t * 1.15)}`
-            };
-            return ranges[id];
-        }
+    mounted() {
+        if (window.lucide) window.lucide.createIcons();
     }
 };
