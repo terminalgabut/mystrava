@@ -119,25 +119,16 @@ export default {
             activity.value?.athlete_pace_threshold_snapshot || 455
         );
 
+        // Versi bersih: Hanya data split murni untuk tabel
         const realSplits = computed(() => {
             const splits = activity.value?.splits_metric;
             if (!splits || !Array.isArray(splits)) return [];
-            
-            return splits.map(s => {
-                const paceSec = PerformanceLogic.speedToPaceSeconds(s.average_speed);
-                const zone = PerformanceLogic.getRunZone(paceSec, threshold.value);
-                const zoneInfo = PerformanceLogic.getZoneSettings(zone, 'Run');
-
-                return {
-                    number: s.split,
-                    distance: (Number(s.distance || 0) / 1000).toFixed(2),
-                    pace: stravaService.calculatePace(s.average_speed, activity.value?.type),
-                    elevation: Math.round(s.elevation_difference || 0),
-                    // Tambahan untuk warna di tabel UI
-                    zoneColor: zoneInfo.color,
-                    zoneLabel: zoneInfo.label
-                };
-            });
+            return splits.map(s => ({
+                number: s.split,
+                distance: (Number(s.distance || 0) / 1000).toFixed(2),
+                pace: stravaService.calculatePace(s.average_speed, activity.value?.type),
+                elevation: Math.round(s.elevation_difference || 0)
+            }));
         });
 
         // --- WEATHER & STATS COMPUTED ---
