@@ -5,7 +5,8 @@ import { Logger } from './services/debug.js';
  */
 const Dashboard = () => import('../views/dashboard.js');
 const Activities = () => import('../views/activities.js');
-const ActivityDetail = () => import('../views/activityDetail.js'); // Placeholder untuk next step
+const ActivityDetail = () => import('../views/activityDetail.js'); 
+const Settings = () => import('../views/settings.js');
 
 const routes = [
     { 
@@ -25,16 +26,17 @@ const routes = [
         props: true 
     }, 
     { 
+        path: '/performance-settings', 
+        name: 'settings',
+        component: Settings 
+    },
+    { 
         path: '/:pathMatch(.*)*', 
         redirect: '/' 
     }
 ];
 
 export const router = VueRouter.createRouter({
-    /**
-     * WebHashHistory paling aman untuk GitHub Pages 
-     * karena tidak memerlukan konfigurasi server sisi backend (Nginx/Apache)
-     */
     history: VueRouter.createWebHashHistory(),
     routes
 });
