@@ -1,3 +1,5 @@
+// root/js/services/supabase.js
+
 // Gunakan CDN jika kamu tidak menggunakan build tools (Vite/Webpack)
 // import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
