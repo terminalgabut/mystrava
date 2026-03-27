@@ -67,64 +67,77 @@ export default {
         </div>
     </div>
     `,
-    computed: {
-        zoneDistribution() {
-            if (!this.splits || !this.threshold) return [];
-
-            const stats = {
-                6: { id: 6, label: 'Neuromuscular', time: 0, color: '#0F172A' },
-                5: { id: 5, label: 'Anaerobic', time: 0, color: '#EF4444' },
-                4: { id: 4, label: 'Threshold', time: 0, color: '#0052FF' },
-                3: { id: 3, label: 'Tempo', time: 0, color: '#EAB308' },
-                2: { id: 2, label: 'Endurance', time: 0, color: '#22C55E' },
-                1: { id: 1, label: 'Recovery', time: 0, color: '#64748B' }
-            };
-
-            let totalMovingTime = 0;
-
-            this.splits.forEach(s => {
-                // Guard clause untuk speed 0
-                if (!s.average_speed || s.average_speed <= 0) return;
-
-                const paceSec = 1000 / s.average_speed;
-                const zoneId = PerformanceLogic.getRunZone(paceSec, this.threshold);
-                const duration = s.moving_time || 0;
-                
-                if(stats[zoneId]) {
-                    stats[zoneId].time += duration;
-                    totalMovingTime += duration;
-                }
-            });
-
-            // Menyimpan total untuk header
-            this.totalSeconds = totalMovingTime;
-
-            return Object.values(stats).reverse().map(z => ({
-                ...z,
-                percentage: totalMovingTime > 0 ? Math.round((z.time / totalMovingTime) * 100) : 0
-            }));
-        },
-        totalTimeDisplay() {
-            return this.formatDuration(this.totalSeconds || 0);
+    
+// js/utils/PaceZoneChart.js
+computed: {
+    // 1. Kita buat satu computed utama untuk memproses semua data
+    processedStats() {
+        if (!Array.isArray(this.splits) || !this.threshold) {
+            return { zones: [], total: 0 };
         }
-    },
-    data() {
-        return {
-            totalSeconds: 0
+
+        const stats = {
+            6: { id: 6, label: 'Neuromuscular', time: 0, color: '#0F172A' },
+            5: { id: 5, label: 'Anaerobic', time: 0, color: '#EF4444' },
+            4: { id: 4, label: 'Threshold', time: 0, color: '#0052FF' },
+            3: { id: 3, label: 'Tempo', time: 0, color: '#EAB308' },
+            2: { id: 2, label: 'Endurance', time: 0, color: '#22C55E' },
+            1: { id: 1, label: 'Recovery', time: 0, color: '#64748B' }
         };
+
+        let totalTime = 0;
+
+        this.splits.forEach(s => {
+            if (!s.average_speed || s.average_speed <= 0) return;
+
+            const paceSec = 1000 / s.average_speed;
+            const zoneId = PerformanceLogic.getRunZone(paceSec, this.threshold);
+            const duration = s.moving_time || 0;
+            
+            if (stats[zoneId]) {
+                stats[zoneId].time += duration;
+                totalTime += duration;
+            }
+        });
+
+        // Map hasil dengan perhitungan persentase
+        const zones = Object.values(stats).reverse().map(z => ({
+            ...z,
+            percentage: totalTime > 0 ? Math.round((z.time / totalTime) * 100) : 0
+        }));
+
+        return { zones, total: totalTime };
     },
-    methods: {
-        formatDuration(sec) {
-            if (!sec) return '0s';
-            const m = Math.floor(sec / 60);
-            const s = Math.round(sec % 60);
-            return m > 0 ? `${m}m ${s}s` : `${s}s`;
-        },
-        refreshChart() {
-            if (window.lucide) window.lucide.createIcons();
-        }
+
+    // 2. Gunakan hasil dari processedStats untuk distribusi zona
+    zoneDistribution() {
+        return this.processedStats.zones;
     },
-    mounted() {
+
+    // 3. Gunakan hasil dari processedStats untuk display waktu total
+    totalTimeDisplay() {
+        const sec = this.processedStats.total;
+        if (!sec) return '0s';
+        const m = Math.floor(sec / 60);
+        const s = Math.round(sec % 60);
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+},
+// Kita tidak butuh lagi this.totalSeconds di dalam data()
+data() {
+    return {}; 
+},
+methods: {
+    formatDuration(sec) {
+        if (!sec) return '0s';
+        const m = Math.floor(sec / 60);
+        const s = Math.round(sec % 60);
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    },
+    refreshChart() {
         if (window.lucide) window.lucide.createIcons();
     }
-};
+},
+mounted() {
+    if (window.lucide) window.lucide.createIcons();
+}
