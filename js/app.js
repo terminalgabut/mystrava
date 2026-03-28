@@ -8,10 +8,8 @@ const app = Vue.createApp({
     template: `<layout-wrapper />`
 });
 
-// Pastikan urutan ini benar
 app.use(router);
 
-// Tambahkan catch error saat mounting
 try {
     app.mount('#app');
     Logger.info('App: Mounted successfully');
