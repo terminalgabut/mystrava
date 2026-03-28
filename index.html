@@ -11,118 +11,111 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <style id="export-styles"> 
-    /* 1. GLOBAL RESET & ACCURACY */
-    .is-exporting * {
-        box-sizing: border-box;
-        /* Gunakan normal/1.2 untuk html-to-image agar font tidak terpotong */
-        line-height: 1.2 !important; 
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeLegibility;
-    }
+    <style id="export-styles">
+        .is-exporting * {
+            box-sizing: border-box;
+            line-height: 1.2 !important; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+       
+        .is-exporting { 
+            background: #0F172A !important; 
+            padding: 0 !important;
+            margin: 0 !important;
+        } 
+        
+        #export-root {
+            width: 600px;
+            background: #0F172A;
+            height: auto !important;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateZ(0);
+        }
+        
+        .is-exporting span,
+        .is-exporting p, 
+        .is-exporting h1 {
+            position: relative;
+            top: 0 !important; 
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .is-exporting .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* 3. PADDING BALANCE (Simetris Sejati) */
+        /* Kita gunakan padding yang sama atas-bawah karena render sudah stabil */
+        /* Stats Box (Distance, Pace, Elevation) */
+        .is-exporting .bg-white\/5, 
+        .is-exporting .bg-blue-600 {
+            padding-top: 1.25rem !important; 
+            padding-bottom: 1.25rem !important; 
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        
+        /* Lap Splits KM Box */
+        .is-exporting .grid > div { 
+            padding: 10px !important;
+            height: 56px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        
+        /* 4. MAPBOX EXPORT FIX */
+        .is-exporting .export-map {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 40px;
+            overflow: hidden;
+        }
 
-    .is-exporting { 
-        background: #0F172A !important; 
-        padding: 0 !important;
-        margin: 0 !important;
-    } 
-
-    #export-root {
-        width: 600px;
-        background: #0F172A;
-        height: auto !important;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        /* Mencegah pergeseran pixel saat rendering */
-        transform: translateZ(0);
-    }
-
-    /* 2. SYMMETRICAL ALIGNMENT (No more hacks) */
-    .is-exporting span, 
-    .is-exporting p, 
-    .is-exporting h1 {
-        position: relative;
-        /* Reset ke 0 karena html-to-image sudah akurat */
-        top: 0 !important; 
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    /* Tetap gunakan tabular-nums untuk angka agar presisi di tengah */
-    .is-exporting .tabular-nums {
-        font-variant-numeric: tabular-nums;
-    }
-
-    /* 3. PADDING BALANCE (Simetris Sejati) */
-    /* Kita gunakan padding yang sama atas-bawah karena render sudah stabil */
-    
-    /* Stats Box (Distance, Pace, Elevation) */
-    .is-exporting .bg-white\/5, 
-    .is-exporting .bg-blue-600 {
-        padding-top: 1.25rem !important; /* 20px */
-        padding-bottom: 1.25rem !important; /* 20px */
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-
-    /* Lap Splits KM Box */
-    .is-exporting .grid > div { 
-        padding: 10px !important;
-        height: 56px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-
-    /* 4. MAPBOX EXPORT FIX */
-    .is-exporting .export-map {
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        border-radius: 40px;
-        overflow: hidden;
-    }
-
-    .is-exporting .mapboxgl-canvas {
-        border-radius: 40px !important;
-        /* Penting: html-to-image butuh canvas tetap di posisi 0 */
-        position: relative !important;
-    }
-
-    /* 5. CLEANUP & PERFORMANCE */
-    .is-exporting .no-export,
-    .is-exporting button,
-    .is-exporting .nav-menu,
-    .is-exporting #__vconsole {
-        display: none !important;
-    } 
-
-    /* html-to-image mendukung backdrop-filter, 
-       tapi jika hasil blur terlihat aneh, aktifkan kembali baris di bawah ini */
-    /* .is-exporting * {
+        .is-exporting .mapboxgl-canvas {
+            border-radius: 40px !important;
+            /* Penting: html-to-image butuh canvas tetap di posisi 0 */
+            position: relative !important;
+        }
+        
+        /* 5. CLEANUP & PERFORMANCE */
+        .is-exporting .no-export,
+        .is-exporting button,
+        .is-exporting .nav-menu,
+        .is-exporting #__vconsole {
+            display: none !important;
+        } 
+        
+        /* html-to-image mendukung backdrop-filter, 
+        tapi jika hasil blur terlihat aneh, aktifkan kembali baris di bawah ini */
+        /* .is-exporting * {
         backdrop-filter: none !important;
-    } 
-    */
+        } 
+        */
     </style>
 </head>
-
 <body>
 
-    <div id="export-mount" style="
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 600px;
-  opacity: 0;
-  pointer-events: none;
-  z-index: -1;
-"></div>
+    <div id="export-mount" style=" position: fixed;
+        top: 0;
+        left: 0;
+        width: 600px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+        "> 
+    </div>
 
-    <div id="app"></div> 
+    <div id="app"> 
+    </div> 
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
@@ -132,9 +125,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
-    <script>var vConsole = new window.VConsole();</script>
-
-    <script type="module" src="js/app.js?v=test293"></script> 
+    <script type="module" src="js/app.js?v=test193"></script> 
 
 </body>
 </html>
