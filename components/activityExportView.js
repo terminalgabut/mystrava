@@ -31,7 +31,7 @@ export default `
       </div>
       <div class="flex flex-col items-end">
          <div class="bg-white/10 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-xl text-[10px] font-black italic tracking-tighter shadow-xl -translate-y-[2px]">
-           MYSTRAVA<span class="text-blue-400">PRO</span>
+           NGANGGUR<span class="text-blue-400">PRO</span>
          </div>
       </div>
     </div>
