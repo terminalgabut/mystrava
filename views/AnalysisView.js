@@ -105,9 +105,10 @@ export default {
             </div>
         </div>
         <div class="text-right">
-            <span :class="weeklyStats.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'" class="text-[10px] font-black italic">
-                {{ weeklyStats.trend >= 0 ? '↑' : '↓' }} {{ Math.abs(weeklyStats.trend) }}%
-            </span>
+            <span :class="weeklyStats.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'" 
+      class="text-[10px] font-black italic">
+    {{ weeklyStats.trend >= 0 ? '↑' : '↓' }} {{ Math.abs(weeklyStats.trend) }}%
+</span>
             <p class="text-[8px] text-slate-400 uppercase font-bold">vs Last Week</p>
         </div>
     </div>
@@ -215,17 +216,16 @@ const runsLastWeek = runs.filter(r => {
 const distThisWeek = runsThisWeek.reduce((acc, r) => acc + r.distance, 0) / 1000;
 const distLastWeek = runsLastWeek.reduce((acc, r) => acc + r.distance, 0) / 1000;
 
-// --- BAGIAN UPDATE STATE DI DALAM calculateAnalysis ---
-
-// 1. Update hanya data yang datang dari database
+// 4. Update state (Gunakan .toFixed(1) agar akurat seperti bubble hijau)
 this.weeklyStats.thisWeek = distThisWeek.toFixed(1);
 this.weeklyStats.lastWeek = distLastWeek.toFixed(1);
+
+// Ubah toFixed(0) menjadi toFixed(1) di sini
 this.weeklyStats.trend = distLastWeek > 0 
-    ? (((distThisWeek - distLastWeek) / distLastWeek) * 100).toFixed(0) 
+    ? parseFloat((((distThisWeek - distLastWeek) / distLastWeek) * 100).toFixed(1)) 
     : 0;
 
-// 2. Hitung persentase & sisa KM berdasarkan 'goal' yang aktif 
-// (Goal ini sudah aman karena di-load di bagian data() dari localStorage)
+// Hitung percent berdasarkan goal
 this.recalculatePercent();
 
             } catch (err) {
