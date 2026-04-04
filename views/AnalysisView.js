@@ -75,7 +75,76 @@ export default {
             ]
         };
     },
-    mounted() {
-        if (window.lucide) window.lucide.createIcons();
+    methods: {
+    async calculateAnalysis() {
+        this.loading = true;
+        try {
+            // 1. Ambil semua data lari (Run)
+            const { data: runs, error } = await supabase
+                .from('activities')
+                .select('*')
+                .eq('type', 'Run')
+                .order('start_date', { ascending: false });
+
+            if (error) throw error;
+            if (!runs || runs.length === 0) return;
+
+            // 2. Cari Best 5K (Mencari lari terdekat dengan 5000m yang paling cepat)
+            // Filter lari yang minimal 4.9km dan maksimal 5.5km
+            const fiveKRuns = runs.filter(r => r.distance >= 4900 && r.distance <= 5500);
+            
+            if (fiveKRuns.length > 0) {
+                // Urutkan berdasarkan pace tercepat (moving_time / distance)
+                const best5k = fiveKRuns.sort((a, b) => (a.moving_time / a.distance) - (b.moving_time / b.distance))[0];
+                
+                this.updatePredictions(best5k);
+            }
+
+        } catch (err) {
+            console.error("Analysis Error:", err.message);
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    updatePredictions(referenceRun) {
+        // T1 = Waktu referensi (detik), D1 = Jarak referensi (meter)
+        const T1 = referenceRun.moving_time;
+        const D1 = referenceRun.distance;
+
+        const distances = [
+            { key: '5K', dist: 5000 },
+            { key: '10K', dist: 10000 },
+            { key: 'Half', dist: 21097 },
+            { key: 'Full', dist: 42195 }
+        ];
+
+        // Rumus Riegel: T2 = T1 * (D2/D1)^1.06
+        this.predictions = distances.map(target => {
+            const T2 = T1 * Math.pow((target.dist / D1), 1.06);
+            const paceSeconds = T2 / (target.dist / 1000);
+            
+            return {
+                name: target.key + ' Prediction',
+                time: this.formatDuration(T2),
+                pace: this.formatPace(paceSeconds) + ' min/km'
+            };
+        });
+    },
+
+    formatDuration(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        return h > 0 
+            ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+            : `${m}:${s.toString().padStart(2, '0')}`;
+    },
+
+    formatPace(paceSeconds) {
+        const m = Math.floor(paceSeconds / 60);
+        const s = Math.floor(paceSeconds % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
     }
+}
 };
