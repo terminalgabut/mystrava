@@ -1,4 +1,6 @@
 // views/TrainingLogView.js
+import { supabase } from '../js/services/supabase.js'; 
+// ^ Pastikan path-nya benar, biasanya di ../services/ atau ../utils/
 export default {
     name: 'TrainingLogView',
     template: `
