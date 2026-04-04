@@ -215,15 +215,18 @@ const runsLastWeek = runs.filter(r => {
 const distThisWeek = runsThisWeek.reduce((acc, r) => acc + r.distance, 0) / 1000;
 const distLastWeek = runsLastWeek.reduce((acc, r) => acc + r.distance, 0) / 1000;
 
-// 4. Update state
-this.weeklyStats = {
-    thisWeek: distThisWeek.toFixed(1),
-    lastWeek: distLastWeek.toFixed(1),
-    goal: 25, 
-    percent: Math.min((distThisWeek / 25) * 100, 100).toFixed(0),
-    trend: distLastWeek > 0 ? (((distThisWeek - distLastWeek) / distLastWeek) * 100).toFixed(0) : 0
-};
-                this.recalculatePercent();
+// --- BAGIAN UPDATE STATE DI DALAM calculateAnalysis ---
+
+// 1. Update hanya data yang datang dari database
+this.weeklyStats.thisWeek = distThisWeek.toFixed(1);
+this.weeklyStats.lastWeek = distLastWeek.toFixed(1);
+this.weeklyStats.trend = distLastWeek > 0 
+    ? (((distThisWeek - distLastWeek) / distLastWeek) * 100).toFixed(0) 
+    : 0;
+
+// 2. Hitung persentase & sisa KM berdasarkan 'goal' yang aktif 
+// (Goal ini sudah aman karena di-load di bagian data() dari localStorage)
+this.recalculatePercent();
 
             } catch (err) {
                 console.error("Analysis Error:", err.message);
