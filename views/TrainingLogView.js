@@ -3,80 +3,67 @@ import { supabase } from '../js/services/supabase.js';
 
 export default {
     name: 'TrainingLogView',
-    template: `
-    <div class="dashboard-wrapper animate-in" :class="{ 'is-loading': loading }">
-        <header class="dashboard-header">
+    // Template yang sudah disesuaikan agar konsisten dengan Dashboard Mobile
+template: `
+<div class="dashboard-wrapper animate-in px-3 md:px-8" :class="{ 'is-loading': loading }">
+    <header class="dashboard-header flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter">Training Log</h1>
+            <p class="text-caption mt-1 uppercase tracking-[0.2em] font-bold text-[9px] md:text-[10px]">Your consistency timeline</p>
+        </div>
+        
+        <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 md:bg-transparent md:border-0 md:p-0">
+            <div class="icon-box bg-blue-600 text-white shadow-lg shadow-blue-200 w-8 h-8 md:w-10 md:h-10">
+                <i data-lucide="calendar-days" class="w-4 h-4 md:w-5 md:h-5"></i>
+            </div>
             <div>
-                <h1 class="text-display text-3xl font-black text-slate-900 tracking-tighter">Training Log</h1>
-                <p class="text-caption mt-1 uppercase tracking-[0.2em] font-bold text-[10px]">Your consistency timeline</p>
+                <p class="label-muted text-[8px] md:text-[10px] uppercase font-black">Total Activities</p>
+                <h2 class="stat-value text-sm md:text-xl">{{ totalActivities }}</h2>
             </div>
-            
-            <div class="flex gap-4">
-                <div class="hidden md:flex flex-col items-end">
-                    <span class="label-muted text-[10px] uppercase font-black">All Time</span>
-                    <h2 class="stat-value text-xl">{{ totalActivities }} <span class="text-[10px] text-slate-400">Activities</span></h2>
-                </div>
-                <div class="icon-box bg-blue-600 text-white shadow-lg shadow-blue-200">
-                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
-                </div>
-            </div>
-        </header>
+        </div>
+    </header>
 
-        <div class="max-w-4xl mx-auto mt-8">
-            <div class="relative pl-4 md:pl-0">
-                <div class="absolute left-[23px] md:left-[23px] top-0 bottom-0 w-[2px] bg-slate-100"></div>
+    <div class="max-w-4xl mx-auto mt-6 md:mt-10">
+        <div class="relative">
+            <div class="absolute left-[15px] md:left-[23px] top-0 bottom-0 w-[1.5px] bg-slate-100"></div>
 
-                <div v-for="(week, index) in groupedData" :key="index" class="relative pl-14 pb-12 group">
-                    
-                    <div class="absolute left-[17px] top-2 w-3.5 h-3.5 rounded-full bg-white border-2 border-slate-300 group-hover:border-blue-500 transition-colors z-10 shadow-sm"></div>
+            <div v-for="(week, index) in groupedData" :key="index" class="relative pl-10 md:pl-16 pb-10 group">
+                
+                <div class="absolute left-[9px] md:left-[17px] top-1.5 w-3 h-3 md:w-3.5 md:h-3.5 rounded-full bg-white border-2 border-slate-300 group-hover:border-blue-500 z-10"></div>
 
-                    <div class="flex justify-between items-center mb-5 pr-2">
-                        <div>
-                            <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">{{ week.range }}</h3>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-xl font-black text-slate-900">{{ week.totalDistance.toFixed(1) }}</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase ml-1">KM</span>
-                        </div>
+                <div class="flex justify-between items-center mb-3 pr-2">
+                    <h3 class="text-[9px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest">{{ week.range }}</h3>
+                    <div class="text-right">
+                        <span class="text-base md:text-xl font-black text-slate-900">{{ week.totalDistance.toFixed(1) }}</span>
+                        <span class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase ml-1">KM</span>
                     </div>
+                </div>
 
-                    <div class="bento-card p-5 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm group-hover:shadow-md group-hover:border-blue-100 transition-all duration-300">
-                        <div class="grid grid-cols-7 gap-2 md:gap-4">
-                            <div v-for="(day, dIdx) in week.days" :key="dIdx" class="flex flex-col items-center gap-2">
-                                <span class="text-[9px] font-black text-slate-300 uppercase tracking-tighter">{{ dayLabels[dIdx] }}</span>
-                                
-                                <div v-if="day" 
-     @click="goToActivity(day.id)"
-     :style="{ backgroundColor: getActivityColor(day.type) }"
-     class="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/5 cursor-pointer transform hover:scale-110 active:scale-95 transition-all">
-    
-    <span class="text-[10px] md:text-[11px] font-black text-white italic">
-        {{ day.distance.toFixed(1) }}
-    </span>
-</div>
-                                
-                                <div v-else class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
-                                    <div class="w-1.5 h-1.5 bg-slate-100 rounded-full group-hover:bg-slate-200 transition-colors"></div>
-                                </div>
+                <div class="bento-card p-3 md:p-6 bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm group-hover:shadow-md transition-all">
+                    <div class="grid grid-cols-7 gap-1 md:gap-4">
+                        <div v-for="(day, dIdx) in week.days" :key="dIdx" class="flex flex-col items-center gap-1.5">
+                            <span class="text-[8px] md:text-[9px] font-black text-slate-300 uppercase">{{ dayLabels[dIdx] }}</span>
+                            
+                            <div v-if="day" 
+                                 @click="goToActivity(day.id)"
+                                 :style="{ backgroundColor: getActivityColor(day.type) }"
+                                 class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-md cursor-pointer transform active:scale-90 transition-all">
+                                <span class="text-[8px] md:text-[11px] font-black text-white italic">
+                                    {{ day.distance.toFixed(1) }}
+                                </span>
+                            </div>
+                            
+                            <div v-else class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center">
+                                <div class="w-1 h-1 bg-slate-100 rounded-full"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div v-if="loading" class="flex flex-col items-center py-20">
-                    <div class="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
-                    <p class="text-caption">Retrieving your data...</p>
-                </div>
-
-                <div v-if="!loading && activities.length === 0" class="text-center py-20 bento-card">
-                    <i data-lucide="database-backup" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
-                    <p class="stat-value text-slate-400">No activities found</p>
-                    <p class="text-caption mt-2">Time to hit the road!</p>
-                </div>
             </div>
         </div>
     </div>
-    `,
+</div>
+`
     data() {
         return {
             loading: false,
