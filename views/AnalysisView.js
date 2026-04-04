@@ -147,7 +147,7 @@ export default {
             weeklyStats: {
             thisWeek: 0,
             lastWeek: 0,
-            goal: 25, // Target mingguan dalam KM (bisa diubah nanti)
+            goal: localStorage.getItem('running_goal') ? parseFloat(localStorage.getItem('running_goal')) : 25,
             percent: 0,
             trend: 0
             }
@@ -306,8 +306,11 @@ this.weeklyStats = {
         },
         
         recalculatePercent() {
-            const target = this.weeklyStats.goal || 1; 
-            this.weeklyStats.percent = Math.min((this.weeklyStats.thisWeek / target) * 100, 100).toFixed(0);
-        }
+    const target = this.weeklyStats.goal || 1;
+    this.weeklyStats.percent = Math.min((this.weeklyStats.thisWeek / target) * 100, 100).toFixed(0);
+    
+    // SIMPAN KE LOCAL STORAGE
+    localStorage.setItem('running_goal', target);
+}
     }
 };
