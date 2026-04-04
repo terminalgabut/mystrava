@@ -154,28 +154,40 @@ export default {
         },
 
         generateHistogram(runs) {
-            const bins = {};
-            runs.forEach(run => {
-                const paceInMinutes = (run.moving_time / 60) / (run.distance / 1000);
-                const binLabel = Math.floor(paceInMinutes); // Grup per menit (Pace 4, Pace 5, Pace 6, dst)
-                
-                // Batasi range histogram agar rapi (misal pace 3 sampai 9)
-                if (binLabel >= 3 && binLabel <= 9) {
-                    bins[binLabel] = (bins[binLabel] || 0) + 1;
-                }
-            });
+    const bins = {};
+    let minPace = 99;
+    let maxPace = 0;
 
-            const formattedBins = [];
-            for (let i = 3; i <= 9; i++) {
-                formattedBins.push({
-                    label: i,
-                    count: bins[i] || 0
-                });
-            }
+    runs.forEach(run => {
+        // Hitung pace per km (menit)
+        const paceInMinutes = (run.moving_time / 60) / (run.distance / 1000);
+        const binLabel = Math.floor(paceInMinutes);
+
+        // Abaikan data anomali (misal pace di bawah 2 atau di atas 20)
+        if (binLabel >= 2 && binLabel <= 20) {
+            bins[binLabel] = (bins[binLabel] || 0) + 1;
             
-            this.maxPaceCount = Math.max(...formattedBins.map(b => b.count), 1);
-            this.paceHistogram = formattedBins;
-        },
+            // Update range dinamis
+            if (binLabel < minPace) minPace = binLabel;
+            if (binLabel > maxPace) maxPace = binLabel;
+        }
+    });
+
+    // Jika tidak ada data, gunakan default 4-9
+    if (maxPace === 0) { minPace = 4; maxPace = 9; }
+
+    const formattedBins = [];
+    // Loop dari pace tercepat sampai terlambat yang ADA di data kamu
+    for (let i = minPace; i <= maxPace; i++) {
+        formattedBins.push({
+            label: i,
+            count: bins[i] || 0
+        });
+    }
+
+    this.maxPaceCount = Math.max(...formattedBins.map(b => b.count), 1);
+    this.paceHistogram = formattedBins;
+        }, 
 
         updatePredictions(referenceRun) {
             const T1 = referenceRun.moving_time;
