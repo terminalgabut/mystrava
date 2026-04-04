@@ -54,7 +54,7 @@ export default {
                             <div class="absolute -top-10 bg-slate-800 text-white text-[9px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
                                 {{ bin.count }} Activities
                             </div>
-                            <div class="w-full bg-blue-50 rounded-t-lg transition-all group-hover:bg-blue-600 relative overflow-hidden"
+                            <div class="w-full bg-blue-500 rounded-t-lg transition-all group-hover:bg-blue-600 relative overflow-hidden"
                                  :style="{ height: (bin.count / maxPaceCount * 100) + '%' }">
                                  <div class="absolute inset-0 bg-gradient-to-t from-blue-100/50 to-transparent"></div>
                             </div>
