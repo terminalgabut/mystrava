@@ -94,7 +94,15 @@ export default {
     <div class="flex justify-between items-center mb-6">
         <div>
             <p class="label-muted text-[10px] uppercase font-black tracking-widest">Weekly Goal Progress</p>
-            <h3 class="text-xl font-black italic text-slate-900 mt-1">{{ weeklyStats.thisWeek }} <span class="text-slate-400 text-xs font-normal">/ {{ weeklyStats.goal }} KM</span></h3>
+            <div class="flex items-center gap-2 mt-1">
+                <h3 class="text-xl font-black italic text-slate-900">{{ weeklyStats.thisWeek }}</h3>
+                <span class="text-slate-400 text-xs font-normal">/</span>
+                <input type="number" 
+                       v-model.number="weeklyStats.goal" 
+                       @input="recalculatePercent"
+                       class="w-12 bg-transparent border-b border-slate-100 focus:border-blue-500 focus:outline-none text-sm font-bold text-slate-500 transition-colors">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">KM</span>
+            </div>
         </div>
         <div class="text-right">
             <span :class="weeklyStats.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'" class="text-[10px] font-black italic">
@@ -119,7 +127,7 @@ export default {
             {{ weeklyStats.percent }}% Achieved
         </p>
         <p class="text-[9px] text-slate-500 font-bold uppercase">
-            {{ (weeklyStats.goal - weeklyStats.thisWeek).toFixed(1) }} KM Left
+            {{ Math.max(0, (weeklyStats.goal - weeklyStats.thisWeek)).toFixed(1) }} KM Left
         </p>
     </div>
 </div>
