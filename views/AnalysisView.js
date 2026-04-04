@@ -187,11 +187,9 @@ export default {
                 }
 
                 // Tambahkan potongan kode ini di dalam try { ... } fungsi calculateAnalysis()
-const now = new Date();
-const dayOfWeek = now.getDay() || 7; // 1 (Senin) - 7 (Minggu)
-
-// 1. Tentukan batas waktu
-const startOfThisWeek = new Date(now);
+                const dayOfWeek = now.getDay() || 7; // 1 (Senin) - 7 (Minggu)
+                // 1. Tentukan batas waktu
+                const startOfThisWeek = new Date(now);
 startOfThisWeek.setHours(0,0,0,0);
 startOfThisWeek.setDate(now.getDate() - (dayOfWeek - 1));
 
