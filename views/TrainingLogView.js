@@ -1,5 +1,5 @@
 // views/TrainingLogView.js
-import { supabase } from '../services/supabase.js';
+import { supabase } from '../js/services/supabase.js';
 
 export default {
     name: 'TrainingLogView',
