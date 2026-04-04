@@ -223,6 +223,7 @@ this.weeklyStats = {
     percent: Math.min((distThisWeek / 25) * 100, 100).toFixed(0),
     trend: distLastWeek > 0 ? (((distThisWeek - distLastWeek) / distLastWeek) * 100).toFixed(0) : 0
 };
+                this.recalculatePercent();
 
             } catch (err) {
                 console.error("Analysis Error:", err.message);
@@ -302,6 +303,11 @@ this.weeklyStats = {
             const m = Math.floor(paceSeconds / 60);
             const s = Math.floor(paceSeconds % 60);
             return `${m}:${s.toString().padStart(2, '0')}`;
+        },
+        
+        recalculatePercent() {
+            const target = this.weeklyStats.goal || 1; 
+            this.weeklyStats.percent = Math.min((this.weeklyStats.thisWeek / target) * 100, 100).toFixed(0);
         }
     }
 };
