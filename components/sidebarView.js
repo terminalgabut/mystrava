@@ -39,6 +39,14 @@ export default {
                     <div class="active-indicator"></div>
                 </router-link>
 
+                <router-link to="/training-log" class="sidebar-item group" active-class="is-active">
+                    <div class="sidebar-icon-box">
+                        <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                    </div>
+                    <span class="font-semibold text-sm">Training Log</span>
+                    <div class="active-indicator"></div>
+                </router-link>
+
                 <router-link to="/performance-settings" class="sidebar-item group" active-class="is-active">
                 <div class="sidebar-icon-box">
                 <i data-lucide="settings" class="w-5 h-5"></i>
