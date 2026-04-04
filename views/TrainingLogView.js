@@ -46,11 +46,14 @@ export default {
                                 <span class="text-[9px] font-black text-slate-300 uppercase tracking-tighter">{{ dayLabels[dIdx] }}</span>
                                 
                                 <div v-if="day" 
-                                     @click="goToActivity(day.id)"
-                                     :style="{ backgroundColor: getActivityColor(day.type) }"
-                                     class="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/5 cursor-pointer transform hover:scale-110 active:scale-95 transition-all">
-                                    <span class="text-[10px] md:text-[11px] font-black text-white italic">{{ Math.round(day.distance) }}</span>
-                                </div>
+     @click="goToActivity(day.id)"
+     :style="{ backgroundColor: getActivityColor(day.type) }"
+     class="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg shadow-black/5 cursor-pointer transform hover:scale-110 active:scale-95 transition-all">
+    
+    <span class="text-[10px] md:text-[11px] font-black text-white italic">
+        {{ day.distance.toFixed(1) }}
+    </span>
+</div>
                                 
                                 <div v-else class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
                                     <div class="w-1.5 h-1.5 bg-slate-100 rounded-full group-hover:bg-slate-200 transition-colors"></div>
@@ -102,17 +105,17 @@ export default {
                     };
                 }
 
-                const dayIndex = (date.getDay() + 6) % 7;
-                const km = act.distance / 1000;
+                // Di dalam groupedData()
+const dayIndex = (date.getDay() + 6) % 7;
+const km = act.distance / 1000; // Biarkan tetap desimal (misal 5.75)
 
-                // Jika ada aktivitas ganda di hari yang sama, kita bisa pilih yang terjauh
-                if (!weeks[rangeLabel].days[dayIndex] || weeks[rangeLabel].days[dayIndex].distance < km) {
-                    weeks[rangeLabel].days[dayIndex] = {
-                        id: act.id,
-                        type: act.type,
-                        distance: km
-                    };
-                }
+if (!weeks[rangeLabel].days[dayIndex] || weeks[rangeLabel].days[dayIndex].distance < km) {
+    weeks[rangeLabel].days[dayIndex] = {
+        id: act.id,
+        type: act.type,
+        distance: km // Jangan di-round di sini
+    };
+}
                 
                 weeks[rangeLabel].totalDistance += km;
             });
