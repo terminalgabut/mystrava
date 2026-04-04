@@ -2,6 +2,7 @@ import { Logger } from './services/debug.js';
 
 const Dashboard = () => import('../views/dashboard.js');
 const Activities = () => import('../views/activities.js');
+const Analysis = () => import('../views/AnalysisView.js');
 const ActivityDetail = () => import('../views/activityDetail.js'); 
 const TrainingLog = () => import('../views/TrainingLogView.js');
 const Settings = () => import('../views/settings.js');
@@ -16,6 +17,11 @@ const routes = [
         path: '/activities', 
         name: 'activities',
         component: Activities 
+    },
+    { 
+        path: '/analysis', 
+        name: 'analysis',
+        component: Analysis 
     },
     { 
         path: '/activity/:id', 
