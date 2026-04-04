@@ -101,7 +101,14 @@ export default {
             paceHistogram: [],
             maxPaceCount: 1,
             best5kThisMonth: '--:--',
-            projectedVO2Max: '--'
+            projectedVO2Max: '--',
+            weeklyStats: {
+            thisWeek: 0,
+            lastWeek: 0,
+            goal: 25, // Target mingguan dalam KM (bisa diubah nanti)
+            percent: 0,
+            trend: 0
+            }
         };
     },
     mounted() {
@@ -144,6 +151,38 @@ export default {
                     const bestMonth = monthly5K.sort((a, b) => a.moving_time - b.moving_time)[0];
                     this.best5kThisMonth = this.formatDuration(bestMonth.moving_time);
                 }
+
+                // Tambahkan potongan kode ini di dalam try { ... } fungsi calculateAnalysis()
+const now = new Date();
+const dayOfWeek = now.getDay() || 7; // 1 (Senin) - 7 (Minggu)
+
+// 1. Tentukan batas waktu
+const startOfThisWeek = new Date(now);
+startOfThisWeek.setHours(0,0,0,0);
+startOfThisWeek.setDate(now.getDate() - (dayOfWeek - 1));
+
+const startOfLastWeek = new Date(startOfThisWeek);
+startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+// 2. Filter lari per minggu
+const runsThisWeek = runs.filter(r => new Date(r.start_date) >= startOfThisWeek);
+const runsLastWeek = runs.filter(r => {
+    const d = new Date(r.start_date);
+    return d >= startOfLastWeek && d < startOfThisWeek;
+});
+
+// 3. Hitung total jarak (KM)
+const distThisWeek = runsThisWeek.reduce((acc, r) => acc + r.distance, 0) / 1000;
+const distLastWeek = runsLastWeek.reduce((acc, r) => acc + r.distance, 0) / 1000;
+
+// 4. Update state
+this.weeklyStats = {
+    thisWeek: distThisWeek.toFixed(1),
+    lastWeek: distLastWeek.toFixed(1),
+    goal: 25, 
+    percent: Math.min((distThisWeek / 25) * 100, 100).toFixed(0),
+    trend: distLastWeek > 0 ? (((distThisWeek - distLastWeek) / distLastWeek) * 100).toFixed(0) : 0
+};
 
             } catch (err) {
                 console.error("Analysis Error:", err.message);
