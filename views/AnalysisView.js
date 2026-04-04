@@ -48,21 +48,29 @@ export default {
                         </div>
                         <span class="label-muted text-[10px]">All Time Data</span>
                     </div>
-                    <div class="h-48 flex items-end justify-between gap-3 px-2">
-                        <div v-for="bin in paceHistogram" :key="bin.label" 
-                             class="flex-1 group relative flex flex-col items-center">
-                            <div class="absolute -top-10 bg-slate-800 text-white text-[9px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
-                                {{ bin.count }} Activities
-                            </div>
-                            <div class="w-full bg-blue-500 rounded-t-lg transition-all group-hover:bg-blue-600 relative overflow-hidden"
-                                 :style="{ height: (bin.count / maxPaceCount * 100) + '%' }">
-                                 <div class="absolute inset-0 bg-gradient-to-t from-blue-100/50 to-transparent"></div>
-                            </div>
-                            <span class="text-[8px] font-black text-slate-400 mt-4 group-hover:text-blue-600 transition-colors uppercase">
-                                P{{ bin.label }}
-                            </span>
-                        </div>
-                    </div>
+                    <div class="h-48 flex items-end justify-between gap-3 px-2 border-b border-slate-50 pb-2">
+    <div v-for="bin in paceHistogram" :key="bin.label" 
+         class="flex-1 h-full group relative flex flex-col items-center justify-end">
+        
+        <div class="absolute -top-10 bg-slate-800 text-white text-[9px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-xl">
+            {{ bin.count }} Activities
+        </div>
+
+        <div class="w-full h-full flex items-end px-1"> 
+            <div class="w-full bg-blue-500 rounded-t-lg transition-all duration-500 ease-out group-hover:bg-blue-600 relative overflow-hidden"
+                 :style="{ 
+                    height: bin.count > 0 ? (bin.count / maxPaceCount * 100) + '%' : '0%',
+                    minHeight: bin.count > 0 ? '4px' : '0px' 
+                 }">
+                 <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+            </div>
+        </div>
+
+        <span class="text-[8px] font-black text-slate-400 mt-4 group-hover:text-blue-600 transition-colors uppercase tracking-tighter">
+            P{{ bin.label }}
+        </span>
+    </div>
+</div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
