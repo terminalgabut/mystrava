@@ -107,7 +107,7 @@ export default {
         <div class="text-right">
             <span :class="weeklyStats.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'" 
       class="text-[10px] font-black italic">
-    {{ weeklyStats.trend >= 0 ? '↑' : '↓' }} {{ Math.abs(weeklyStats.trend) }}%
+    {{ weeklyStats.trend >= 0 ? '▲' : '▼' }} {{ Math.abs(weeklyStats.trend) }}%
 </span>
             <p class="text-[8px] text-slate-400 uppercase font-bold">vs Last Week</p>
         </div>
