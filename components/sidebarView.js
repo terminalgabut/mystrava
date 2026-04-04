@@ -31,7 +31,7 @@ export default {
                     <div class="active-indicator"></div>
                 </router-link>
 
-                <router-link to="/statistics" class="sidebar-item group" active-class="is-active">
+                <router-link to="/analysis" class="sidebar-item group" active-class="is-active">
                     <div class="sidebar-icon-box">
                         <i data-lucide="trending-up" class="w-5 h-5"></i>
                     </div>
