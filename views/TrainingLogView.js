@@ -42,7 +42,7 @@ template: `
                 <div class="bento-card p-3 md:p-6 bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm group-hover:shadow-md transition-all">
                     <div class="grid grid-cols-7 gap-1 md:gap-4">
                         <div v-for="(day, dIdx) in week.days" :key="dIdx" class="flex flex-col items-center gap-1.5">
-                            <span class="text-[8px] md:text-[9px] font-black text-slate-300 uppercase">{{ dayLabels[dIdx] }}</span>
+                            <span class="text-[9px] md:text-[10px] font-black text-slate-500 uppercase">{{ dayLabels[dIdx] }}</span>
                             
                             <div v-if="day" 
                                  @click="goToActivity(day.id)"
