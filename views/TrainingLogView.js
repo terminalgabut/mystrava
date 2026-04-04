@@ -63,7 +63,7 @@ template: `
         </div>
     </div>
 </div>
-`
+`,
     data() {
         return {
             loading: false,
