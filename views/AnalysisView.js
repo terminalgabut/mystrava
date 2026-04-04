@@ -75,6 +75,12 @@ export default {
             ]
         };
     },
+    mounted() {
+        // Ini otomatis jalan saat kamu klik menu "Analytics" di sidebar
+        this.calculateAnalysis();
+        
+        if (window.lucide) window.lucide.createIcons();
+    },
     methods: {
     async calculateAnalysis() {
         this.loading = true;
