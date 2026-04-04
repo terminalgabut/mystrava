@@ -89,6 +89,40 @@ export default {
                         <h2 class="stat-value text-3xl text-blue-600 italic tracking-tighter">{{ projectedVO2Max }}</h2>
                         <p class="text-[8px] text-slate-400 mt-2 font-bold uppercase tracking-tighter italic">Berdasarkan ACSM Formula</p>
                     </div>
+
+                    <div class="bento-card p-8 bg-white border border-slate-100 mt-8 group">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <p class="label-muted text-[10px] uppercase font-black tracking-widest">Weekly Goal Progress</p>
+            <h3 class="text-xl font-black italic text-slate-900 mt-1">{{ weeklyStats.thisWeek }} <span class="text-slate-400 text-xs font-normal">/ {{ weeklyStats.goal }} KM</span></h3>
+        </div>
+        <div class="text-right">
+            <span :class="weeklyStats.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'" class="text-[10px] font-black italic">
+                {{ weeklyStats.trend >= 0 ? '↑' : '↓' }} {{ Math.abs(weeklyStats.trend) }}%
+            </span>
+            <p class="text-[8px] text-slate-400 uppercase font-bold">vs Last Week</p>
+        </div>
+    </div>
+
+    <div class="w-full h-3 bg-slate-50 rounded-full overflow-hidden relative border border-slate-100">
+        <div class="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out relative z-10"
+             :style="{ width: weeklyStats.percent + '%' }">
+             <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+        </div>
+        <div class="absolute inset-0 flex justify-between px-2 items-center pointer-events-none">
+            <div v-for="i in 4" :key="i" class="w-[1px] h-1 bg-slate-200"></div>
+        </div>
+    </div>
+
+    <div class="flex justify-between mt-4">
+        <p class="text-[9px] text-slate-400 font-bold uppercase italic">
+            {{ weeklyStats.percent }}% Achieved
+        </p>
+        <p class="text-[9px] text-slate-500 font-bold uppercase">
+            {{ (weeklyStats.goal - weeklyStats.thisWeek).toFixed(1) }} KM Left
+        </p>
+    </div>
+</div>
                 </div>
             </div>
         </div>
