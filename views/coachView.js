@@ -74,14 +74,19 @@ export default `
             </h3>
             <div class="space-y-6">
                 <div v-for="insight in efficiencyInsights" :key="insight.label" class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <div class="flex justify-between items-end mb-2">
-                        <p class="label-muted text-[10px] uppercase font-black tracking-widest">{{ insight.label }}</p>
-                        <p class="stat-value text-lg text-slate-900">{{ insight.value }}</p>
-                    </div>
-                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                        <div class="bg-blue-600 h-full transition-all" :style="{ width: insight.percentage + '%' }"></div>
-                    </div>
-                </div>
+    <div class="flex justify-between items-end mb-2">
+        <p class="label-muted text-[10px] uppercase font-black tracking-widest">{{ insight.label }}</p>
+        <p class="stat-value text-lg" :class="insight.value === 'DANGER' ? 'text-red-600' : 'text-slate-900'">
+            {{ insight.value }}
+        </p>
+    </div>
+    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+        <div class="h-full transition-all" 
+             :class="insight.percentage > 80 && insight.label.includes('Workload') ? 'bg-red-500' : 'bg-blue-600'"
+             :style="{ width: insight.percentage + '%' }">
+        </div>
+    </div>
+</div>
             </div>
         </div>
 
