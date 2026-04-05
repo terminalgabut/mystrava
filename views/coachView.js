@@ -116,37 +116,46 @@ export default `
     </div>
 
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm px-4 pb-4 animate-in fade-in">
-        <div class="w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl animate-in slide-in-from-bottom-8">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
+    <div class="w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl animate-in slide-in-from-bottom-8">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
+        
+        <div class="text-center mb-6">
+            <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] leading-none mb-1">
+                {{ pendingActivity?.type }}
+            </p>
+            <h3 class="text-lg font-black text-slate-900 uppercase tracking-tighter">
+                {{ pendingActivity?.name }}
+            </h3>
+        </div>
+
+        <header class="text-center mb-8">
+            <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Feeling Check</p>
+            <h2 class="text-2xl font-black italic tracking-tighter text-slate-900">HOW HARD WAS IT?</h2>
+            <p class="text-caption mt-1">Rate your perceived effort (1-10)</p>
+        </header>
+
+        <div class="px-4">
+            <input type="range" min="1" max="10" v-model="rpeValue" 
+                   class="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-6">
             
-            <header class="text-center mb-8">
-                <p class="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Feeling Check</p>
-                <h2 class="text-2xl font-black italic tracking-tighter text-slate-900">HOW HARD WAS IT?</h2>
-                <p class="text-caption mt-1">Rate your perceived effort (1-10)</p>
-            </header>
-
-            <div class="px-4">
-                <input type="range" min="1" max="10" v-model="rpeValue" 
-                       class="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-6">
-                
-                <div class="flex justify-between items-center bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 transition-all">
-                    <div class="text-left">
-                        <span class="text-4xl font-black italic tracking-tighter" :style="{ color: getStatusColor(rpeValue * 10) }">
-                            {{ rpeValue }}
-                        </span>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-black text-slate-900 uppercase tracking-tighter leading-none">{{ getRpeLabel(rpeValue) }}</p>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{{ getRpeDescription(rpeValue) }}</p>
-                    </div>
+            <div class="flex justify-between items-center bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 transition-all">
+                <div class="text-left">
+                    <span class="text-4xl font-black italic tracking-tighter" :style="{ color: getStatusColor(rpeValue * 10) }">
+                        {{ rpeValue }}
+                    </span>
                 </div>
-
-                <button @click="saveRpe" 
-                        class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-600 active:scale-95 transition-all shadow-xl shadow-blue-100">
-                    SAVE EVALUATION
-                </button>
+                <div class="text-right">
+                    <p class="font-black text-slate-900 uppercase tracking-tighter leading-none">{{ getRpeLabel(rpeValue) }}</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{{ getRpeDescription(rpeValue) }}</p>
+                </div>
             </div>
+
+            <button @click="saveRpe" 
+                    class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-600 active:scale-95 transition-all shadow-xl shadow-blue-100">
+                SAVE EVALUATION
+            </button>
         </div>
     </div>
+</div>
 </div>
   `;
