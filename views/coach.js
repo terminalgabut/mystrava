@@ -20,6 +20,9 @@ export default {
         const pendingActivity = ref(null);
         const coachHistory = ref([]);
         const efficiencyInsights = ref([]);
+        
+        // --- TAMBAHKAN INI ---
+        const dynamicInsights = ref([]); 
 
         // --- HELPERS ---
         const refreshIcons = () => {
@@ -36,17 +39,18 @@ export default {
         const initCoach = async () => {
             isLoading.value = true;
             try {
-                // Ambil data secara paralel untuk kecepatan maksimal
                 const [rawActivities, readiness, pending] = await Promise.all([
                     CoachLogic.getRawActivityData(),
                     CoachLogic.calculateReadiness(),
                     CoachLogic.getPendingRPE()
                 ]);
 
-                // Proses Intel melalui BioEngine (Otak JS)
+                // Proses Intel melalui BioEngine
                 const intel = BioEngine.processIntelligence(rawActivities);
 
-                // Update State UI secara atomik
+                // --- UPDATE STATE INSIGHTS DISINI ---
+                dynamicInsights.value = intel.dynamicInsights || []; 
+
                 coachBrief.value = {
                     recommendation: intel.prescription.recommendation,
                     breathing_tip: intel.prescription.tip
@@ -54,8 +58,6 @@ export default {
 
                 readinessScore.value = readiness.score;
                 readinessStatus.value = readiness.status;
-                
-                // PENTING: Update pendingActivity terakhir untuk memicu modal
                 pendingActivity.value = pending;
 
                 efficiencyInsights.value = [
@@ -92,23 +94,13 @@ export default {
 
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
-            
             isLoading.value = true;
             try {
-                // Eksekusi Simpan ke DB
                 const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
-                
                 if (success) {
-                    // RESET STATE secara eksplisit sebelum refresh
                     isModalOpen.value = false;
                     pendingActivity.value = null; 
-                    
-                    // Delay kecil untuk memastikan DB Supabase sudah ter-update
-                    setTimeout(async () => {
-                        await initCoach(); 
-                    }, 500);
-                } else {
-                    alert("Gagal menyimpan feedback. Silakan coba lagi.");
+                    setTimeout(async () => { await initCoach(); }, 500);
                 }
             } catch (err) {
                 Logger.error("SaveRPE_UI_Error", err);
@@ -127,6 +119,7 @@ export default {
             pendingActivity,
             coachHistory,
             efficiencyInsights,
+            dynamicInsights, // --- JANGAN LUPA DI-RETURN ---
             isModalOpen,
             rpeValue,
             getStatusColor,
