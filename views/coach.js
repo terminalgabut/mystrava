@@ -96,16 +96,19 @@ export default {
         };
 
         const saveRpe = async () => {
-            if (!pendingActivity.value) return;
-            isLoading.value = true;
-            const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
-            if (success) {
-                isModalOpen.value = false;
-                await initCoach(); // Refresh untuk update insight setelah feedback
-            } else {
-                isLoading.value = false;
-            }
-        };
+    if (!pendingActivity.value) return;
+    
+    isLoading.value = true;
+    const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
+    
+    if (success) {
+        isModalOpen.value = false;
+        pendingActivity.value = null; // Hapus referensi agar tidak muncul lagi
+        await initCoach(); // Refresh dashboard
+    } else {
+        isLoading.value = false;
+    }
+};
 
         onMounted(initCoach);
 
