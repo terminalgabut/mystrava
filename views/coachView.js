@@ -50,21 +50,26 @@ export default `
     </div>
 
     <div v-if="pendingActivity" class="bento-card p-6 border-2 border-amber-400 bg-amber-50/50 mb-8 animate-bounce-subtle">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border border-amber-200">
-                    <i data-lucide="message-square" class="w-6 h-6 text-amber-600"></i>
-                </div>
-                <div>
-                    <h3 class="font-black text-slate-900 uppercase tracking-tighter">Feedback Required</h3>
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-tight">Activity: {{ pendingActivity.name }}</p>
-                </div>
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border border-amber-200">
+                <i :data-lucide="pendingActivity.type === 'Hike' ? 'mountain' : 'run'" class="w-6 h-6 text-amber-600"></i>
             </div>
-            <button @click="openRpeModal" class="px-8 py-3 bg-slate-900 text-white rounded-xl font-black italic text-sm tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
-                RATE EFFORT
-            </button>
+            <div>
+                <h3 class="font-black text-slate-900 uppercase tracking-tighter">Feedback Required</h3>
+                <p class="text-[10px] text-amber-700 font-black uppercase tracking-widest leading-none mb-1">
+                    {{ pendingActivity.type }}
+                </p>
+                <p class="text-sm text-slate-600 font-bold uppercase tracking-tight">
+                    {{ pendingActivity.name }}
+                </p>
+            </div>
         </div>
+        <button @click="openRpeModal" class="px-8 py-3 bg-slate-900 text-white rounded-xl font-black italic text-sm tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
+            RATE EFFORT
+        </button>
     </div>
+</div>
 
     <div class="bento-grid-detailed">
         <div class="bento-card p-6">
