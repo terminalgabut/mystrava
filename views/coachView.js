@@ -157,5 +157,45 @@ export default `
         </div>
     </div>
 </div>
+
+<div class="mt-8 p-6 bg-slate-50 rounded-[24px] border border-slate-100">
+    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+        <i data-lucide="info" class="w-3 h-3"></i>
+        Data Methodology & Insights
+    </h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-3">
+            <div class="flex gap-3">
+                <div class="shrink-0 w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                    <strong class="text-slate-900 uppercase italic">Training Load (7D vs 28D):</strong> 
+                    Skor <strong>Workload (ACWR)</strong> membandingkan beban latihan 7 hari terakhir terhadap rata-rata 4 minggu terakhir. Angka di atas 1.5x menunjukkan risiko cedera yang lebih tinggi karena lonjakan intensitas yang tiba-tiba.
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <div class="shrink-0 w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                    <strong class="text-slate-900 uppercase italic">Leg Resilience (14D):</strong> 
+                    Dihitung dari rasio elevasi terhadap jarak selama 2 minggu terakhir. Ini mengukur seberapa kuat fondasi otot kakimu terhadap medan menanjak.
+                </p>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <div class="flex gap-3">
+                <div class="shrink-0 w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                    <strong class="text-slate-900 uppercase italic">Readiness Score:</strong> 
+                    Persentase sisa energi berdasarkan total pengeluaran kalori (kJ) seminggu terakhir. Semakin rendah skornya, semakin besar akumulasi kelelahan sistemik pada tubuhmu.
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <div class="shrink-0 w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5"></div>
+                <p class="text-[11px] text-slate-600 leading-relaxed italic">
+                    Data diperbarui secara otomatis setiap kali aktivitas baru masuk dari Strava dan sinkron dengan database lokal.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
   `;
