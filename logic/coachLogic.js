@@ -5,10 +5,19 @@ import { Logger } from '../js/services/debug.js';
 
 export const CoachLogic = {
     // Tetap ambil data murni
-    async getDailyBrief() {
-        const { data } = await supabase.from('coach_daily_brief').select('*').single();
-        return data || { recommendation: 'No Data' };
-    },
+    async getRawActivityData() {
+    try {
+        const { data, error } = await supabase
+            .from('coach_raw_data') // Memanggil view supplier data mentah
+            .select('*');
+        
+        if (error) throw error;
+        return data; // Mengembalikan Array of Activities
+    } catch (err) {
+        Logger.error("Coach_RawData_Error", err);
+        return [];
+    }
+},
 
     async getPendingRPE() {
         const { data } = await supabase.from('activities').select('*').is('user_rpe', null).order('start_date', { ascending: false }).limit(1);
