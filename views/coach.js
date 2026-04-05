@@ -1,6 +1,7 @@
 // root/views/coach.js
 import coachTemplate from './coachView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
+import { BioEngine } from '../logic/bioEngine.js'; // Import Otak JS
 import { Logger } from '../js/services/debug.js';
 
 export default {
@@ -17,16 +18,8 @@ export default {
         const readinessScore = ref(0);
         const readinessStatus = ref('');
         const pendingActivity = ref(null);
-
-        // Data dummy untuk UI Log & Insights (Bisa dikembangkan nanti)
-        const coachHistory = ref([
-            { id: 1, type: 'Success', date: 'Today', message: 'Analisis data selesai. Tubuhmu dalam kondisi optimal.' }
-        ]);
-
-        const efficiencyInsights = ref([
-            { label: 'Aerobic Power', value: 'Calculating...', percentage: 0 },
-            { label: 'Leg Resilience', value: 'Calculating...', percentage: 0 }
-        ]);
+        const coachHistory = ref([]);
+        const efficiencyInsights = ref([]);
 
         // --- HELPERS ---
         const refreshIcons = () => {
@@ -35,7 +28,6 @@ export default {
             });
         };
 
-        // Fungsi pembantu warna & label (mengambil dari logic)
         const getStatusColor = (val) => CoachLogic.getRpeMetadata(Math.ceil(val/10)).color;
         const getRpeLabel = (val) => CoachLogic.getRpeMetadata(val).label;
         const getRpeDescription = (val) => CoachLogic.getRpeMetadata(val).desc;
@@ -44,21 +36,56 @@ export default {
         const initCoach = async () => {
             isLoading.value = true;
             try {
-                // Tarik data secara paralel agar cepat di Android
-                const [brief, readiness, pending] = await Promise.all([
-                    CoachLogic.getDailyBrief(),
+                // 1. Ambil data mentah (Raw) dan data pendukung secara paralel
+                const [rawActivities, readiness, pending] = await Promise.all([
+                    CoachLogic.getRawActivityData(), // Memanggil View Supplier Baru
                     CoachLogic.calculateReadiness(),
                     CoachLogic.getPendingRPE()
                 ]);
 
-                coachBrief.value = brief;
+                // 2. Proses data mentah menggunakan BioEngine (Otak JS)
+                const intel = BioEngine.processIntelligence(rawActivities);
+
+                // 3. Distribusikan hasil olahan ke State UI
+                // Mengisi rekomendasi harian dari hasil analisis JS
+                coachBrief.value = {
+                    recommendation: intel.prescription.recommendation,
+                    breathing_tip: intel.prescription.tip
+                };
+
                 readinessScore.value = readiness.score;
                 readinessStatus.value = readiness.status;
                 pendingActivity.value = pending;
 
-                // Update Insights sederhana
-                efficiencyInsights.value[0].percentage = readiness.score;
-                efficiencyInsights.value[0].value = `${readiness.score}%`;
+                // Mengupdate bar Power Efficiency & Leg Resilience secara dinamis
+                efficiencyInsights.value = [
+                    { 
+                        label: 'Workload (ACWR)', 
+                        value: `${intel.workload.ratio}x`, 
+                        percentage: Math.min(100, intel.workload.ratio * 50) 
+                    },
+                    { 
+                        label: 'Leg Resilience', 
+                        value: intel.resilience.label, 
+                        percentage: intel.resilience.score 
+                    }
+                ];
+
+                // Update Log Interaksi Coach berdasarkan kondisi Readiness
+                const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                coachHistory.value = [
+                    { 
+                        id: Date.now(), 
+                        type: readiness.score < 20 ? 'Warning' : 'Success', 
+                        date: today, 
+                        message: readiness.score < 20 
+                            ? `Sistem mendeteksi skor kritis (${readiness.score}%). Wajib istirahat total.` 
+                            : 'Analisis data selesai. Tubuhmu dalam kondisi stabil.' 
+                    }
+                ];
+
+                // Auto-open modal jika ada aktivitas yang belum di-rate
+                if (pending) isModalOpen.value = true;
 
             } catch (err) {
                 Logger.error("Coach_Init_Error", err);
@@ -68,24 +95,18 @@ export default {
             }
         };
 
-        const openRpeModal = () => { isModalOpen.value = true; };
-
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
-            
             isLoading.value = true;
             const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
-            
             if (success) {
                 isModalOpen.value = false;
-                // Refresh data setelah simpan agar brief & readiness terupdate
-                await initCoach();
+                await initCoach(); // Refresh untuk update insight setelah feedback
             } else {
                 isLoading.value = false;
             }
         };
 
-        // --- LIFECYCLE ---
         onMounted(initCoach);
 
         return {
@@ -101,7 +122,7 @@ export default {
             getStatusColor,
             getRpeLabel,
             getRpeDescription,
-            openRpeModal,
+            openRpeModal: () => { isModalOpen.value = true; },
             saveRpe
         };
     }
