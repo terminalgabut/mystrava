@@ -31,6 +31,14 @@ export default {
                     <div class="active-indicator"></div>
                 </router-link>
 
+                <router-link to="/coach" class="sidebar-item group" active-class="is-active">
+                    <div class="sidebar-icon-box">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-blue-500"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-blue-600">AI Coach</span>
+                    <div class="active-indicator"></div>
+                </router-link>
+
                 <router-link to="/analysis" class="sidebar-item group" active-class="is-active">
                     <div class="sidebar-icon-box">
                         <i data-lucide="trending-up" class="w-5 h-5"></i>
