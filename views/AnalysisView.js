@@ -132,6 +132,28 @@ export default {
         </p>
     </div>
 </div>
+
+<div class="mt-6 pt-6 border-t border-slate-50">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+            <i :data-lucide="workload.icon" :class="workload.color" class="w-4 h-4"></i>
+            <span class="text-[10px] font-black uppercase tracking-widest" :class="workload.color">
+                Training Load: {{ workload.status }}
+            </span>
+        </div>
+        <span class="text-[10px] font-bold text-slate-400">{{ workload.ratio }}x Ratio</span>
+    </div>
+    <p class="text-[9px] text-slate-500 leading-relaxed">
+        {{ workload.msg }}
+    </p>
+    <div class="w-full h-1 bg-slate-50 rounded-full mt-3 overflow-hidden">
+        <div class="h-full transition-all duration-1000" 
+             :class="workload.ratio > 1.5 ? 'bg-rose-500' : (workload.ratio > 1.3 ? 'bg-amber-500' : 'bg-emerald-500')"
+             :style="{ width: Math.min((workload.ratio / 2) * 100, 100) + '%' }">
+        </div>
+    </div>
+</div>
+
                 </div>
             </div>
         </div>
@@ -151,6 +173,15 @@ export default {
             goal: localStorage.getItem('running_goal') ? parseFloat(localStorage.getItem('running_goal')) : 25,
             percent: 0,
             trend: 0
+            },
+            workload: {
+            acute: 0,
+            chronic: 0,
+            ratio: 0,
+            status: 'Steady',
+            color: 'text-slate-400',
+            msg: 'Waiting for data...',
+            icon: 'check-circle'
             }
         };
     },
