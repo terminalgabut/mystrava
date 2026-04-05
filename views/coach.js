@@ -12,6 +12,10 @@ export default {
 
         // --- STATE ---
         const isLoading = ref(true);
+        // --- STATE (Tambahkan di bawah state yang sudah ada) ---
+        const isRecoverySynced = ref(false); // Cek apakah sudah input hari ini
+        const isRecoveryModalOpen = ref(false);
+        const recoveryForm = ref({ start: '23:00', end: '06:00', quality: 7, rhr: 69 });
         const isModalOpen = ref(false);
         const rpeValue = ref(5);
         const coachBrief = ref({ recommendation: 'Analyzing...', breathing_tip: 'Hang tight.' });
