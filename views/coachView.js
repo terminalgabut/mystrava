@@ -1,7 +1,5 @@
 // coachView.js
-export default {
-  name: 'CoachView',
-  template: `
+export default `
 <div class="dashboard-wrapper animate-in" :class="{ 'is-loading': isLoading }">
     <header class="dashboard-header">
         <div>
