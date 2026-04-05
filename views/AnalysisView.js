@@ -133,7 +133,7 @@ export default {
     </div>
 </div>
 
-<div class="mt-6 pt-6 border-t border-slate-50">
+<div class="mt-6 pt-6 border-t border-slate-150">
     <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2">
             <i :data-lucide="workload.icon" :class="workload.color" class="w-4 h-4"></i>
