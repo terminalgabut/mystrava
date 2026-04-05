@@ -46,8 +46,19 @@ export default {
                 const [rawActivities, readiness, pending] = await Promise.all([
                     CoachLogic.getRawActivityData(),
                     CoachLogic.calculateReadiness(),
-                    CoachLogic.getPendingRPE()
+                    CoachLogic.getPendingRPE(),
+                    CoachLogic.getTodayRecovery()
                 ]);
+
+                isRecoverySynced.value = !!recoveryData;
+        if (recoveryData) {
+            recoveryForm.value = {
+                start: recoveryData.sleep_start_time, // ambil jam saja
+                end: recoveryData.sleep_end_time,
+                quality: recoveryData.sleep_quality,
+                rhr: recoveryData.morning_rhr
+            };
+        }
 
                 // Proses Intel melalui BioEngine
                 const intel = BioEngine.processIntelligence(rawActivities);
