@@ -1,4 +1,4 @@
-// coachView.js
+// root/views/coachView.js
 export default `
 <div class="dashboard-wrapper animate-in" :class="{ 'is-loading': isLoading }">
     <header class="dashboard-header">
@@ -50,28 +50,28 @@ export default `
     </div>
 
     <div v-if="pendingActivity" class="bento-card p-6 border-2 border-amber-400 bg-amber-50/50 mb-8 animate-bounce-subtle">
-    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border border-amber-200">
-                <i :data-lucide="pendingActivity.type === 'Hike' ? 'mountain' : 'run'" class="w-6 h-6 text-amber-600"></i>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border border-amber-200">
+                    <i :data-lucide="pendingActivity.type === 'Hike' ? 'mountain' : 'run'" class="w-6 h-6 text-amber-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-slate-900 uppercase tracking-tighter">Feedback Required</h3>
+                    <p class="text-[10px] text-amber-700 font-black uppercase tracking-widest leading-none mb-1">
+                        {{ pendingActivity.type }}
+                    </p>
+                    <p class="text-sm text-slate-600 font-bold uppercase tracking-tight">
+                        {{ pendingActivity.name }}
+                    </p>
+                </div>
             </div>
-            <div>
-                <h3 class="font-black text-slate-900 uppercase tracking-tighter">Feedback Required</h3>
-                <p class="text-[10px] text-amber-700 font-black uppercase tracking-widest leading-none mb-1">
-                    {{ pendingActivity.type }}
-                </p>
-                <p class="text-sm text-slate-600 font-bold uppercase tracking-tight">
-                    {{ pendingActivity.name }}
-                </p>
-            </div>
+            <button @click="openRpeModal" class="px-8 py-3 bg-slate-900 text-white rounded-xl font-black italic text-sm tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
+                RATE EFFORT
+            </button>
         </div>
-        <button @click="openRpeModal" class="px-8 py-3 bg-slate-900 text-white rounded-xl font-black italic text-sm tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
-            RATE EFFORT
-        </button>
     </div>
-</div>
 
-    <div class="bento-grid-detailed">
+    <div class="bento-grid-detailed mb-8">
         <div class="bento-card p-6">
             <h3 class="text-card-title mb-6 flex items-center gap-2">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-500"></i>
@@ -79,19 +79,19 @@ export default `
             </h3>
             <div class="space-y-6">
                 <div v-for="insight in efficiencyInsights" :key="insight.label" class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-    <div class="flex justify-between items-end mb-2">
-        <p class="label-muted text-[10px] uppercase font-black tracking-widest">{{ insight.label }}</p>
-        <p class="stat-value text-lg" :class="insight.value === 'DANGER' ? 'text-red-600' : 'text-slate-900'">
-            {{ insight.value }}
-        </p>
-    </div>
-    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-        <div class="h-full transition-all" 
-             :class="insight.percentage > 80 && insight.label.includes('Workload') ? 'bg-red-500' : 'bg-blue-600'"
-             :style="{ width: insight.percentage + '%' }">
-        </div>
-    </div>
-</div>
+                    <div class="flex justify-between items-end mb-2">
+                        <p class="label-muted text-[10px] uppercase font-black tracking-widest">{{ insight.label }}</p>
+                        <p class="stat-value text-lg" :class="insight.value === 'DANGER' ? 'text-red-600' : 'text-slate-900'">
+                            {{ insight.value }}
+                        </p>
+                    </div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                        <div class="h-full transition-all" 
+                             :class="insight.percentage > 80 && insight.label.includes('Workload') ? 'bg-red-500' : 'bg-blue-600'"
+                             :style="{ width: insight.percentage + '%' }">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -115,83 +115,82 @@ export default `
         </div>
     </div>
 
-    <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm px-4 pb-4 animate-in fade-in">
-    <div class="w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl animate-in slide-in-from-bottom-8">
-        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
-        
-        <div class="text-center mb-6">
-            <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] leading-none mb-1">
-                {{ pendingActivity?.type }}
-            </p>
-            <h3 class="text-lg font-black text-slate-900 uppercase tracking-tighter">
-                {{ pendingActivity?.name }}
-            </h3>
-        </div>
-
-        <header class="text-center mb-8">
-            <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Feeling Check</p>
-            <h2 class="text-2xl font-black italic tracking-tighter text-slate-900">HOW HARD WAS IT?</h2>
-            <p class="text-caption mt-1">Rate your perceived effort (1-10)</p>
-        </header>
-
-        <div class="px-4">
-            <input type="range" min="1" max="10" v-model="rpeValue" 
-                   class="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 mb-12">
+        <div v-for="item in dynamicInsights" :key="item.title" 
+             class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all"
+             :class="{ 'border-red-500/40 ring-1 ring-red-500/20 shadow-red-500/10': item.type === 'danger' }">
             
-            <div class="flex justify-between items-center bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 transition-all">
-                <div class="text-left">
-                    <span class="text-4xl font-black italic tracking-tighter" :style="{ color: getStatusColor(rpeValue * 10) }">
-                        {{ rpeValue }}
-                    </span>
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest mb-2"
+                       :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-400'">
+                        {{ item.type === 'danger' ? 'System Alert' : 'Coach Intelligence' }}
+                    </p>
+                    <h2 class="text-3xl font-black italic tracking-tighter leading-none">
+                        {{ item.title }}
+                    </h2>
                 </div>
-                <div class="text-right">
-                    <p class="font-black text-slate-900 uppercase tracking-tighter leading-none">{{ getRpeLabel(rpeValue) }}</p>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{{ getRpeDescription(rpeValue) }}</p>
+                <div class="icon-box bg-white/10 border-white/20">
+                    <i :data-lucide="item.type === 'danger' ? 'alert-octagon' : 'sparkles'" 
+                       class="w-6 h-6" 
+                       :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-300'"></i>
                 </div>
             </div>
-
-            <button @click="saveRpe" 
-                    class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-600 active:scale-95 transition-all shadow-xl shadow-blue-100">
-                SAVE EVALUATION
-            </button>
-        </div>
-    </div>
-</div>
-
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-    <div v-for="item in dynamicInsights" :key="item.title" 
-         class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all"
-         :class="{ 'border-red-500/40 ring-1 ring-red-500/20 shadow-red-500/10': item.type === 'danger' }">
-        
-        <div class="flex items-start justify-between mb-6">
-            <div>
-                <p class="text-[10px] font-black uppercase tracking-widest mb-2"
-                   :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-400'">
-                    {{ item.type === 'danger' ? 'System Alert' : 'Coach Intelligence' }}
+            
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
+                <p class="text-sm font-medium text-slate-300 leading-relaxed italic">
+                    "{{ item.text }}"
                 </p>
-                <h2 class="text-3xl font-black italic tracking-tighter leading-none">
-                    {{ item.title }}
-                </h2>
             </div>
-            <div class="icon-box bg-white/10 border-white/20">
-                <i :data-lucide="item.type === 'danger' ? 'alert-octagon' : 'sparkles'" 
-                   class="w-6 h-6" 
-                   :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-300'"></i>
+            
+            <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between opacity-40">
+                <span class="text-[8px] font-black uppercase tracking-widest">Neural Analysis Active</span>
+                <span class="text-[8px] italic">ACWR Method</span>
             </div>
         </div>
-        
-        <div class="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
-            <p class="text-sm font-medium text-slate-300 leading-relaxed italic">
-                "{{ item.text }}"
-            </p>
-        </div>
-        
-        <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between opacity-40">
-            <span class="text-[8px] font-black uppercase tracking-widest">Neural Analysis Active</span>
-            <span class="text-[8px] italic">ACWR Method</span>
+    </div>
+
+    <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm px-4 pb-4 animate-in fade-in">
+        <div class="w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl animate-in slide-in-from-bottom-8">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
+            
+            <div class="text-center mb-6">
+                <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] leading-none mb-1">
+                    {{ pendingActivity?.type }}
+                </p>
+                <h3 class="text-lg font-black text-slate-900 uppercase tracking-tighter">
+                    {{ pendingActivity?.name }}
+                </h3>
+            </div>
+
+            <header class="text-center mb-8">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Feeling Check</p>
+                <h2 class="text-2xl font-black italic tracking-tighter text-slate-900">HOW HARD WAS IT?</h2>
+                <p class="text-caption mt-1">Rate your perceived effort (1-10)</p>
+            </header>
+
+            <div class="px-4">
+                <input type="range" min="1" max="10" v-model="rpeValue" 
+                       class="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-6">
+                
+                <div class="flex justify-between items-center bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 transition-all">
+                    <div class="text-left">
+                        <span class="text-4xl font-black italic tracking-tighter" :style="{ color: getStatusColor(rpeValue * 10) }">
+                            {{ rpeValue }}
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-slate-900 uppercase tracking-tighter leading-none">{{ getRpeLabel(rpeValue) }}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{{ getRpeDescription(rpeValue) }}</p>
+                    </div>
+                </div>
+
+                <button @click="saveRpe" 
+                        class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-600 active:scale-95 transition-all shadow-xl shadow-blue-100">
+                    SAVE EVALUATION
+                </button>
+            </div>
         </div>
     </div>
 </div>
-</div>
-  `;
+`;
