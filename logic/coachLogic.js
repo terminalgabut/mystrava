@@ -23,31 +23,22 @@ export const CoachLogic = {
 
 async getPendingRPE() {
     try {
-        // Ambil hanya 1 data terbaru yang rpe-nya masih null
+        const now = new Date();
+        const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000)).toISOString();
+
+        // Cari aktivitas terbaru DALAM 24 JAM terakhir yang RPE-nya masih kosong
         const { data, error } = await supabase
             .from('activities')
-            .select('id, name, type, start_date')
-            .is('user_rpe', null) 
-            .order('start_date', { ascending: false }) // Urutkan dari yang paling baru
-            .limit(1); // Paksa hanya ambil satu
+            .select('id, name, type, start_date, user_rpe')
+            .gt('start_date', yesterday) // Batasi waktu: hanya 24 jam terakhir
+            .is('user_rpe', null)        // Harus kosong
+            .order('start_date', { ascending: false })
+            .limit(1);
 
         if (error) throw error;
-
-        const latestActivity = data?.[0];
-
-        if (latestActivity) {
-            const actDate = new Date(latestActivity.start_date);
-            const now = new Date();
-            const diffInHours = (now - actDate) / (1000 * 60 * 60);
-
-            // Opsional: Hanya munculkan jika aktivitas terjadi dalam 48 jam terakhir
-            // Agar aktivitas purba yang lupa di-rate tidak muncul terus
-            if (diffInHours < 48) {
-                return latestActivity;
-            }
-        }
         
-        return null;
+        // Jika tidak ada aktivitas tanpa RPE dalam 24 jam terakhir, return null
+        return data?.[0] || null;
     } catch (err) {
         Logger.error("Coach_PendingRPE_Error", err);
         return null;
