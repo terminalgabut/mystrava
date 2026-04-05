@@ -259,6 +259,51 @@ this.weeklyStats.trend = distLastWeek > 0
 // Hitung percent berdasarkan goal
 this.recalculatePercent();
 
+                // ... di dalam calculateAnalysis() setelah hitung distLastWeek
+const totalKjThisWeek = runsThisWeek.reduce((acc, r) => acc + (r.kilojoules || 0), 0);
+
+// Hitung Chronic Load (Rata-rata kJ 4 minggu sebelumnya)
+const fourWeeksAgo = new Date(startOfLastWeek);
+fourWeeksAgo.setDate(startOfLastWeek.getDate() - (7 * 3));
+
+const runsChronic = runs.filter(r => {
+    const d = new Date(r.start_date);
+    return d >= fourWeeksAgo && d < startOfThisWeek;
+});
+
+const totalKjChronic = runsChronic.reduce((acc, r) => acc + (r.kilojoules || 0), 0);
+const avgKjChronic = totalKjChronic / 4;
+
+// Hitung Ratio
+const ratio = avgKjChronic > 0 ? parseFloat((totalKjThisWeek / avgKjChronic).toFixed(2)) : 0;
+
+// Update Workload State
+this.workload.acute = totalKjThisWeek;
+this.workload.chronic = avgKjChronic;
+this.workload.ratio = ratio;
+
+if (ratio > 1.5) {
+    this.workload.status = 'Danger';
+    this.workload.color = 'text-rose-500';
+    this.workload.icon = 'alert-octagon';
+    this.workload.msg = 'Beban melonjak drastis! Risiko cedera sangat tinggi. Sangat disarankan untuk rest day atau lari sangat pelan.';
+} else if (ratio > 1.3) {
+    this.workload.status = 'Overload';
+    this.workload.color = 'text-amber-500';
+    this.workload.icon = 'alert-triangle';
+    this.workload.msg = 'Kamu sedang menekan batas kemampuan. Pastikan nutrisi dan tidur maksimal untuk recovery.';
+} else if (ratio >= 0.8) {
+    this.workload.status = 'Optimal';
+    this.workload.color = 'text-emerald-500';
+    this.workload.icon = 'check-circle';
+    this.workload.msg = 'Beban latihan sangat ideal. Tubuhmu beradaptasi dengan baik untuk peningkatan performa.';
+} else {
+    this.workload.status = 'Recovery';
+    this.workload.color = 'text-blue-500';
+    this.workload.icon = 'battery-charging';
+    this.workload.msg = 'Beban rendah. Ini adalah waktu yang baik untuk pemulihan sebelum masuk ke blok latihan berat.';
+}
+
             } catch (err) {
                 console.error("Analysis Error:", err.message);
             } finally {
