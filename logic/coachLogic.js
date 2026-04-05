@@ -19,10 +19,40 @@ export const CoachLogic = {
     }
 },
 
-    async getPendingRPE() {
-        const { data } = await supabase.from('activities').select('*').is('user_rpe', null).order('start_date', { ascending: false }).limit(1);
-        return data?.[0] || null;
-    },
+    // root/logic/coachLogic.js
+
+async getPendingRPE() {
+    try {
+        // Ambil hanya 1 data terbaru yang rpe-nya masih null
+        const { data, error } = await supabase
+            .from('activities')
+            .select('id, name, type, start_date')
+            .is('user_rpe', null) 
+            .order('start_date', { ascending: false }) // Urutkan dari yang paling baru
+            .limit(1); // Paksa hanya ambil satu
+
+        if (error) throw error;
+
+        const latestActivity = data?.[0];
+
+        if (latestActivity) {
+            const actDate = new Date(latestActivity.start_date);
+            const now = new Date();
+            const diffInHours = (now - actDate) / (1000 * 60 * 60);
+
+            // Opsional: Hanya munculkan jika aktivitas terjadi dalam 48 jam terakhir
+            // Agar aktivitas purba yang lupa di-rate tidak muncul terus
+            if (diffInHours < 48) {
+                return latestActivity;
+            }
+        }
+        
+        return null;
+    } catch (err) {
+        Logger.error("Coach_PendingRPE_Error", err);
+        return null;
+    }
+},
 
     // Delegasikan perhitungan Readiness ke BioEngine di masa depan
     // Untuk sekarang, kita panggil fungsi Engine di dalam sini
