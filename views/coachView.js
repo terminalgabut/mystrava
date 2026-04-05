@@ -13,6 +13,75 @@ export default `
         </div>
     </header>
 
+
+    <div v-if="!isRecoverySynced" class="bento-card p-6 border-2 border-blue-500 bg-slate-900 text-white mb-8 shadow-2xl shadow-blue-500/20">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                    <i data-lucide="activity" class="w-6 h-6 text-blue-400"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-white uppercase tracking-tighter">Bio-Signal Sync Required</h3>
+                    <p class="text-[10px] text-blue-400 font-black uppercase tracking-widest leading-none mb-1">
+                        Morning Recovery Check-in
+                    </p>
+                    <p class="text-sm text-slate-400 font-bold uppercase tracking-tight">
+                        Current RHR trend detected: 69 BPM
+                    </p>
+                </div>
+            </div>
+            <button @click="openRecoveryModal" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-black italic text-sm tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-900/40">
+                SYNC MORNING DATA
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        </div>
+
+    <div v-if="isRecoveryModalOpen" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-md px-4 pb-4 animate-in fade-in">
+        <div class="w-full max-w-md bg-slate-900 border border-white/10 rounded-[32px] p-8 shadow-2xl shadow-blue-500/20 animate-in slide-in-from-bottom-8">
+            <div class="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8"></div>
+            
+            <header class="text-center mb-8">
+                <p class="text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Manual Bio-Data</p>
+                <h2 class="text-2xl font-black italic tracking-tighter text-white">RECOVERY CHECK-IN</h2>
+                <p class="text-slate-400 text-xs mt-1 italic">Input your signals for WIB Timezone</p>
+            </header>
+
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-2">Sleep Start</label>
+                        <input type="time" v-model="recoveryForm.start" class="bg-transparent text-white font-black text-xl w-full focus:outline-none">
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-2">Wake Up</label>
+                        <input type="time" v-model="recoveryForm.end" class="bg-transparent text-white font-black text-xl w-full focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="bg-white/5 p-6 rounded-3xl border border-white/10">
+                    <div class="flex justify-between mb-4">
+                        <span class="text-[10px] font-black text-slate-400 uppercase">Sleep Quality (1-10)</span>
+                        <span class="text-blue-400 font-black">{{ recoveryForm.quality }}/10</span>
+                    </div>
+                    <input type="range" min="1" max="10" v-model="recoveryForm.quality" class="w-full h-2 bg-slate-800 rounded-lg appearance-none accent-blue-500">
+                </div>
+
+                <div class="bg-blue-600/10 p-6 rounded-3xl border border-blue-500/30">
+                    <label class="text-[10px] font-black text-blue-400 uppercase block mb-2">Morning RHR (BPM)</label>
+                    <input type="number" v-model="recoveryForm.rhr" placeholder="69" class="bg-transparent text-white text-4xl font-black italic tracking-tighter w-full focus:outline-none">
+                </div>
+
+                <button @click="saveRecovery" class="w-full py-5 bg-blue-600 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-500 transition-all">
+                    UPDATE BIO-ENGINE
+                </button>
+            </div>
+        </div>
+    </div>
+    
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bento-card p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
             <div class="absolute top-0 right-0 p-4 opacity-10">
