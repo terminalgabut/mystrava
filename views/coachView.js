@@ -158,53 +158,39 @@ export default `
     </div>
 </div>
 
-<div class="mt-8 space-y-4 mb-12">
-    <header class="px-2 flex items-center justify-between">
-        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-            <i data-lucide="lightbulb" class="w-3 h-3 text-amber-500"></i>
-            Coach AI Intelligence
-        </h3>
-        <span class="text-[9px] text-slate-400 italic">
-            Methodology: ACWR & Metabolic Load
-        </span>
-    </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="item in dynamicInsights" :key="item.title" 
-             class="bento-card p-5 transition-all duration-300"
-             :class="{ 'border-red-100 bg-red-50/30': item.type === 'danger' }">
-            
-            <div class="flex items-start gap-4">
-                <div class="shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center"
-                     :class="item.type === 'danger' ? 'bg-red-100' : 'bg-slate-100'">
-                    <i :data-lucide="item.type === 'danger' ? 'alert-octagon' : 'zap'" 
-                       :class="item.type === 'danger' ? 'text-red-600' : 'text-blue-600'" 
-                       class="w-5 h-5"></i>
-                </div>
-
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                        <h4 class="font-black text-slate-900 uppercase italic tracking-tighter text-sm">
-                            {{ item.title }}
-                        </h4>
-                        <span v-if="item.type === 'danger'" 
-                              class="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded uppercase tracking-widest">
-                            Critical
-                        </span>
-                    </div>
-                    <p class="text-[11px] text-slate-600 font-medium leading-relaxed">
-                        {{ item.text }}
-                    </p>
-                </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+    <div v-for="item in dynamicInsights" :key="item.title" 
+         class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all"
+         :class="{ 'border-red-500/40 ring-1 ring-red-500/20 shadow-red-500/10': item.type === 'danger' }">
+        
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest mb-2"
+                   :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-400'">
+                    {{ item.type === 'danger' ? 'System Alert' : 'Coach Intelligence' }}
+                </p>
+                <h2 class="text-3xl font-black italic tracking-tighter leading-none">
+                    {{ item.title }}
+                </h2>
+            </div>
+            <div class="icon-box bg-white/10 border-white/20">
+                <i :data-lucide="item.type === 'danger' ? 'alert-octagon' : 'sparkles'" 
+                   class="w-6 h-6" 
+                   :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-300'"></i>
             </div>
         </div>
-    </div>
-
-    <div class="px-2 py-3 border-t border-slate-100 mt-2">
-        <p class="text-[9px] text-slate-400 leading-normal">
-            *Analisis ini membandingkan beban 7 hari terakhir (Acute) terhadap rata-rata 28 hari (Chronic). 
-            Skor efisiensi kaki dihitung dari akumulasi elevasi 14 hari terakhir.
-        </p>
+        
+        <div class="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
+            <p class="text-sm font-medium text-slate-300 leading-relaxed italic">
+                "{{ item.text }}"
+            </p>
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between opacity-40">
+            <span class="text-[8px] font-black uppercase tracking-widest">Neural Analysis Active</span>
+            <span class="text-[8px] italic">ACWR Method</span>
+        </div>
     </div>
 </div>
 </div>
