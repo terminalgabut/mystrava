@@ -1,65 +1,32 @@
 // root/logic/coachLogic.js
-import { supabase } from '../js/services/supabase.js'; // Pastikan path ini benar sesuai projectmu
+import { supabase } from '../js/services/supabase.js';
+import { BioEngine } from './bioEngine.js'; // Import Brain Baru
 import { Logger } from '../js/services/debug.js';
 
 export const CoachLogic = {
-    /**
-     * 1. Mengambil Rekomendasi dari SQL View
-     */
+    // Tetap ambil data murni
     async getDailyBrief() {
-        try {
-            const { data, error } = await supabase
-                .from('coach_daily_brief')
-                .select('*')
-                .single();
-            
-            if (error) throw error;
-            return data;
-        } catch (err) {
-            Logger.error("Coach_Brief_Logic_Error", err);
-            return {
-                recommendation: 'Syncing Data...',
-                breathing_tip: 'Napas adalah kunci. Tunggu sebentar selagi kami menghitung...'
-            };
-        }
+        const { data } = await supabase.from('coach_daily_brief').select('*').single();
+        return data || { recommendation: 'No Data' };
     },
 
-    /**
-     * 2. Mencari Aktivitas Terbaru yang RPE-nya masih KOSONG
-     */
     async getPendingRPE() {
-        try {
-            const { data, error } = await supabase
-                .from('activities')
-                .select('id, name, type, average_watts, kilojoules, start_date')
-                .is('user_rpe', null)
-                .order('start_date', { ascending: false })
-                .limit(1);
-
-            if (error) throw error;
-            return data && data.length > 0 ? data[0] : null;
-        } catch (err) {
-            Logger.error("Coach_PendingRPE_Error", err);
-            return null;
-        }
+        const { data } = await supabase.from('activities').select('*').is('user_rpe', null).order('start_date', { ascending: false }).limit(1);
+        return data?.[0] || null;
     },
 
-    /**
-     * 3. Menyimpan Nilai RPE (1-10) ke Database
-     */
-    async saveRPE(activityId, value) {
-        try {
-            const { error } = await supabase
-                .from('activities')
-                .update({ user_rpe: parseInt(value) })
-                .eq('id', activityId);
+    // Delegasikan perhitungan Readiness ke BioEngine di masa depan
+    // Untuk sekarang, kita panggil fungsi Engine di dalam sini
+    async getFullIntelligence() {
+        const workload = await BioEngine.calculateWorkloadBalance();
+        const readiness = await this.calculateReadiness(); // Fungsi lama yang sudah ada
+        const recovery = BioEngine.predictRecovery(readiness.score);
 
-            if (error) throw error;
-            return true;
-        } catch (err) {
-            Logger.error("Coach_SaveRPE_Error", err);
-            return false;
-        }
+        return {
+            workload,
+            readiness,
+            recovery
+        };
     },
 
     /**
