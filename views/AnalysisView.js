@@ -106,9 +106,9 @@ export default {
         </div>
         <div class="text-right">
             <span :class="weeklyStats.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'" 
-      class="text-[10px] font-black italic">
-    {{ weeklyStats.trend >= 0 ? '▲' : '▼' }} {{ Math.abs(weeklyStats.trend) }}%
-</span>
+                  class="text-[10px] font-black italic">
+                {{ weeklyStats.trend >= 0 ? '▲' : '▼' }} {{ Math.abs(weeklyStats.trend) }}%
+            </span>
             <p class="text-[8px] text-slate-400 uppercase font-bold">vs Last Week</p>
         </div>
     </div>
@@ -131,29 +131,28 @@ export default {
             {{ Math.max(0, (weeklyStats.goal - weeklyStats.thisWeek)).toFixed(1) }} KM Left
         </p>
     </div>
-</div>
 
-<div class="mt-6 pt-6 border-t border-slate-150">
-    <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-            <i :data-lucide="workload.icon" :class="workload.color" class="w-4 h-4"></i>
-            <span class="text-[10px] font-black uppercase tracking-widest" :class="workload.color">
-                Training Load: {{ workload.status }}
-            </span>
+    <div class="mt-6 pt-6 border-t border-slate-100">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+                <i :data-lucide="workload.icon" :class="workload.color" class="w-4 h-4"></i>
+                <span class="text-[10px] font-black uppercase tracking-widest" :class="workload.color">
+                    Training Load: {{ workload.status }}
+                </span>
+            </div>
+            <span class="text-[10px] font-bold text-slate-400">{{ workload.ratio }}x Ratio</span>
         </div>
-        <span class="text-[10px] font-bold text-slate-400">{{ workload.ratio }}x Ratio</span>
-    </div>
-    <p class="text-[9px] text-slate-500 leading-relaxed">
-        {{ workload.msg }}
-    </p>
-    <div class="w-full h-1 bg-slate-50 rounded-full mt-3 overflow-hidden">
-        <div class="h-full transition-all duration-1000" 
-             :class="workload.ratio > 1.5 ? 'bg-rose-500' : (workload.ratio > 1.3 ? 'bg-amber-500' : 'bg-emerald-500')"
-             :style="{ width: Math.min((workload.ratio / 2) * 100, 100) + '%' }">
+        <p class="text-[9px] text-slate-500 leading-relaxed italic">
+            {{ workload.msg }}
+        </p>
+        <div class="w-full h-1 bg-slate-50 rounded-full mt-3 overflow-hidden">
+            <div class="h-full transition-all duration-1000" 
+                 :class="workload.ratio > 1.5 ? 'bg-rose-500' : (workload.ratio > 1.3 ? 'bg-amber-500' : 'bg-emerald-500')"
+                 :style="{ width: Math.min((workload.ratio / 2) * 100, 100) + '%' }">
+            </div>
         </div>
     </div>
 </div>
-
                 </div>
             </div>
         </div>
