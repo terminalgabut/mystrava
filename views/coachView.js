@@ -58,27 +58,38 @@ export default `
             </div>
         </div>
     </div>
+    
 
-    <div v-if="dynamicInsights.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div v-for="item in dynamicInsights" :key="item.title"
-             class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all border border-white/5"
-             :class="{ 'border-red-500/40 ring-1 ring-red-500/20 shadow-red-500/20': item.type === 'danger' }">
+    <div v-if="dynamicInsights && dynamicInsights.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div v-for="item in dynamicInsights" :key="item.title" 
+             class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all border border-white/10"
+             :class="{ 'border-red-500/50 ring-2 ring-red-500/20': item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning' }">
+            
             <div class="flex items-start justify-between mb-6">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-widest mb-2 text-blue-400"
-                       :class="{ 'text-red-400': item.type === 'danger' }">
-                       {{ item.type === 'danger' ? 'System Alert' : 'Bio-Insight' }}
+                    <p class="text-[10px] font-black uppercase tracking-widest mb-2"
+                       :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'text-red-400' : 'text-blue-400'">
+                       {{ (item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'System Alert' : 'Bio-Insight' }}
                     </p>
-                    <h2 class="text-2xl font-black italic tracking-tighter leading-none text-white">{{ item.title }}</h2>
+                    <h2 class="text-xl md:text-2xl font-black italic tracking-tighter leading-none text-white">{{ item.title }}</h2>
                 </div>
-                <i :data-lucide="item.type === 'danger' ? 'alert-octagon' : 'zap'" 
-                   class="w-6 h-6" :class="item.type === 'danger' ? 'text-red-400' : 'text-blue-300'"></i>
+                <div class="icon-box bg-white/10 border-white/20">
+                    <i :data-lucide="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'alert-octagon' : 'zap'" 
+                       class="w-6 h-6" :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'text-red-400' : 'text-blue-300'"></i>
+                </div>
             </div>
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
                 <p class="text-sm font-medium text-slate-300 leading-relaxed italic">"{{ item.text }}"</p>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between opacity-30">
+                <span class="text-[8px] font-black uppercase tracking-widest">Neural Analysis Active</span>
+                <span class="text-[8px] italic">Verified Bio-Signal</span>
             </div>
         </div>
     </div>
+    
 
     <div v-if="pendingActivity" class="bento-card p-6 border-2 border-amber-400 bg-amber-50/50 mb-8">
         <div class="flex flex-col md:flex-row items-center justify-between gap-6">
