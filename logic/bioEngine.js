@@ -75,43 +75,67 @@ export const BioEngine = {
         }
     },
 
-    _generateSmartInsights(intel) {
-        const insights = [];
-        const { ratio } = intel.workload;
-        const { score: resScore } = intel.resilience;
-        const recovery = intel.recoveryData;
+_generateSmartInsights(intel) {
+    const insights = [];
+    const { ratio, status: acwrStatus } = intel.workload;
+    const { score: resScore, label: resLabel } = intel.resilience;
+    const { score: readiness } = intel.readiness;
+    const recovery = intel.recoveryData;
 
-        // Insight 1: RHR Alert
-        if (recovery && recovery.morning_rhr > 67) {
-            insights.push({
-                type: 'danger',
-                title: 'Sinyal Jantung Tidak Stabil',
-                text: `RHR pagi ini (${recovery.morning_rhr} BPM) berada di atas baseline. Jantungmu bekerja ekstra. Sangat disarankan untuk rest total.`
-            });
-        }
+    // 1. ANALISIS OVERLOADING (Beban vs Jantung)
+    if (ratio > 1.3 && recovery && recovery.morning_rhr > 67) {
+        insights.push({
+            type: 'danger',
+            title: 'Kelelahan Sistemik (Overtraining Risk)',
+            text: `Beban latihan mingguanmu melonjak ke angka ${ratio}x (Zona ${acwrStatus}), sementara detak jantung istirahat (RHR) pagi ini naik menjadi ${recovery.morning_rhr} BPM. Ini adalah tanda 'Double Fatigue'. Jantungmu sedang bekerja ekstra hanya untuk memulihkan kerusakan jaringan dari sesi terakhir. Jika dipaksakan lari intensitas tinggi hari ini, kamu berisiko mengalami cedera otot jangka panjang atau penurunan performa kronis.`
+        });
+    }
 
-        // Insight 2: Workload
-        if (ratio > 1.5) {
-             insights.push({
-                type: 'danger',
-                title: 'Lonjakan Beban Kritis',
-                text: `Beban latihan 7 hari terakhir (${ratio}x) melampaui batas aman. Risiko cedera meningkat tajam.`
-            });
-        }
+    // 2. ANALISIS STRUKTURAL (Resilience vs Readiness)
+    if (resScore > 65 && readiness < 35) {
+        insights.push({
+            type: 'info',
+            title: 'Kapasitas Kaki vs Kesiapan Saraf',
+            text: `Indeks Resilience kamu (${resScore}% - ${resLabel}) menunjukkan otot dan tendon kamu sangat kuat untuk tanjakan. Namun, 'Readiness Score' yang rendah (${readiness}%) menandakan Sistem Saraf Pusat (CNS) kamu sedang 'hang'. Kamu punya 'body' mobil balap tapi dengan 'baterai' yang hampir habis. Hindari rute teknis atau tanjakan curam hari ini karena koordinasi kaki biasanya menurun saat saraf sedang lelah.`
+        });
+    }
 
-        // Insight 3: Default/Success (Agar tidak kosong)
-        if (insights.length === 0) {
-            insights.push({
-                type: 'info',
-                title: 'Neural Engine Active',
-                text: intel.readiness.score > 60 
-                    ? 'Kondisi biometrik stabil. Tubuh merespon beban latihan dengan sangat efisien.'
-                    : 'Sistem sedang memantau fase pemulihanmu. Tetap ikuti rekomendasi hari ini.'
-            });
-        }
+    // 3. ANALISIS KUALITAS PEMULIHAN (Sleep Impact)
+    const sleepStart = recovery?.sleep_start_time || recovery?.sleep_start;
+    const sleepEnd = recovery?.sleep_end_time || recovery?.sleep_end;
+    let sleepHours = 0;
+    if (sleepStart && sleepEnd) {
+        sleepHours = (new Date(sleepEnd) - new Date(sleepStart)) / (1000 * 60 * 60);
+    }
 
-        return insights;
-    },
+    if (sleepHours > 0 && sleepHours < 6.5 && recovery?.sleep_quality < 6) {
+        insights.push({
+            type: 'warning',
+            title: 'Defisit Fase Pemulihan Deep Sleep',
+            text: `Tidur selama ${sleepHours.toFixed(1)} jam dengan kualitas rendah (${recovery.sleep_quality}/10) menghambat pelepasan hormon pertumbuhan yang krusial untuk recovery otot. Angka Readiness kamu tertekan bukan karena latihan berat, tapi karena fase restorasi yang tidak tuntas. Fokus pada 'Active Recovery' ringan seperti jalan kaki atau stretching statis untuk menjaga sirkulasi darah tanpa menaikkan kortisol.`
+        });
+    }
+
+    // 4. ANALISIS PERFORMANCE WINDOW (The Green Zone)
+    if (readiness > 75 && ratio >= 0.8 && ratio <= 1.2) {
+        insights.push({
+            type: 'success',
+            title: 'Jendela Adaptasi Maksimal',
+            text: `Ini adalah 'Sweet Spot' latihanmu. Beban mingguan stabil di ${ratio}x dan biometrikmu sangat segar. Tubuhmu sedang dalam fase superkompensasi—di mana dia paling siap menerima stres latihan baru untuk menjadi lebih kuat. Jika ada rencana 'Interval Run' atau 'Tempo Run', lakukan hari ini untuk hasil adaptasi fisiologis yang maksimal.`
+        });
+    }
+
+    // 5. INSIGHT UNTUK DATA MINIM/NORMAL
+    if (insights.length === 0) {
+        insights.push({
+            type: 'info',
+            title: 'Pemantauan Bio-Engine Aktif',
+            text: `Sistem sedang melakukan sinkronisasi data Strava dan Recovery. Saat ini tidak ditemukan anomali kritis. Teruslah mencatat RHR dan kualitas tidur setiap pagi untuk mendapatkan pola 'Basal Heart Rate' yang lebih akurat dalam 7 hari ke depan.`
+        });
+    }
+
+    return insights;
+},
 
     _generatePrescription(intel) {
         const score = intel.readiness.score;
