@@ -82,45 +82,39 @@ _generateSmartInsights(intel) {
     const { score: readiness } = intel.readiness;
     const recovery = intel.recoveryData;
 
-    // 1. ANALISIS TREN RHR VS HISTORIS
-    // Menggunakan baseline 62 (seperti di setup awal) untuk mendeteksi deviasi
+    // Baseline statis (Idealnya diambil dari rata-rata data lama di DB)
     const rhrBaseline = 62; 
     const rhrToday = recovery?.morning_rhr || 0;
     const rhrDiff = rhrToday - rhrBaseline;
 
+    // 1. CRITICAL READINESS ALERT (Pemicu Utama untuk Angka 4%)
+    if (readiness < 20) {
+        insights.push({
+            type: 'danger',
+            title: 'Neural Alert: Sistem Kritis',
+            text: `Skor kesiapanmu berada di level terendah (${readiness}%). Berdasarkan data aktivitas 5km terakhir dan beban akumulatif mingguan, tubuhmu sedang mengalami kelelahan sistemik berat. Melanjutkan latihan saat ini tidak akan memberikan efek adaptasi, melainkan hanya akan meningkatkan risiko cedera otot atau overtraining syndrome.`
+        });
+    }
+
+    // 2. ANALISIS TREN RHR (Sinkronisasi Biometrik)
     if (rhrToday > 0 && rhrDiff > 5) {
         insights.push({
             type: 'danger',
             title: 'Deviasi Jantung (Baseline Shift)',
-            text: `RHR pagi ini (${rhrToday} BPM) melonjak signifikan dibanding rata-rata stabilmu (~${rhrBaseline} BPM). Secara historis, kenaikan +${rhrDiff} poin ini mengonfirmasi bahwa tubuhmu sedang dalam tekanan stres tinggi. Dikombinasikan dengan ACWR ${ratio}x, sistem mendeteksi adanya 'Recovery Debt' yang harus dibayar hari ini dengan istirahat total.`
+            text: `RHR pagi ini (${rhrToday} BPM) melonjak +${rhrDiff} poin dibanding rata-rata stabilmu. Data historis menunjukkan kenaikan tajam ini adalah respons tubuh terhadap inflamasi atau kurangnya restorasi dari sesi lari dan bersepeda sebelumnya. Jantungmu sedang bekerja lembur untuk menjaga homeostasis.`
         });
     }
 
-    // 2. ANALISIS WORKLOAD PROGRESSION (Data Masa Lalu)
+    // 3. WORKLOAD VS STRUKTURAL (Data Strava vs Resilience)
     if (ratio > 1.5) {
         insights.push({
-            type: 'danger',
-            title: 'Lonjakan Beban Anomali',
-            text: `Beban latihanmu meningkat ${ratio}x dibanding rata-rata kronis (4 minggu terakhir). Data masa lalu menunjukkan lonjakan secepat ini sering memicu cedera overuse. Meskipun Resilience kaki kamu berada di level ${resLabel}, sistem sarafmu belum beradaptasi dengan volume seberat ini.`
-        });
-    } else if (ratio < 0.7 && ratio > 0) {
-        insights.push({
-            type: 'info',
-            title: 'Fase De-training Terdeteksi',
-            text: `Volume latihanmu menurun di bawah rata-rata historis (${ratio}x). Jika ini bukan minggu 'Tapering' yang direncanakan, kamu mulai kehilangan momentum adaptasi fisiologis yang sudah dibangun di sesi-sesi sebelumnya.`
-        });
-    }
-
-    // 3. STRUKTURAL VS NEURAL (Resilience vs Readiness)
-    if (resScore > 70 && readiness < 40) {
-        insights.push({
             type: 'warning',
-            title: 'Mismatch: Kapasitas vs Kesiapan',
-            text: `Berdasarkan data 14 hari terakhir, kekuatan kakimu (${resScore}%) sangat mumpuni untuk intensitas tinggi. Namun, Bio-Signal pagi ini menunjukkan Readiness hanya ${readiness}%. Ada ketidaksinkronan antara kekuatan otot (Structural) dan kesiapan saraf (Neural). Hindari rute teknis karena koordinasi motorikmu sedang tidak sinkron.`
+            title: 'Beban Latihan Anomali',
+            text: `Volume latihanmu meningkat tajam (${ratio}x) dibanding rata-rata 4 minggu terakhir. Meskipun Resilience kakimu berada di level '${resLabel}' (${resScore}%), lonjakan beban secepat ini seringkali tidak diiringi oleh pemulihan jaringan lunak yang cukup. Waspadai area shin splints atau Achilles.`
         });
     }
 
-    // 4. ANALISIS PEMULIHAN (Sleep Quality vs Readiness Trend)
+    // 4. ANALISIS TIDUR & CNS (Central Nervous System)
     const sleepStart = recovery?.sleep_start_time || recovery?.sleep_start;
     const sleepEnd = recovery?.sleep_end_time || recovery?.sleep_end;
     let sleepHours = 0;
@@ -131,26 +125,26 @@ _generateSmartInsights(intel) {
     if (sleepHours > 0 && sleepHours < 6.5 && readiness < 50) {
         insights.push({
             type: 'warning',
-            title: 'Incomplete Restoration Cycle',
-            text: `Tidur selama ${sleepHours.toFixed(1)} jam tidak cukup untuk menetralisir beban ACWR ${ratio}x dari hari-hari sebelumnya. Data menunjukkan korelasi kuat antara durasi tidur pendek dan rendahnya skor kesiapanmu hari ini. Fokus pada restorasi agar tren penurunan ini tidak berlanjut menjadi fatigue kronis.`
+            title: 'Siklus Restorasi Tidak Tuntas',
+            text: `Tidur selama ${sleepHours.toFixed(1)} jam tidak cukup untuk menetralisir beban ACWR ${ratio}x yang tersimpan dalam sistemmu. Kurangnya fase deep sleep menghambat hormon pertumbuhan yang krusial untuk memperbaiki jaringan otot setelah aktivitas intens.`
         });
     }
 
-    // 5. THE GREEN ZONE (Optimal Performance)
-    if (readiness > 75 && ratio >= 0.8 && ratio <= 1.3 && rhrDiff <= 2) {
+    // 5. THE GREEN ZONE (Hanya jika semua data benar-benar aman)
+    if (readiness > 75 && ratio >= 0.8 && ratio <= 1.2 && rhrDiff <= 2) {
         insights.push({
             type: 'success',
-            title: 'Optimal Synergy: Ready for Peak',
-            text: `Semua sistem sinkron! Beban latihan terukur (${ratio}x), biometrik stabil, dan pemulihan tuntas. Data historis menunjukkan ini adalah kondisi ideal untuk melakukan 'Breakthrough Session'. Jangan sia-siakan jendela performa ini.`
+            title: 'Optimal Synergy Detected',
+            text: `Sinkronisasi data sempurna! Beban latihan stabil di zona ${acwrStatus}, biometrik tetap pada baseline, dan pemulihan tuntas. Data menunjukkan ini adalah momen tepat untuk sesi Breakthrough—tubuhmu dalam fase superkompensasi maksimal.`
         });
     }
 
-    // 6. DEFAULT (Data Minim)
+    // 6. DEFAULT (Hanya jika tidak ada anomali sama sekali)
     if (insights.length === 0) {
         insights.push({
             type: 'info',
             title: 'Neural Engine Synced',
-            text: `Sistem telah membandingkan data biometrik pagi ini dengan tren aktivitas mingguanmu. Tidak ditemukan anomali. Tetap pertahankan konsistensi input data untuk analisis yang lebih tajam.`
+            text: `Sistem telah membandingkan data biometrik pagi ini dengan tren aktivitas mingguanmu. Kondisi stabil. Pastikan tetap konsisten mengisi data recovery untuk menjaga akurasi algoritma.`
         });
     }
 
