@@ -116,5 +116,61 @@ export const CoachLogic = {
             10: { label: 'Max Effort', desc: 'Usaha habis-habisan!', color: '#ef4444' }
         };
         return meta[val] || meta[5];
+    },
+
+    // Tambahkan fungsi-fungsi ini di dalam objek CoachLogic
+
+    /**
+     * 6. Ambil data recovery hari ini (WIB)
+     */
+    async getTodayRecovery() {
+        try {
+            // Ambil tanggal hari ini dalam format YYYY-MM-DD (WIB)
+            const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+
+            const { data, error } = await supabase
+                .from('daily_recovery')
+                .select('*')
+                .eq('check_in_date', todayWib)
+                .single(); // Kita hanya butuh satu record per hari
+
+            if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows found" error
+            return data || null;
+        } catch (err) {
+            Logger.error("Coach_GetRecovery_Error", err);
+            return null;
+        }
+    },
+
+    /**
+     * 7. Simpan data recovery harian (WIB)
+     */
+    async saveDailyRecovery(payload) {
+        try {
+            const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            
+            // Format jam ke ISO Timestamptz dengan offset WIB (+07:00)
+            const formatToWibIso = (timeStr) => `${todayWib}T${timeStr}:00+07:00`;
+
+            const entry = {
+                check_in_date: todayWib,
+                sleep_start: formatToWibIso(payload.start),
+                sleep_end: formatToWibIso(payload.end),
+                sleep_quality: parseInt(payload.quality),
+                morning_rhr: parseInt(payload.rhr),
+                notes: payload.notes || ''
+            };
+
+            // Gunakan upsert agar jika user update data di hari yang sama, data tertimpa
+            const { error } = await supabase
+                .from('daily_recovery')
+                .upsert(entry, { onConflict: 'check_in_date' });
+
+            if (error) throw error;
+            return true;
+        } catch (err) {
+            Logger.error("Coach_SaveRecovery_Error", err);
+            return false;
+        }
     }
 };
