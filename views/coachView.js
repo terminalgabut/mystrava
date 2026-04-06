@@ -60,35 +60,59 @@ export default `
     </div>
     
 
-    <div v-if="dynamicInsights && dynamicInsights.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div v-for="item in dynamicInsights" :key="item.title" 
-             class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all border border-white/10"
-             :class="{ 'border-red-500/50 ring-2 ring-red-500/20': item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning' }">
-            
+<div v-if="dynamicInsights && dynamicInsights.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div v-for="item in dynamicInsights" :key="item.title" 
+         class="bento-card group p-0 bg-slate-900 text-white relative shadow-2xl transition-all overflow-hidden border border-white/5"
+         :class="{ 'border-red-500/30 ring-1 ring-red-500/10 shadow-red-500/10': item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning' }">
+        
+        <div class="h-1.5 w-full" 
+             :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'bg-red-500' : 'bg-blue-500'">
+        </div>
+
+        <div class="p-8">
             <div class="flex items-start justify-between mb-6">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-widest mb-2"
-                       :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'text-red-400' : 'text-blue-400'">
-                       {{ (item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'System Alert' : 'Bio-Insight' }}
-                    </p>
-                    <h2 class="text-xl md:text-2xl font-black italic tracking-tighter leading-none text-white">{{ item.title }}</h2>
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 mb-2">
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse"
+                              :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'bg-red-400' : 'bg-blue-400'">
+                        </span>
+                        <span class="text-[9px] font-black uppercase tracking-[0.15em]"
+                              :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'text-red-400' : 'text-blue-400'">
+                           {{ (item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'Neural Alert' : 'System Insight' }}
+                        </span>
+                    </div>
+                    <h2 class="text-2xl font-black italic tracking-tighter leading-tight text-white group-hover:text-blue-400 transition-colors">
+                        {{ item.title }}
+                    </h2>
                 </div>
-                <div class="icon-box bg-white/10 border-white/20">
-                    <i :data-lucide="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'alert-octagon' : 'zap'" 
-                       class="w-6 h-6" :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'text-red-400' : 'text-blue-300'"></i>
+                
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all"
+                     :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'">
+                    <i :data-lucide="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'alert-octagon' : 'brain-circuit'" 
+                       class="w-6 h-6" :class="(item.type?.toLowerCase() === 'danger' || item.type?.toLowerCase() === 'warning') ? 'text-red-400' : 'text-blue-400'">
+                    </i>
                 </div>
             </div>
 
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
-                <p class="text-sm font-medium text-slate-300 leading-relaxed italic">"{{ item.text }}"</p>
+            <div class="relative">
+                <div class="absolute -left-2 top-0 w-1 h-full bg-white/5 rounded-full"></div>
+                <p class="text-[13px] md:text-sm font-medium text-slate-300 leading-relaxed text-justify tracking-tight pl-4">
+                    {{ item.text }}
+                </p>
             </div>
             
-            <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between opacity-30">
-                <span class="text-[8px] font-black uppercase tracking-widest">Neural Analysis Active</span>
-                <span class="text-[8px] italic">Verified Bio-Signal</span>
+            <div class="mt-8 pt-4 border-t border-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-2 opacity-30 group-hover:opacity-60 transition-opacity">
+                    <i data-lucide="fingerprint" class="w-3 h-3"></i>
+                    <span class="text-[8px] font-black uppercase tracking-widest italic">Core Analysis Engine v3.0</span>
+                </div>
+                <div class="px-2 py-0.5 rounded bg-white/5 opacity-30 text-[8px] font-bold">
+                    {{ new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} WIB
+                </div>
             </div>
         </div>
     </div>
+</div>
     
 
     <div v-if="pendingActivity" class="bento-card p-6 border-2 border-amber-400 bg-amber-50/50 mb-8">
