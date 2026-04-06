@@ -149,7 +149,7 @@ export default {
             pendingActivity,
             coachHistory,
             efficiencyInsights,
-            dynamicInsights, // --- JANGAN LUPA DI-RETURN ---
+            dynamicInsights, 
             isModalOpen,
             rpeValue,
             getStatusColor,
