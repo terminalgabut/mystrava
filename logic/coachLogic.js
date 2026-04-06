@@ -172,5 +172,82 @@ export const CoachLogic = {
             Logger.error("Coach_SaveRecovery_Error", err);
             return false;
         }
+    },
+
+    // Tambahkan fungsi ini di dalam objek CoachLogic
+
+    /**
+     * 8. Ambil Data Tren Mingguan untuk Grafik (7 Hari Terakhir)
+     * Menggabungkan Volume (Kj), Readiness, dan RHR per hari
+     */
+    async getWeeklyTrend() {
+        try {
+            const days = [];
+            const labels = [];
+            const now = new Date();
+
+            // Generate list 7 hari terakhir (WIB)
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+                days.push(dateStr);
+                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' })); // Sen, Sel, dst.
+            }
+
+            // 1. Tarik Data Aktivitas (Workload)
+            const { data: activities, error: actErr } = await supabase
+                .from('activities')
+                .select('start_date, kilojoules')
+                .gte('start_date', days[0]);
+
+            if (actErr) throw actErr;
+
+            // 2. Tarik Data Recovery (RHR & Sleep)
+            const { data: recoveries, error: recErr } = await supabase
+                .from('daily_recovery')
+                .select('check_in_date, morning_rhr, sleep_quality')
+                .gte('check_in_date', days[0]);
+
+            if (recErr) throw recErr;
+
+            // 3. Mapping Data ke Array untuk Chart
+            const workloadSeries = days.map(day => {
+                return activities
+                    .filter(a => a.start_date.startsWith(day))
+                    .reduce((sum, a) => sum + (a.kilojoules || 0), 0);
+            });
+
+            const rhrSeries = days.map(day => {
+                const rec = recoveries.find(r => r.check_in_date === day);
+                return rec ? rec.morning_rhr : null; // null agar grafik tidak drop ke 0 jika data kosong
+            });
+
+            // 4. Kalkulasi Readiness Harian (Simulasi sederhana untuk tren)
+            // Di sini kita hitung readiness kumulatif tiap harinya
+            const readinessSeries = days.map((day, idx) => {
+                const totalKjSoFar = workloadSeries.slice(0, idx + 1).reduce((a, b) => a + b, 0);
+                const limitKj = 3000;
+                let score = 100 - ((totalKjSoFar / limitKj) * 100);
+                
+                // Modifier RHR jika ada data recovery pada hari itu
+                const dailyRhr = rhrSeries[idx];
+                if (dailyRhr && dailyRhr > 67) score -= 15;
+                
+                return Math.max(5, Math.min(100, Math.round(score)));
+            });
+
+            return {
+                labels,          // ['Sen', 'Sel', ...]
+                workloadSeries,  // [1200, 0, 800, ...]
+                rhrSeries,       // [62, 63, 68, ...]
+                readinessSeries, // [80, 75, 40, ...]
+                baselineRhr: 62  // Angka garis putus-putus
+            };
+
+        } catch (err) {
+            Logger.error("Coach_WeeklyTrend_Error", err);
+            return null;
+        }
     }
 };
