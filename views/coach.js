@@ -168,5 +168,6 @@ export default {
             recoveryForm,
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; refreshIcons(); },
             saveRecovery
+        };
     }
 };
