@@ -1,6 +1,7 @@
 import coachTemplate from './coachView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { BioEngine } from '../logic/bioEngine.js'; 
+import { RecoveryEngine } from '../logic/recoveryEngine.js'; 
 import { Logger } from '../js/services/debug.js';
 
 export default {
