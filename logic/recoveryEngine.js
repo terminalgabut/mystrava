@@ -9,6 +9,15 @@ export const RecoveryEngine = {
         ACTIVE_RECOVERY_PACE: 10, // 10-15 min/km (Jalan tempo)
     },
 
+    getSorenessMultiplier(score) {
+        const mapping = {
+            1: 0.70, 2: 0.80, 3: 0.85, 4: 0.90, // Penalty
+            5: 1.0,  6: 1.0,                    // Neutral
+            7: 1.05, 8: 1.10, 9: 1.15, 10: 1.20 // Bonus
+        };
+        return mapping[score] || 1.0;
+    },
+
     analyzeActivity(activity) {
         // Hanya proses tipe "Walk"
         if (activity.type !== 'Walk') {
