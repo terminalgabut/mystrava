@@ -163,7 +163,14 @@ export default {
                     };
                 }
 
-                const intel = BioEngine.processIntelligence(rawActivities, recoveryData);
+                const intel = BioEngine.processIntelligence(rawActivities, recoveryData); 
+                
+                // 2. HUBUNGKAN RECOVERY ENGINE DI SINI
+                // Hitung boost berdasarkan aktivitas jalan kaki (Pace 10-15+)
+                const finalReadiness = RecoveryEngine.calculateReadinessBoost(
+                    intel.readiness.score, 
+                    rawActivities
+                );
                 
                 // --- UI MAPPING ---
                 dynamicInsights.value = intel.dynamicInsights || []; 
