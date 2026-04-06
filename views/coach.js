@@ -23,11 +23,7 @@ export default {
         const pendingActivity = ref(null);
         const coachHistory = ref([]);
         const efficiencyInsights = ref([]);
-        
-        // --- TAMBAHKAN INI ---
         const dynamicInsights = ref([]); 
-
-        // --- HELPERS ---
         const refreshIcons = () => {
             nextTick(() => { 
                 if (window.lucide) window.lucide.createIcons(); 
@@ -38,7 +34,6 @@ export default {
         const getRpeLabel = (val) => CoachLogic.getRpeMetadata(val).label;
         const getRpeDescription = (val) => CoachLogic.getRpeMetadata(val).desc;
 
-        // --- CORE ACTIONS ---
         const initCoach = async () => {
             isLoading.value = true;
             try {
