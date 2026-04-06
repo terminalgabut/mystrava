@@ -107,6 +107,27 @@ export default {
             }
         };
 
+        const saveRecovery = async () => {
+    isLoading.value = true;
+    try {
+        const success = await CoachLogic.saveDailyRecovery({
+            ...recoveryForm.value,
+            date: new Date().toLocaleDateString('en-CA') // Format YYYY-MM-DD
+        });
+
+        if (success) {
+            isRecoveryModalOpen.value = false;
+            isRecoverySynced.value = true;
+            // Re-init coach untuk melihat dampak RHR 69 ke skor Readiness
+            await initCoach(); 
+        }
+    } catch (err) {
+        Logger.error("SaveRecovery_UI_Error", err);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
             isLoading.value = true;
@@ -141,7 +162,11 @@ export default {
             getRpeLabel,
             getRpeDescription,
             openRpeModal: () => { isModalOpen.value = true; refreshIcons(); },
-            saveRpe
-        };
+            saveRpe,
+            isRecoverySynced,
+            isRecoveryModalOpen,
+            recoveryForm,
+            openRecoveryModal: () => { isRecoveryModalOpen.value = true; refreshIcons(); },
+            saveRecovery
     }
 };
