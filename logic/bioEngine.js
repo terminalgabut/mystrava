@@ -2,7 +2,11 @@
 import { Logger } from '../js/services/debug.js';
 
 export const BioEngine = {
-    processIntelligence(activities) {
+    /**
+     * @param {Array} activities - Data mentah dari Strava
+     * @param {Object} recovery - Data dari tabel daily_recovery (RHR, Sleep)
+     */
+    processIntelligence(activities, recovery = null) {
         try {
             if (!activities || !Array.isArray(activities) || activities.length === 0) {
                 return this.getDefaults();
@@ -12,7 +16,7 @@ export const BioEngine = {
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-            // 1. WORKLOAD CALCULATION
+            // 1. WORKLOAD CALCULATION (ACWR)
             const acuteKj = activities
                 .filter(a => new Date(a.start_date) >= sevenDaysAgo)
                 .reduce((sum, a) => sum + (a.kilojoules || 0), 0);
@@ -28,79 +32,110 @@ export const BioEngine = {
             const climbRatio = totalDist > 0 ? (totalElev / totalDist) : 0;
             const resScore = Math.min(100, Math.round((climbRatio / 60) * 100));
 
-            // 3. GENERATE ALL INTEL
-            const latest = activities[0];
-            const workloadStatus = this._getAcwrStatus(ratio);
-            
+            // 3. BASE READINESS (Matematika Dasar Strava)
+            // Jika Kj sangat tinggi (3000+), skor dasar akan rendah (sekitar 6%)
+            const limitKj = 3000;
+            let finalReadiness = Math.max(0, 100 - ((acuteKj / limitKj) * 100));
+
+            // 4. BIOMETRIC MODIFIER (RHR & Sleep Logic)
+            let bioModifier = 1.0;
+            if (recovery) {
+                // Penalti RHR (Baseline diasumsikan 62, kamu 69 = +7 BPM)
+                if (recovery.morning_rhr > 67) bioModifier -= 0.25; 
+                
+                // Penalti Kualitas Tidur (Skala 1-10)
+                if (recovery.sleep_quality < 6) bioModifier -= 0.15;
+
+                // Penalti Durasi (Kurang dari 6.5 jam)
+                const hours = (new Date(recovery.sleep_end) - new Date(recovery.sleep_start)) / (1000 * 60 * 60);
+                if (hours < 6.5) bioModifier -= 0.10;
+
+                // Terapkan Modifikator ke Skor Readiness
+                finalReadiness = finalReadiness * Math.max(0.2, bioModifier);
+            }
+
             const intel = {
-                workload: { ratio: parseFloat(ratio.toFixed(2)), status: workloadStatus },
+                readiness: {
+                    score: Math.round(finalReadiness),
+                    status: this._getReadinessStatus(finalReadiness)
+                },
+                workload: { ratio: parseFloat(ratio.toFixed(2)), status: this._getAcwrStatus(ratio) },
                 resilience: { score: resScore, label: this._getResilienceLabel(resScore) },
-                latestActivity: latest
+                recoveryData: recovery
             };
 
-            // 4. GENERATE DYNAMIC INSIGHTS & PRESCRIPTION
             return {
                 ...intel,
-                prescription: this._generatePrescription(latest, ratio, resScore),
-                dynamicInsights: this._generateSmartInsights(intel) // Ini fungsi baru yang kamu butuhkan
+                prescription: this._generatePrescription(intel),
+                dynamicInsights: this._generateSmartInsights(intel)
             };
+
         } catch (err) {
             Logger.error("BioEngine_Process_Error", err);
             return this.getDefaults();
         }
     },
 
-    /**
-     * Logic Insight Cerdas: Menjelaskan Maksud Data
-     */
     _generateSmartInsights(intel) {
         const insights = [];
-        const ratio = intel.workload.ratio;
-        const resScore = intel.resilience.score;
+        const { ratio } = intel.workload;
+        const { score: resScore } = intel.resilience;
+        const recovery = intel.recoveryData;
 
-        // INSIGHT 1: Beban Latihan (Workload)
-        if (ratio > 1.5) {
+        // Insight 1: RHR Alert (Jika data ada)
+        if (recovery && recovery.morning_rhr > 67) {
             insights.push({
                 type: 'danger',
-                title: 'Lonjakan Beban Kritis',
-                text: `Beban latihanmu ${ratio}x lebih tinggi dari biasanya. Ini adalah zona merah cedera. Jantung dan ototmu belum siap dengan volume ini. Wajib Rest!`
-            });
-        } else if (ratio >= 0.8 && ratio <= 1.3) {
-            insights.push({
-                type: 'success',
-                title: 'Zona Latihan Optimal',
-                text: `Rasio beban (${ratio}x) menunjukkan kamu berada di "Sweet Spot". Kamu meningkatkan kebugaran secara stabil tanpa risiko cedera berlebih.`
-            });
-        } else {
-            insights.push({
-                type: 'info',
-                title: 'Intensitas Rendah',
-                text: `Beban minggu ini (${ratio}x) jauh di bawah rata-rata bulananmu. Ini bagus untuk fase deload, tapi kebugaranmu akan menurun jika berlangsung lama.`
+                title: 'Sinyal Jantung Tidak Stabil',
+                text: `RHR pagi ini (${recovery.morning_rhr} BPM) berada di atas baseline. Jantungmu sedang bekerja ekstra untuk recovery. Lari 10km saat ini sangat berisiko!`
             });
         }
 
-        // INSIGHT 2: Ketahanan Kaki (Resilience)
-        if (resScore > 60) {
-            insights.push({
-                type: 'success',
-                title: 'Fondasi Kaki Kuat',
-                text: `Dengan Resilience ${resScore}%, kamu sering melahap tanjakan. Ototmu punya "leg memory" yang baik untuk medan berat.`
-            });
-        } else if (resScore < 20) {
+        // Insight 2: Workload vs Resilience
+        if (ratio > 1.5 && resScore > 70) {
             insights.push({
                 type: 'info',
-                title: 'Adaptasi Medan Flat',
-                text: `Resilience rendah (${resScore}%) menunjukkan mayoritas latihanmu di jalan datar. Hati-hati jika tiba-tiba ingin lari di tanjakan curam.`
+                title: 'Struktur Kuat, Baterai Lemah',
+                text: `Kaki kamu (Resilience ${resScore}%) mampu menanjak, tapi sistem sarafmu (Readiness ${intel.readiness.score}%) sudah mencapai limit.`
+            });
+        } else if (ratio > 1.5) {
+             insights.push({
+                type: 'danger',
+                title: 'Lonjakan Beban Kritis',
+                text: `Beban latihanmu ${ratio}x lebih tinggi dari biasanya. Wajib Rest!`
             });
         }
 
         return insights;
     },
 
-    _generatePrescription(latest, ratio, resilience) {
-        if (ratio > 1.5) return { recommendation: 'Emergency Rest', tip: 'Data menunjukkan kelelahan sistemik. Lewati sesi hari ini.' };
-        if (latest?.user_rpe >= 8) return { recommendation: 'Recovery Focus', tip: 'Sesi terakhirmu sangat berat. Fokus pada kualitas tidur.' };
-        return { recommendation: 'Steady Progress', tip: 'Pertahankan ritme ini. Tubuhmu merespon latihan dengan baik.' };
+    _generatePrescription(intel) {
+        const score = intel.readiness.score;
+        const rhr = intel.recoveryData?.morning_rhr || 0;
+
+        if (rhr > 70 || score < 10) {
+            return { 
+                recommendation: 'Emergency Shutdown', 
+                tip: 'Jangan lakukan aktivitas fisik hari ini. Fokus pada hidrasi dan tidur siang.' 
+            };
+        }
+        if (score < 40) {
+            return { 
+                recommendation: 'Active Recovery Only', 
+                tip: 'Jalan santai maksimal 1-2 km diperbolehkan. Hindari elevasi.' 
+            };
+        }
+        return { 
+            recommendation: 'Green Light', 
+            tip: 'Kesiapan tubuh optimal. Sesi hari ini bisa dilaksanakan.' 
+        };
+    },
+
+    _getReadinessStatus(score) {
+        if (score < 15) return 'CRITICAL RECOVERY';
+        if (score < 40) return 'FATIGUED';
+        if (score > 80) return 'PRIMED';
+        return 'STABLE';
     },
 
     _getAcwrStatus(ratio) {
@@ -117,12 +152,11 @@ export const BioEngine = {
 
     getDefaults() {
         return {
+            readiness: { score: 0, status: 'CALIBRATING' },
             workload: { ratio: 0, status: 'N/A' },
             resilience: { score: 0, label: 'N/A' },
             prescription: { recommendation: 'Analyzing...', tip: 'Keep moving.' },
-            dynamicInsights: [
-                { type: 'info', title: 'Collecting Data', text: 'Sistem sedang mempelajari pola latihanmu selama 28 hari terakhir.' }
-            ]
+            dynamicInsights: []
         };
     }
 };
