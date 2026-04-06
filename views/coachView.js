@@ -60,7 +60,7 @@ export default `
     </div>
 
     <div v-if="dynamicInsights.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div v-for="(item, index) in dynamicInsights" :key="index" 
+        <div v-for="item in dynamicInsights" :key="item.title"
              class="bento-card p-8 bg-slate-900 text-white relative shadow-2xl transition-all border border-white/5"
              :class="{ 'border-red-500/40 ring-1 ring-red-500/20 shadow-red-500/20': item.type === 'danger' }">
             <div class="flex items-start justify-between mb-6">
