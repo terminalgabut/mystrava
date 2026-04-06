@@ -20,6 +20,19 @@ export default {
         const isLoading = ref(true);
         const isRecoverySynced = ref(false);
         const isRecoveryModalOpen = ref(false);
+        const sorenessValue = ref(7); // Default 7 (Lighter)
+        const sorenessMap = {
+    1: { icon: 'skull', label: 'CRITICAL / PAIN' },
+    2: { icon: 'anchor', label: 'HEAVY LEAD' },
+    3: { icon: 'zap-off', label: 'DRAINED' },
+    4: { icon: 'activity', label: 'DELAYED SORE' },
+    5: { icon: 'thermometer', label: 'INFLAMED' },
+    6: { icon: 'footprints', label: 'FUNCTIONAL' },
+    7: { icon: 'wind', label: 'LIGHTER' },
+    8: { icon: 'zap', label: 'CHARGED' },
+    9: { icon: 'flame', label: 'IGNITED' },
+    10: { icon: 'rocket', label: 'PEAK POWER' }
+};
         const isModalOpen = ref(false); 
         const rpeValue = ref(5);
         
@@ -36,12 +49,22 @@ export default {
         let rhrChart = null;
 
         // --- HELPERS ---
+        const { computed, watch } = Vue; // Pastikan ambil dari Vue
+
+const currentSorenessIcon = computed(() => sorenessMap[sorenessValue.value]?.icon || 'footprints');
+const sorenessLabel = computed(() => sorenessMap[sorenessValue.value]?.label || 'NORMAL');
+
+// Sangat Penting: Refresh Lucide saat slider digeser
+watch(sorenessValue, () => {
+    refreshIcons();
+});
         const refreshIcons = () => {
             nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
         };
 
         const getStatusColor = (val) => CoachLogic.getRpeMetadata(Math.ceil(val/10)).color;
         const getRpeLabel = (val) => CoachLogic.getRpeMetadata(val).label;
+        
 
         // --- CHART ENGINE ---
         const initCharts = (trendData) => {
@@ -167,7 +190,7 @@ export default {
                 
                 // 2. HUBUNGKAN RECOVERY ENGINE DI SINI
                 // Hitung boost berdasarkan aktivitas jalan kaki (Pace 10-15+)
-                intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities);
+                intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities, recoveryData);
                 
                 // --- UI MAPPING ---
                 dynamicInsights.value = intel.dynamicInsights || []; 
@@ -207,19 +230,24 @@ export default {
         };
 
         const saveRecovery = async () => {
-            isLoading.value = true;
-            try {
-                const success = await CoachLogic.saveDailyRecovery(recoveryForm.value);
-                if (success) {
-                    isRecoveryModalOpen.value = false;
-                    await initCoach(); 
-                }
-            } catch (err) {
-                Logger.error("SaveRecovery_UI_Error", err);
-            } finally {
-                isLoading.value = false;
-            }
+    isLoading.value = true;
+    try {
+        // Kirim data gabungan form + soreness
+        const payload = { 
+            ...recoveryForm.value, 
+            soreness: sorenessValue.value 
         };
+        const success = await CoachLogic.saveDailyRecovery(payload);
+        if (success) {
+            isRecoveryModalOpen.value = false;
+            await initCoach(); 
+        }
+    } catch (err) {
+        Logger.error("SaveRecovery_UI_Error", err);
+    } finally {
+        isLoading.value = false;
+    }
+}; 
 
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
@@ -241,7 +269,7 @@ export default {
         onMounted(initCoach);
 
         return {
-            isLoading, isRecoverySynced, isRecoveryModalOpen, recoveryForm,
+            isLoading, isRecoverySynced, isRecoveryModalOpen, recoveryForm, sorenessValue, currentSorenessIcon, sorenessLabel,
             isModalOpen, rpeValue, coachBrief, readinessScore, readinessStatus,
             pendingActivity, coachHistory, efficiencyInsights, dynamicInsights, 
             getStatusColor, getRpeLabel, saveRecovery, saveRpe,
