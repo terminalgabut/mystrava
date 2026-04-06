@@ -167,10 +167,7 @@ export default {
                 
                 // 2. HUBUNGKAN RECOVERY ENGINE DI SINI
                 // Hitung boost berdasarkan aktivitas jalan kaki (Pace 10-15+)
-                const finalReadiness = RecoveryEngine.calculateReadinessBoost(
-                    intel.readiness.score, 
-                    rawActivities
-                );
+                intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities);
                 
                 // --- UI MAPPING ---
                 dynamicInsights.value = intel.dynamicInsights || []; 
