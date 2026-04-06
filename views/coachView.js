@@ -167,29 +167,52 @@ export default `
     <div v-if="isRecoveryModalOpen" class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-md px-4 pb-4 animate-in fade-in">
         <div class="w-full max-w-md bg-slate-900 border border-white/10 rounded-[32px] p-8 shadow-2xl animate-in slide-in-from-bottom-8">
             <div class="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8"></div>
+            
             <header class="text-center mb-8">
-                <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Recovery Check-in</h2>
-                <p class="text-slate-400 text-xs mt-1 italic">Input bio-signals for today</p>
+                <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Bio-Signal Sync</h2>
+                <p class="text-slate-400 text-[10px] mt-1 font-black uppercase tracking-widest italic">Calibration Engine v3.0</p>
             </header>
+
             <div class="space-y-6">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                        <label class="text-[8px] font-black text-slate-500 uppercase block mb-2 text-center">Sleep Start</label>
-                        <input type="time" v-model="recoveryForm.start" class="bg-transparent text-white font-black text-xl w-full text-center focus:outline-none">
+                        <label class="text-[8px] font-black text-slate-500 uppercase block mb-2 text-center tracking-widest">Sleep Quality</label>
+                        <input type="number" v-model="recoveryForm.quality" min="1" max="10" class="bg-transparent text-white font-black text-2xl w-full text-center focus:outline-none">
                     </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                        <label class="text-[8px] font-black text-slate-500 uppercase block mb-2 text-center">Wake Up</label>
-                        <input type="time" v-model="recoveryForm.end" class="bg-transparent text-white font-black text-xl w-full text-center focus:outline-none">
+                    <div class="bg-blue-600/10 p-4 rounded-2xl border border-blue-500/30">
+                        <label class="text-[8px] font-black text-blue-400 uppercase block mb-2 text-center tracking-widest">Morning RHR</label>
+                        <input type="number" v-model="recoveryForm.rhr" class="bg-transparent text-white text-2xl font-black italic w-full text-center focus:outline-none">
                     </div>
                 </div>
-                <div class="bg-blue-600/10 p-6 rounded-3xl border border-blue-500/30">
-                    <label class="text-[10px] font-black text-blue-400 uppercase block mb-2 text-center">Morning RHR (BPM)</label>
-                    <input type="number" v-model="recoveryForm.rhr" class="bg-transparent text-white text-4xl font-black italic tracking-tighter w-full text-center focus:outline-none">
+
+                <div class="bg-slate-800/50 p-6 rounded-3xl border border-white/5">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leg Soreness</label>
+                        <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-black italic">SCORE: {{ sorenessValue }}/10</span>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <div class="w-16 h-16 bg-slate-900 rounded-2xl flex flex-col items-center justify-center border border-white/10 shadow-inner">
+                            <i :data-lucide="currentSorenessIcon" class="w-8 h-8 text-blue-400 mb-1"></i>
+                        </div>
+
+                        <div class="flex-1">
+                            <input type="range" min="1" max="10" v-model="sorenessValue" 
+                                   class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                            <div class="flex justify-between mt-3">
+                                <span class="text-[9px] font-black text-red-500 uppercase italic">Heavy</span>
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-tighter">{{ sorenessLabel }}</span>
+                                <span class="text-[9px] font-black text-green-500 uppercase italic">Fresh</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button @click="saveRecovery" class="w-full py-5 bg-blue-600 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-500 transition-all">
+
+                <button @click="saveRecovery" class="w-full py-5 bg-blue-600 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-blue-500 transition-all shadow-xl shadow-blue-900/20">
                     UPDATE BIO-ENGINE
                 </button>
-                <button @click="isRecoveryModalOpen = false" class="w-full text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">Cancel</button>
+                
+                <button @click="isRecoveryModalOpen = false" class="w-full text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">Dismiss</button>
             </div>
         </div>
     </div>
