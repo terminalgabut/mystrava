@@ -215,24 +215,38 @@ export default `
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bento-card p-6 bg-white border border-slate-100">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Load vs Readiness Correlation</h3>
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Load</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-slate-900"></span>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Readiness</span>
-                    </div>
+    <div class="bento-card p-6 bg-white border border-slate-100">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Load vs Readiness Correlation</h3>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Load</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-slate-900"></span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Readiness</span>
                 </div>
             </div>
-            <div class="h-[200px] w-full">
-                <canvas id="correlationChart"></canvas>
-            </div>
+        </div>
+        <div class="h-[200px] w-full">
+            <canvas id="correlationChart"></canvas>
+        </div>
     </div>
+
+    <div class="bento-card p-6 bg-white border border-slate-100">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">RHR Baseline Analysis</h3>
+            <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                <span class="text-[9px] font-bold text-slate-400 uppercase">Morning RHR</span>
+            </div>
+        </div>
+        <div class="h-[200px] w-full">
+            <canvas id="rhrChart"></canvas>
+        </div>
+    </div>
+</div>
 
 </div>
 `;
