@@ -74,7 +74,7 @@ export default {
         onMounted(loadExistingData);
 
         return {
-            form,
+            sleepForm: form,
             goBack: () => window.location.hash = '#/coach',
             saveSleepData,
             refreshIcons // Berguna jika ada interaksi dinamis
