@@ -143,20 +143,34 @@ export const CoachLogic = {
     },
 
     /**
- * 7. Simpan data recovery harian (WIB) - UPDATED WITH SORENESS
+ * 7. Simpan data recovery harian (WIB) - FIX UNDEFINED TIMESTAMP
  */
 async saveDailyRecovery(payload) {
     try {
         const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-        const formatToWibIso = (timeStr) => `${todayWib}T${timeStr}:00+07:00`;
+        
+        // Helper: Hanya buat format ISO jika jam tersedia dan valid
+        const formatTime = (timeStr) => {
+            if (!timeStr || timeStr === 'undefined') return undefined;
+            return `${todayWib}T${timeStr}:00+07:00`;
+        };
 
+        const sleep_start = formatTime(payload.start);
+        const sleep_end = formatTime(payload.end);
+
+        // Membangun object secara dinamis
+        // Menggunakan spread operator (...) agar field yang undefined TIDAK dikirim ke DB
         const entry = {
             check_in_date: todayWib,
-            sleep_start: formatToWibIso(payload.start),
-            sleep_end: formatToWibIso(payload.end),
-            sleep_quality: parseInt(payload.quality),
-            morning_rhr: parseInt(payload.rhr),
-            soreness: parseInt(payload.soreness), // <--- TAMBAHKAN INI (Pastikan nama kolom di DB 'soreness')
+            ...(sleep_start && { sleep_start }),
+            ...(sleep_end && { sleep_end }),
+            ...(payload.quality !== undefined && { sleep_quality: parseInt(payload.quality) }),
+            ...(payload.rhr !== undefined && { morning_rhr: parseInt(payload.rhr) }),
+            ...(payload.soreness !== undefined && { soreness: parseInt(payload.soreness) }),
+            ...(payload.latency !== undefined && { sleep_latency_mins: parseInt(payload.latency) }),
+            ...(payload.nap !== undefined && { nap_duration_mins: parseInt(payload.nap) }),
+            ...(payload.consistency !== undefined && { sleep_consistency_score: parseFloat(payload.consistency) }),
+            ...(payload.isComplete !== undefined && { is_overnight_complete: payload.isComplete }),
             notes: payload.notes || ''
         };
 
@@ -167,7 +181,7 @@ async saveDailyRecovery(payload) {
         if (error) throw error;
         return true;
     } catch (err) {
-        Logger.error("Coach_SaveRecovery_Error", err);
+        Logger.error("CoachLogic_SaveRecovery_Error", err);
         return false;
     }
 },
