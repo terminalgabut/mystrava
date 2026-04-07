@@ -154,7 +154,8 @@ export const CoachLogic = {
     },
 
     /**
-     * 8. WEEKLY TREND (Chart Sinkron WIB)
+     * 8. WEEKLY TREND (Chart Sinkron WIB & ACWR-based Readiness)
+     * Sinkronisasi data beban dan simulasi tren kesiapan (garis hitam)
      */
     async getWeeklyTrend() {
         try {
@@ -164,34 +165,69 @@ export const CoachLogic = {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 days.push(d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }));
-                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' }));
+                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' })); // Sen, Sel, dst.
             }
 
-            const { data: activities } = await supabase
-                .from('activities')
-                .select('start_date, kilojoules')
-                .gte('start_date', days[0]);
+            // 1. Ambil data mentah (WIB)
+            const [ { data: activities }, { data: recoveries } ] = await Promise.all([
+                supabase
+                    .from('activities')
+                    .select('start_date, kilojoules')
+                    .gte('start_date', days[0]),
+                supabase
+                    .from('daily_recovery')
+                    .select('check_in_date, morning_rhr')
+                    .gte('check_in_date', days[0])
+            ]);
 
-            const { data: recoveries } = await supabase
-                .from('daily_recovery')
-                .select('check_in_date, morning_rhr')
-                .gte('check_in_date', days[0]);
-
+            // 2. Data Batang: Daily Load (Sudah benar)
             const workloadSeries = days.map(day => 
                 (activities || [])
                 .filter(a => a.start_date.startsWith(day))
                 .reduce((sum, a) => sum + (a.kilojoules || 0), 0)
             );
 
+            // 3. Data Titik: Morning RHR (Sudah benar)
             const rhrSeries = days.map(day => {
                 const rec = (recoveries || []).find(r => r.check_in_date === day);
                 return rec ? rec.morning_rhr : null;
             });
 
-            return { labels, workloadSeries, rhrSeries };
+            // 4. Data Garis Hitam: Simulasikan Readiness Kumulatif (FIX LOGIKA)
+            // Di sini kita tidak lagi memakai limit 3000 kJ yang kaku.
+            const readinessSeries = days.map((day, idx) => {
+                // Volume latihan harian dibanding rata-rata 7 hari
+                const dailyLoad = workloadSeries[idx];
+                const totalLoadSoFar = workloadSeries.slice(0, idx + 1).reduce((a, b) => a + b, 0);
+                const avgLoad = totalLoadSoFar / (idx + 1);
+
+                // Perhitungan ACWR kasar untuk simulasi harian
+                // Sweet Spot = ratio 1.0 (Skor 85-100)
+                // Overload = ratio > 1.5 (Skor anjlok)
+                const tempRatio = avgLoad > 0 ? (dailyLoad / avgLoad) : 1.0;
+                
+                let score = 80; // Baseline netral
+
+                if (tempRatio >= 0.8 && tempRatio <= 1.3) score += 15; // Primed
+                else if (tempRatio > 1.3 && tempRatio <= 1.5) score = 65; // Stable
+                else if (tempRatio > 1.5) score = 20; // Fatigued
+                else if (dailyLoad < 100) score = 90; // Fresh
+
+                // Modifier Biometrik Harian (RHR)
+                const dailyRhr = rhrSeries[idx];
+                const rhrBaseline = 62;
+                if (dailyRhr && dailyRhr > rhrBaseline + 5) score -= 15; // Jantung stres
+                else if (dailyRhr && dailyRhr <= rhrBaseline) score += 5; // Jantung segar
+
+                // Batas keamanan agar garis tidak lari ke 0 atau 100+
+                return Math.max(10, Math.min(100, Math.round(score)));
+            });
+
+            return { labels, workloadSeries, rhrSeries, readinessSeries, baselineRhr: 62 };
         } catch (err) {
             Logger.error("Coach_Trend_Error", err);
             return null;
         }
     }
+    
 };
