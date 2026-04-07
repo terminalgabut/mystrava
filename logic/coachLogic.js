@@ -1,97 +1,65 @@
-// root/logic/coachLogic.js
 import { supabase } from '../js/services/supabase.js';
 import { Logger } from '../js/services/debug.js';
 
 export const CoachLogic = {
     /**
-     * 1. Ambil data mentah (28 hari terakhir)
-     * Digunakan oleh BioEngine untuk kalkulasi ACWR & Resilience
+     * 1. Ambil Data Workload dari SQL Function (RPC)
+     * Sinkron dengan Timezone Asia/Jakarta di DB
      */
-    async getRawActivityData() {
+    async getWorkloadStats() {
         try {
-            const { data, error } = await supabase
-                .from('coach_raw_data') 
-                .select('*');
-            
+            const { data, error } = await supabase.rpc('get_workload_stats');
             if (error) throw error;
-            return data || []; 
+            // Mengambil baris pertama dari hasil tabel SQL
+            return data?.[0] || { acute: 0, chronic: 0, ratio: 0 };
         } catch (err) {
-            Logger.error("Coach_RawData_Error", err);
-            return [];
+            Logger.error("Coach_GetWorkload_Error", err);
+            return { acute: 0, chronic: 0, ratio: 0 };
         }
     },
 
     /**
-     * 2. Cari aktivitas yang butuh feedback RPE
-     * Ketat: Hanya 24 jam terakhir agar tidak "menghantui" user
-     */
-    async getPendingRPE() {
-        try {
-            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-            const { data, error } = await supabase
-                .from('activities')
-                .select('id, name, type, start_date, user_rpe')
-                .gt('start_date', yesterday) 
-                .is('user_rpe', null)        
-                .order('start_date', { ascending: false })
-                .limit(1);
-
-            if (error) throw error;
-            return data?.[0] || null;
-        } catch (err) {
-            Logger.error("Coach_PendingRPE_Error", err);
-            return null;
-        }
-    },
-
-    /**
-     * 3. Simpan Nilai RPE ke Database
-     * Inilah kunci agar modal bisa tertutup dengan sukses
-     */
-    async saveRPE(activityId, rpeValue) {
-        try {
-            if (!activityId) return false;
-
-            const { error } = await supabase
-                .from('activities')
-                .update({ user_rpe: parseInt(rpeValue) })
-                .eq('id', activityId);
-
-            if (error) throw error;
-            return true; 
-        } catch (err) {
-            Logger.error("Coach_SaveRPE_Error", err);
-            return false;
-        }
-    },
-
-    /**
-     * 4. Skor Kesiapan (Readiness)
-     * Tetap di sini karena query-nya sederhana (7 hari)
+     * 2. Hitung Readiness Score (Utama)
+     * Menggabungkan ACWR dari DB dan Data Recovery Harian
      */
     async calculateReadiness() {
         try {
-            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const stats = await this.getWorkloadStats();
+            const recovery = await this.getTodayRecovery();
             
-            const { data, error } = await supabase
-                .from('activities')
-                .select('kilojoules')
-                .gt('start_date', sevenDaysAgo);
-
-            if (error) throw error;
-
-            const totalKj = data?.reduce((acc, curr) => acc + (curr.kilojoules || 0), 0) || 0;
-            const limitKj = 3000; 
-            
-            let score = 100 - ((totalKj / limitKj) * 100);
-            score = Math.max(0, Math.min(100, Math.round(score)));
-
+            const ratio = stats.ratio || 0;
+            let score = 50; // Default Neutral
             let status = 'STABLE';
-            if (score > 80) status = 'PRIMED';
-            else if (score < 40) status = 'FATIGUED';
 
-            return { score, status };
+            // LOGIKA ACWR (Acute:Chronic Workload Ratio)
+            if (ratio >= 0.8 && ratio <= 1.3) {
+                score = 85; // Sweet Spot / Primed
+                status = 'PRIMED';
+            } else if (ratio > 1.3 && ratio <= 1.5) {
+                score = 60; // Overreaching (Lelah tapi produktif)
+                status = 'STABLE';
+            } else if (ratio > 1.5) {
+                score = 25; // Danger Zone (Sistem Kritis/Overload)
+                status = 'FATIGUED';
+            } else if (ratio < 0.8 && ratio > 0) {
+                score = 75; // Fresh (Kurang beban)
+                status = 'STABLE';
+            }
+
+            // MODIFIER RECOVERY (Jika ada data hari ini)
+            if (recovery) {
+                // Penalti RHR Tinggi (Tanda kelelahan jantung)
+                if (recovery.morning_rhr > 68) score -= 15;
+                // Penalti Tidur Buruk
+                if (recovery.sleep_quality < 6) score -= 10;
+                // Penalti Soreness (Otot sakit)
+                if (recovery.soreness > 7) score -= 10;
+            }
+
+            return { 
+                score: Math.max(5, Math.min(100, Math.round(score))), 
+                status 
+            };
         } catch (err) {
             Logger.error("Coach_Readiness_Error", err);
             return { score: 50, status: 'NEUTRAL' };
@@ -99,42 +67,19 @@ export const CoachLogic = {
     },
 
     /**
-     * 5. Metadata Label UI (Feeling Check)
-     */
-    getRpeMetadata(value) {
-        const val = parseInt(value);
-        const meta = {
-            1: { label: 'Rest', desc: 'Sangat santai, napas normal', color: '#10b981' },
-            2: { label: 'Easy', desc: 'Bisa ngobrol sangat lancar', color: '#10b981' },
-            3: { label: 'Easy', desc: 'Napas tenang & teratur', color: '#10b981' },
-            4: { label: 'Moderate', desc: 'Napas mulai terasa dalam', color: '#3b82f6' },
-            5: { label: 'Moderate', desc: 'Mulai berkeringat sedikit', color: '#3b82f6' },
-            6: { label: 'Steady', desc: 'Napas berat tapi terkontrol', color: '#3b82f6' },
-            7: { label: 'Hard', desc: 'Butuh fokus jaga napas', color: '#f59e0b' },
-            8: { label: 'Hard', desc: 'Napas tersengal-sengal', color: '#f59e0b' },
-            9: { label: 'Extreme', desc: 'Hampir kehabisan napas', color: '#ef4444' },
-            10: { label: 'Max Effort', desc: 'Usaha habis-habisan!', color: '#ef4444' }
-        };
-        return meta[val] || meta[5];
-    },
-
-    // Tambahkan fungsi-fungsi ini di dalam objek CoachLogic
-
-    /**
-     * 6. Ambil data recovery hari ini (WIB)
+     * 3. Ambil data recovery hari ini (WIB)
      */
     async getTodayRecovery() {
         try {
-            // Ambil tanggal hari ini dalam format YYYY-MM-DD (WIB)
             const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
             const { data, error } = await supabase
                 .from('daily_recovery')
                 .select('*')
                 .eq('check_in_date', todayWib)
-                .single(); // Kita hanya butuh satu record per hari
+                .single();
 
-            if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows found" error
+            if (error && error.code !== 'PGRST116') throw error;
             return data || null;
         } catch (err) {
             Logger.error("Coach_GetRecovery_Error", err);
@@ -143,137 +88,82 @@ export const CoachLogic = {
     },
 
     /**
- * 7. Simpan data recovery harian (WIB) - FIX TANGGAL TERBALIK
- */
-async saveDailyRecovery(payload) {
-    try {
-        // Tanggal pelaporan (Hari ini)
-        const dateObj = new Date();
-        const todayWib = dateObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-        
-        // Tanggal mulai tidur (Kemarin)
-        const yesterdayObj = new Date();
-        yesterdayObj.setDate(yesterdayObj.getDate() - 1);
-        const yesterdayWib = yesterdayObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-
-        // Helper untuk memformat waktu dengan tanggal yang benar
-        const formatTime = (timeStr, isStartTime = false) => {
-            if (!timeStr || timeStr === 'undefined') return undefined;
+     * 4. Simpan Data Recovery (Fix Timezone & Cross-Day Sleep)
+     */
+    async saveDailyRecovery(payload) {
+        try {
+            const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
             
-            // LOGIKA: Jika jam mulai tidur (Start), gunakan tanggal kemarin. 
-            // Jika jam bangun (End), gunakan tanggal hari ini.
-            const targetDate = isStartTime ? yesterdayWib : todayWib;
-            return `${targetDate}T${timeStr}:00+07:00`;
-        };
+            const yesterdayObj = new Date();
+            yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+            const yesterdayWib = yesterdayObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
-        const sleep_start = formatTime(payload.start, true);  // Pakai Yesterday
-        const sleep_end = formatTime(payload.end, false);    // Pakai Today
+            const formatTime = (timeStr, isStartTime = false) => {
+                if (!timeStr) return undefined;
+                const targetDate = isStartTime ? yesterdayWib : todayWib;
+                return `${targetDate}T${timeStr}:00+07:00`;
+            };
 
-        // Ambil data existing dulu agar tidak menimpa data dashboard (Safe Merge)
-        const { data: existing } = await supabase
-            .from('daily_recovery')
-            .select('*')
-            .eq('check_in_date', todayWib)
-            .single();
+            const entry = {
+                check_in_date: todayWib,
+                sleep_start: formatTime(payload.start, true),
+                sleep_end: formatTime(payload.end, false),
+                sleep_quality: payload.quality ? parseInt(payload.quality) : undefined,
+                morning_rhr: payload.rhr ? parseInt(payload.rhr) : undefined,
+                soreness: payload.soreness ? parseInt(payload.soreness) : undefined,
+                is_overnight_complete: payload.isComplete ?? true
+            };
 
-        const entry = {
-            check_in_date: todayWib,
-            sleep_start: sleep_start || existing?.sleep_start,
-            sleep_end: sleep_end || existing?.sleep_end,
-            sleep_quality: payload.quality !== undefined ? parseInt(payload.quality) : existing?.sleep_quality,
-            morning_rhr: payload.rhr !== undefined ? parseInt(payload.rhr) : existing?.morning_rhr,
-            soreness: payload.soreness !== undefined ? parseInt(payload.soreness) : existing?.soreness,
-            sleep_latency_mins: payload.latency !== undefined ? parseInt(payload.latency) : existing?.sleep_latency_mins,
-            nap_duration_mins: payload.nap !== undefined ? parseInt(payload.nap) : existing?.nap_duration_mins,
-            sleep_consistency_score: payload.consistency !== undefined ? parseFloat(payload.consistency) : existing?.sleep_consistency_score,
-            is_overnight_complete: payload.isComplete !== undefined ? payload.isComplete : (existing?.is_overnight_complete ?? true),
-            notes: payload.notes || existing?.notes || ''
-        };
+            const { error } = await supabase
+                .from('daily_recovery')
+                .upsert(entry, { onConflict: 'check_in_date' });
 
-        const { error } = await supabase
-            .from('daily_recovery')
-            .upsert(entry, { onConflict: 'check_in_date' });
-
-        if (error) throw error;
-        return true;
-    } catch (err) {
-        Logger.error("CoachLogic_SaveRecovery_Error", err);
-        return false;
-    }
-},
-    // Tambahkan fungsi ini di dalam objek CoachLogic
+            if (error) throw error;
+            return true;
+        } catch (err) {
+            Logger.error("Coach_SaveRecovery_Error", err);
+            return false;
+        }
+    },
 
     /**
-     * 8. Ambil Data Tren Mingguan untuk Grafik (7 Hari Terakhir)
-     * Menggabungkan Volume (Kj), Readiness, dan RHR per hari
+     * 5. Weekly Trend untuk Chart (Sinkron WIB)
      */
     async getWeeklyTrend() {
         try {
             const days = [];
             const labels = [];
-            const now = new Date();
-
-            // Generate list 7 hari terakhir (WIB)
             for (let i = 6; i >= 0; i--) {
-                const d = new Date(now);
+                const d = new Date();
                 d.setDate(d.getDate() - i);
-                const dateStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-                days.push(dateStr);
-                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' })); // Sen, Sel, dst.
+                days.push(d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }));
+                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' }));
             }
 
-            // 1. Tarik Data Aktivitas (Workload)
-            const { data: activities, error: actErr } = await supabase
+            const { data: activities } = await supabase
                 .from('activities')
                 .select('start_date, kilojoules')
                 .gte('start_date', days[0]);
 
-            if (actErr) throw actErr;
-
-            // 2. Tarik Data Recovery (RHR & Sleep)
-            const { data: recoveries, error: recErr } = await supabase
+            const { data: recoveries } = await supabase
                 .from('daily_recovery')
-                .select('check_in_date, morning_rhr, sleep_quality, soreness')
+                .select('check_in_date, morning_rhr')
                 .gte('check_in_date', days[0]);
 
-            if (recErr) throw recErr;
-
-            // 3. Mapping Data ke Array untuk Chart
-            const workloadSeries = days.map(day => {
-                return activities
-                    .filter(a => a.start_date.startsWith(day))
-                    .reduce((sum, a) => sum + (a.kilojoules || 0), 0);
-            });
+            const workloadSeries = days.map(day => 
+                (activities || [])
+                .filter(a => a.start_date.startsWith(day))
+                .reduce((sum, a) => sum + (a.kilojoules || 0), 0)
+            );
 
             const rhrSeries = days.map(day => {
-                const rec = recoveries.find(r => r.check_in_date === day);
-                return rec ? rec.morning_rhr : null; // null agar grafik tidak drop ke 0 jika data kosong
+                const rec = (recoveries || []).find(r => r.check_in_date === day);
+                return rec ? rec.morning_rhr : null;
             });
 
-            // 4. Kalkulasi Readiness Harian (Simulasi sederhana untuk tren)
-            // Di sini kita hitung readiness kumulatif tiap harinya
-            const readinessSeries = days.map((day, idx) => {
-                const totalKjSoFar = workloadSeries.slice(0, idx + 1).reduce((a, b) => a + b, 0);
-                const limitKj = 3000;
-                let score = 100 - ((totalKjSoFar / limitKj) * 100);
-                
-                // Modifier RHR jika ada data recovery pada hari itu
-                const dailyRhr = rhrSeries[idx];
-                if (dailyRhr && dailyRhr > 67) score -= 15;
-                
-                return Math.max(5, Math.min(100, Math.round(score)));
-            });
-
-            return {
-                labels,          // ['Sen', 'Sel', ...]
-                workloadSeries,  // [1200, 0, 800, ...]
-                rhrSeries,       // [62, 63, 68, ...]
-                readinessSeries, // [80, 75, 40, ...]
-                baselineRhr: 62  // Angka garis putus-putus
-            };
-
+            return { labels, workloadSeries, rhrSeries };
         } catch (err) {
-            Logger.error("Coach_WeeklyTrend_Error", err);
+            Logger.error("Coach_Trend_Error", err);
             return null;
         }
     }
