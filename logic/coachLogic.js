@@ -145,35 +145,44 @@ export const CoachLogic = {
     /**
  * 7. Simpan data recovery harian (WIB) - FIX UNDEFINED TIMESTAMP
  */
-async saveDailyRecovery(payload) {
+
+    async saveDailyRecovery(payload) {
     try {
         const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
         
-        // Helper: Hanya buat format ISO jika jam tersedia dan valid
+        // 1. Ambil data yang sudah ada di DB untuk hari ini
+        const { data: existing } = await supabase
+            .from('daily_recovery')
+            .select('*')
+            .eq('check_in_date', todayWib)
+            .single();
+
         const formatTime = (timeStr) => {
             if (!timeStr || timeStr === 'undefined') return undefined;
             return `${todayWib}T${timeStr}:00+07:00`;
         };
 
-        const sleep_start = formatTime(payload.start);
-        const sleep_end = formatTime(payload.end);
-
-        // Membangun object secara dinamis
-        // Menggunakan spread operator (...) agar field yang undefined TIDAK dikirim ke DB
+        // 2. Gabungkan data: Gunakan data baru jika ada, jika tidak pakai data lama (existing)
         const entry = {
             check_in_date: todayWib,
-            ...(sleep_start && { sleep_start }),
-            ...(sleep_end && { sleep_end }),
-            ...(payload.quality !== undefined && { sleep_quality: parseInt(payload.quality) }),
-            ...(payload.rhr !== undefined && { morning_rhr: parseInt(payload.rhr) }),
-            ...(payload.soreness !== undefined && { soreness: parseInt(payload.soreness) }),
-            ...(payload.latency !== undefined && { sleep_latency_mins: parseInt(payload.latency) }),
-            ...(payload.nap !== undefined && { nap_duration_mins: parseInt(payload.nap) }),
-            ...(payload.consistency !== undefined && { sleep_consistency_score: parseFloat(payload.consistency) }),
-            ...(payload.isComplete !== undefined && { is_overnight_complete: payload.isComplete }),
-            notes: payload.notes || ''
+            // Jika payload.start ada, pakai itu. Jika tidak, pakai dari DB.
+            sleep_start: formatTime(payload.start) || existing?.sleep_start,
+            sleep_end: formatTime(payload.end) || existing?.sleep_end,
+            
+            // Lakukan hal yang sama untuk kolom numerik
+            sleep_quality: payload.quality !== undefined ? parseInt(payload.quality) : existing?.sleep_quality,
+            morning_rhr: payload.rhr !== undefined ? parseInt(payload.rhr) : existing?.morning_rhr,
+            soreness: payload.soreness !== undefined ? parseInt(payload.soreness) : existing?.soreness,
+            
+            sleep_latency_mins: payload.latency !== undefined ? parseInt(payload.latency) : existing?.sleep_latency_mins,
+            nap_duration_mins: payload.nap !== undefined ? parseInt(payload.nap) : existing?.nap_duration_mins,
+            sleep_consistency_score: payload.consistency !== undefined ? parseFloat(payload.consistency) : existing?.sleep_consistency_score,
+            is_overnight_complete: payload.isComplete !== undefined ? payload.isComplete : (existing?.is_overnight_complete ?? true),
+            
+            notes: payload.notes || existing?.notes || ''
         };
 
+        // 3. Simpan data yang sudah lengkap (merged)
         const { error } = await supabase
             .from('daily_recovery')
             .upsert(entry, { onConflict: 'check_in_date' });
@@ -184,7 +193,8 @@ async saveDailyRecovery(payload) {
         Logger.error("CoachLogic_SaveRecovery_Error", err);
         return false;
     }
-},
+}
+ 
 
     // Tambahkan fungsi ini di dalam objek CoachLogic
 
