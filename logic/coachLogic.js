@@ -193,7 +193,7 @@ export const CoachLogic = {
         Logger.error("CoachLogic_SaveRecovery_Error", err);
         return false;
     }
-}
+},
  
 
     // Tambahkan fungsi ini di dalam objek CoachLogic
