@@ -1,92 +1,108 @@
+// root/views/sleepView.js
 export default `
-<div class="dashboard-wrapper animate-in bg-slate-950 text-slate-100 min-h-screen pb-20">
-    <header class="p-6 flex justify-between items-center border-b border-white/5">
-        <button @click="goBack" class="p-2 hover:bg-white/5 rounded-full transition-colors">
+<div class="dashboard-wrapper animate-in bg-slate-50 text-slate-900 min-h-screen pb-20">
+    <header class="p-6 flex justify-between items-center bg-white border-b border-slate-200 sticky top-0 z-10 backdrop-blur-md bg-white/80">
+        <button @click="goBack" class="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600">
             <i data-lucide="chevron-left" class="w-6 h-6"></i>
         </button>
         <div class="text-center">
-            <h1 class="text-xl font-black italic uppercase tracking-tighter">Sleep Engine</h1>
-            <p class="text-[9px] font-bold text-indigo-400 tracking-[0.3em] uppercase">AASM Standard v1.0</p>
+            <h1 class="text-xl font-black italic uppercase tracking-tighter text-slate-900">Sleep Engine</h1>
+            <p class="text-[9px] font-black text-blue-600 tracking-[0.3em] uppercase italic">AASM Standard v1.0</p>
         </div>
-        <div class="w-10"></div> </header>
+        <div class="w-10"></div> 
+    </header>
 
     <div class="p-6 max-w-2xl mx-auto space-y-8">
         
         <section class="space-y-4">
-            <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                <i data-lucide="clock" class="w-3 h-3"></i> Main Sleep Cycle
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <i data-lucide="clock" class="w-3 h-3 text-blue-500"></i> Main Sleep Cycle
             </h3>
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
-                    <label class="text-[8px] font-black text-indigo-300 uppercase block mb-1 tracking-widest">Sleep Start</label>
-                    <input type="time" v-model="form.start" class="bg-transparent text-2xl font-black text-white w-full outline-none">
+                <div class="bg-white p-5 rounded-[32px] border border-slate-200 shadow-sm transition-all hover:border-blue-200">
+                    <label class="text-[8px] font-black text-slate-400 uppercase block mb-1 tracking-widest">Sleep Start</label>
+                    <input type="time" v-model="form.start" class="bg-transparent text-2xl font-black text-slate-900 w-full outline-none focus:text-blue-600 transition-colors">
                 </div>
-                <div class="bg-white/5 p-4 rounded-3xl border border-white/10">
-                    <label class="text-[8px] font-black text-indigo-300 uppercase block mb-1 tracking-widest">Wake Up</label>
-                    <input type="time" v-model="form.end" class="bg-transparent text-2xl font-black text-white w-full outline-none">
+                <div class="bg-white p-5 rounded-[32px] border border-slate-200 shadow-sm transition-all hover:border-blue-200">
+                    <label class="text-[8px] font-black text-slate-400 uppercase block mb-1 tracking-widest">Wake Up</label>
+                    <input type="time" v-model="form.end" class="bg-transparent text-2xl font-black text-slate-900 w-full outline-none focus:text-blue-600 transition-colors">
                 </div>
             </div>
         </section>
 
-        <section class="bg-indigo-950/30 p-6 rounded-[32px] border border-indigo-500/20">
-            <div class="flex justify-between items-center mb-6">
+        <section class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h3 class="text-sm font-black italic uppercase tracking-tight">Sleep Latency</h3>
-                    <p class="text-[10px] text-slate-400 font-medium">Berapa menit sampai terlelap?</p>
+                    <h3 class="text-sm font-black italic uppercase tracking-tight text-slate-900">Sleep Latency</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Waktu Menuju Terlelap</p>
                 </div>
-                <span class="text-2xl font-black text-indigo-400">{{ form.latency }}m</span>
+                <div class="px-4 py-2 bg-blue-50 rounded-2xl border border-blue-100">
+                    <span class="text-2xl font-black text-blue-600 italic">{{ form.latency }}<span class="text-xs uppercase ml-1">m</span></span>
+                </div>
             </div>
+            
             <input type="range" min="0" max="60" step="5" v-model="form.latency" 
-                   class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
-            <p v-if="form.latency > 30" class="mt-4 text-[10px] text-amber-400 font-bold italic uppercase tracking-tight">
-                <i data-lucide="alert-circle" class="inline w-3 h-3 mr-1"></i> High Latency: Indikasi Overstimulation / Cortisol Spike
-            </p>
+                   class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            
+            <div v-if="form.latency > 30" class="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-amber-500"></i>
+                <p class="text-[10px] text-amber-700 font-black italic uppercase tracking-tight">
+                    High Latency: Overstimulation Detected
+                </p>
+            </div>
         </section>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-900 p-6 rounded-[32px] border border-white/5">
+            <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
                 <div class="flex items-center gap-3 mb-4">
-                    <i data-lucide="sun" class="w-5 h-5 text-amber-400"></i>
-                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Daytime Nap</h3>
+                    <div class="p-2 bg-amber-50 rounded-lg">
+                        <i data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Daytime Nap</h3>
                 </div>
                 <div class="flex items-end gap-2">
-                    <input type="number" v-model="form.nap" class="bg-transparent text-3xl font-black text-white w-20 outline-none border-b border-white/10">
-                    <span class="text-xs font-bold text-slate-500 mb-2 uppercase">Mins</span>
+                    <input type="number" v-model="form.nap" class="bg-transparent text-4xl font-black text-slate-900 w-24 outline-none border-b-2 border-slate-100 focus:border-amber-400 transition-all">
+                    <span class="text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">Minutes</span>
                 </div>
             </div>
 
-            <div class="bg-slate-900 p-6 rounded-[32px] border border-white/5">
+            <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
                 <div class="flex items-center gap-3 mb-4">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 text-emerald-400"></i>
-                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Consistency</h3>
+                    <div class="p-2 bg-emerald-50 rounded-lg">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-500"></i>
+                    </div>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Schedule Sync</h3>
                 </div>
                 <div class="flex items-end gap-2">
-                    <span class="text-3xl font-black text-white">{{ form.consistency }}%</span>
-                    <span class="text-[8px] font-bold text-slate-500 mb-2 uppercase tracking-tighter">Schedule Sync</span>
+                    <span class="text-4xl font-black text-slate-900 italic">{{ form.consistency }}%</span>
+                    <span class="text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest italic">Stability</span>
                 </div>
             </div>
         </div>
 
         <section class="space-y-4">
-             <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500">How do you feel upon waking?</h3>
-             <div class="grid grid-cols-2 gap-3">
+             <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Neural Readiness Assessment</h3>
+             <div class="grid grid-cols-2 gap-4">
                 <button @click="form.isComplete = true" 
-                        :class="form.isComplete ? 'bg-indigo-600 border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/10'"
-                        class="p-4 rounded-2xl border text-left transition-all">
-                    <i data-lucide="zap" class="w-5 h-5 mb-2" :class="form.isComplete ? 'text-white' : 'text-slate-500'"></i>
-                    <p class="text-xs font-black uppercase italic">Refreshed</p>
+                        :class="form.isComplete ? 'bg-blue-600 border-blue-500 shadow-xl shadow-blue-200 scale-[1.02]' : 'bg-white border-slate-200 grayscale opacity-60'"
+                        class="p-6 rounded-[28px] border text-left transition-all duration-300">
+                    <i data-lucide="zap" class="w-6 h-6 mb-3" :class="form.isComplete ? 'text-white' : 'text-slate-400'"></i>
+                    <p class="text-xs font-black uppercase italic" :class="form.isComplete ? 'text-white' : 'text-slate-900'">Refreshed</p>
+                    <p class="text-[8px] font-bold uppercase mt-1 opacity-60" :class="form.isComplete ? 'text-white' : 'text-slate-400'">Neural Alert: High</p>
                 </button>
+                
                 <button @click="form.isComplete = false" 
-                        :class="!form.isComplete ? 'bg-red-950 border-red-500' : 'bg-white/5 border-white/10'"
-                        class="p-4 rounded-2xl border text-left transition-all">
-                    <i data-lucide="cloud-rain" class="w-5 h-5 mb-2" :class="!form.isComplete ? 'text-white' : 'text-slate-500'"></i>
-                    <p class="text-xs font-black uppercase italic">Groggy</p>
+                        :class="!form.isComplete ? 'bg-slate-900 border-slate-800 shadow-xl shadow-slate-200 scale-[1.02]' : 'bg-white border-slate-200 grayscale opacity-60'"
+                        class="p-6 rounded-[28px] border text-left transition-all duration-300">
+                    <i data-lucide="cloud-rain" class="w-6 h-6 mb-3" :class="!form.isComplete ? 'text-white' : 'text-slate-400'"></i>
+                    <p class="text-xs font-black uppercase italic" :class="!form.isComplete ? 'text-white' : 'text-slate-900'">Groggy</p>
+                    <p class="text-[8px] font-bold uppercase mt-1 opacity-60" :class="!form.isComplete ? 'text-white' : 'text-slate-400'">System Lag</p>
                 </button>
              </div>
         </section>
 
         <button @click="saveSleepData" 
-                class="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black italic tracking-[0.2em] hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-900/40">
+                class="w-full py-6 bg-blue-600 text-white rounded-[32px] font-black italic tracking-[0.2em] hover:bg-blue-700 active:scale-[0.98] transition-all shadow-2xl shadow-blue-600/30">
             SYNC TO BIO-ENGINE
         </button>
 
