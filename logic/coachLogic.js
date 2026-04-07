@@ -143,36 +143,34 @@ export const CoachLogic = {
     },
 
     /**
-     * 7. Simpan data recovery harian (WIB)
-     */
-    async saveDailyRecovery(payload) {
-        try {
-            const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-            
-            // Format jam ke ISO Timestamptz dengan offset WIB (+07:00)
-            const formatToWibIso = (timeStr) => `${todayWib}T${timeStr}:00+07:00`;
+ * 7. Simpan data recovery harian (WIB) - UPDATED WITH SORENESS
+ */
+async saveDailyRecovery(payload) {
+    try {
+        const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+        const formatToWibIso = (timeStr) => `${todayWib}T${timeStr}:00+07:00`;
 
-            const entry = {
-                check_in_date: todayWib,
-                sleep_start: formatToWibIso(payload.start),
-                sleep_end: formatToWibIso(payload.end),
-                sleep_quality: parseInt(payload.quality),
-                morning_rhr: parseInt(payload.rhr),
-                notes: payload.notes || ''
-            };
+        const entry = {
+            check_in_date: todayWib,
+            sleep_start: formatToWibIso(payload.start),
+            sleep_end: formatToWibIso(payload.end),
+            sleep_quality: parseInt(payload.quality),
+            morning_rhr: parseInt(payload.rhr),
+            soreness: parseInt(payload.soreness), // <--- TAMBAHKAN INI (Pastikan nama kolom di DB 'soreness')
+            notes: payload.notes || ''
+        };
 
-            // Gunakan upsert agar jika user update data di hari yang sama, data tertimpa
-            const { error } = await supabase
-                .from('daily_recovery')
-                .upsert(entry, { onConflict: 'check_in_date' });
+        const { error } = await supabase
+            .from('daily_recovery')
+            .upsert(entry, { onConflict: 'check_in_date' });
 
-            if (error) throw error;
-            return true;
-        } catch (err) {
-            Logger.error("Coach_SaveRecovery_Error", err);
-            return false;
-        }
-    },
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        Logger.error("Coach_SaveRecovery_Error", err);
+        return false;
+    }
+},
 
     // Tambahkan fungsi ini di dalam objek CoachLogic
 
@@ -206,7 +204,7 @@ export const CoachLogic = {
             // 2. Tarik Data Recovery (RHR & Sleep)
             const { data: recoveries, error: recErr } = await supabase
                 .from('daily_recovery')
-                .select('check_in_date, morning_rhr, sleep_quality')
+                .select('check_in_date, morning_rhr, sleep_quality, soreness')
                 .gte('check_in_date', days[0]);
 
             if (recErr) throw recErr;
