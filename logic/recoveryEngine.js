@@ -41,24 +41,30 @@ export const RecoveryEngine = {
      * Fungsi utama untuk menimpa skor BioEngine
      * Digunakan langsung di coach.js
      */
-    applyRecoveryBoost(baseScore, activities) {
-        // Filter aktivitas yang terjadi hari ini saja
-        // (Asumsi data Strava ada field start_date_local atau is_today)
-        const today = new Date().toISOString().split('T')[0];
-        const todaysActivities = activities.filter(act => 
-            act.start_date_local && act.start_date_local.includes(today)
-        );
+    // Tambahkan parameter 'recovery' di sini
+applyRecoveryBoost(baseScore, activities, recovery = null) {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const todaysActivities = activities.filter(act => 
+        act.start_date_local && act.start_date_local.includes(today)
+    );
 
-        let totalBonus = 0;
-        todaysActivities.forEach(act => {
-            const analysis = this.analyzeActivity(act);
-            if (analysis.isRecovery) {
-                totalBonus += analysis.bonus;
-            }
-        });
+    let totalBonus = 0;
+    todaysActivities.forEach(act => {
+        const analysis = this.analyzeActivity(act);
+        if (analysis.isRecovery) {
+            totalBonus += analysis.bonus;
+        }
+    });
 
-        // Hitung skor akhir (Max 100)
-        const finalScore = Math.min(100, baseScore + (totalBonus * 100));
-        return Math.round(finalScore);
+    // 1. Tambahkan bonus dari aktivitas jalan kaki
+    let finalScore = baseScore + (totalBonus * 100);
+
+    // 2. Gunakan Multiplier Soreness jika ada data recovery
+    if (recovery && recovery.soreness) {
+        const multiplier = this.getSorenessMultiplier(recovery.soreness);
+        finalScore = finalScore * multiplier;
     }
+
+    return Math.min(100, Math.round(finalScore));
+}
 };
