@@ -1,30 +1,26 @@
-/**
- * RECOVERY ENGINE v1.0
- * Fokus: Klasifikasi aktivitas pemulihan berbasis Pace & RPE
- */
-
 export const RecoveryEngine = {
     THRESHOLDS: {
-        DEEP_RECOVERY_PACE: 15,   // > 15 min/km (Sangat santai)
-        ACTIVE_RECOVERY_PACE: 10, // 10-15 min/km (Jalan tempo)
+        DEEP_RECOVERY_PACE: 15,   
+        ACTIVE_RECOVERY_PACE: 10, 
     },
 
     getSorenessMultiplier(score) {
+        // Skala 1-4: Penalti (Sakit)
+        // Skala 5-6: Netral
+        // Skala 7-10: Bonus (Segar)
         const mapping = {
-            1: 0.70, 2: 0.80, 3: 0.85, 4: 0.90, // Penalty
-            5: 1.0,  6: 1.0,                    // Neutral
-            7: 1.05, 8: 1.10, 9: 1.15, 10: 1.20 // Bonus
+            1: 0.70, 2: 0.80, 3: 0.85, 4: 0.90, 
+            5: 1.0,  6: 1.0,                    
+            7: 1.05, 8: 1.10, 9: 1.15, 10: 1.20 
         };
         return mapping[score] || 1.0;
     },
 
     analyzeActivity(activity) {
-        // Hanya proses tipe "Walk"
-        if (activity.type !== 'Walk') {
+        if (activity.type !== 'Walk' || !activity.distance || !activity.moving_time) {
             return { isRecovery: false, bonus: 0 };
         }
 
-        // Hitung Pace: (detik/60) / (meter/1000) = menit/km
         const paceMinKm = (activity.moving_time / 60) / (activity.distance / 1000);
         
         if (paceMinKm >= this.THRESHOLDS.DEEP_RECOVERY_PACE) {
@@ -38,33 +34,37 @@ export const RecoveryEngine = {
     },
 
     /**
-     * Fungsi utama untuk menimpa skor BioEngine
-     * Digunakan langsung di coach.js
+     * FIX: Menggunakan Timezone Jakarta untuk filter aktivitas hari ini
      */
-    // Tambahkan parameter 'recovery' di sini
-applyRecoveryBoost(baseScore, activities, recovery = null) {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-    const todaysActivities = activities.filter(act => 
-        act.start_date_local && act.start_date_local.includes(today)
-    );
+    applyRecoveryBoost(baseScore, activities, recovery = null) {
+        // Ambil tanggal hari ini versi Jakarta
+        const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+        
+        // Filter aktivitas yang start_date-nya (UTC) jika dikonversi ke Jakarta adalah HARI INI
+        const todaysActivities = activities.filter(act => {
+            if (!act.start_date) return false;
+            const actDateWib = new Date(act.start_date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            return actDateWib === todayWib;
+        });
 
-    let totalBonus = 0;
-    todaysActivities.forEach(act => {
-        const analysis = this.analyzeActivity(act);
-        if (analysis.isRecovery) {
-            totalBonus += analysis.bonus;
+        let bonusPercentage = 0;
+        todaysActivities.forEach(act => {
+            const analysis = this.analyzeActivity(act);
+            if (analysis.isRecovery) {
+                bonusPercentage += analysis.bonus;
+            }
+        });
+
+        // 1. Tambahkan bonus (misal 0.15 jadi +15 poin)
+        let finalScore = baseScore + (bonusPercentage * 100);
+
+        // 2. Terapkan Multiplier Soreness (Pegal Otot)
+        if (recovery && recovery.soreness) {
+            const multiplier = this.getSorenessMultiplier(recovery.soreness);
+            finalScore = finalScore * multiplier;
         }
-    });
 
-    // 1. Tambahkan bonus dari aktivitas jalan kaki
-    let finalScore = baseScore + (totalBonus * 100);
-
-    // 2. Gunakan Multiplier Soreness jika ada data recovery
-    if (recovery && recovery.soreness) {
-        const multiplier = this.getSorenessMultiplier(recovery.soreness);
-        finalScore = finalScore * multiplier;
+        // 3. Safety Floor & Cap (5 - 100)
+        return Math.max(5, Math.min(100, Math.round(finalScore)));
     }
-
-    return Math.min(100, Math.round(finalScore));
-}
 };
