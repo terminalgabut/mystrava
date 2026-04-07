@@ -3,14 +3,13 @@ import { Logger } from '../js/services/debug.js';
 
 export const CoachLogic = {
     /**
-     * 1. Ambil Data Workload dari SQL Function (RPC)
-     * Sinkron dengan Timezone Asia/Jakarta di DB
+     * 1. AMBIL DATA WORKLOAD (RPC)
+     * Langsung ambil hasil kalkulasi SQL Function di Postgres (+07)
      */
     async getWorkloadStats() {
         try {
             const { data, error } = await supabase.rpc('get_workload_stats');
             if (error) throw error;
-            // Mengambil baris pertama dari hasil tabel SQL
             return data?.[0] || { acute: 0, chronic: 0, ratio: 0 };
         } catch (err) {
             Logger.error("Coach_GetWorkload_Error", err);
@@ -19,60 +18,51 @@ export const CoachLogic = {
     },
 
     /**
-     * 2. Hitung Readiness Score (Utama)
-     * Menggabungkan ACWR dari DB dan Data Recovery Harian
+     * 2. AMBIL DATA RAW (Untuk BioEngine & RecoveryEngine)
+     * Digunakan oleh Coach.js untuk proses detail aktivitas
      */
-    async calculateReadiness() {
+    async getRawActivityData() {
         try {
-            const stats = await this.getWorkloadStats();
-            const recovery = await this.getTodayRecovery();
-            
-            const ratio = stats.ratio || 0;
-            let score = 50; // Default Neutral
-            let status = 'STABLE';
-
-            // LOGIKA ACWR (Acute:Chronic Workload Ratio)
-            if (ratio >= 0.8 && ratio <= 1.3) {
-                score = 85; // Sweet Spot / Primed
-                status = 'PRIMED';
-            } else if (ratio > 1.3 && ratio <= 1.5) {
-                score = 60; // Overreaching (Lelah tapi produktif)
-                status = 'STABLE';
-            } else if (ratio > 1.5) {
-                score = 25; // Danger Zone (Sistem Kritis/Overload)
-                status = 'FATIGUED';
-            } else if (ratio < 0.8 && ratio > 0) {
-                score = 75; // Fresh (Kurang beban)
-                status = 'STABLE';
-            }
-
-            // MODIFIER RECOVERY (Jika ada data hari ini)
-            if (recovery) {
-                // Penalti RHR Tinggi (Tanda kelelahan jantung)
-                if (recovery.morning_rhr > 68) score -= 15;
-                // Penalti Tidur Buruk
-                if (recovery.sleep_quality < 6) score -= 10;
-                // Penalti Soreness (Otot sakit)
-                if (recovery.soreness > 7) score -= 10;
-            }
-
-            return { 
-                score: Math.max(5, Math.min(100, Math.round(score))), 
-                status 
-            };
+            const { data, error } = await supabase
+                .from('activities')
+                .select('*')
+                .order('start_date', { ascending: false })
+                .limit(50);
+            if (error) throw error;
+            return data || [];
         } catch (err) {
-            Logger.error("Coach_Readiness_Error", err);
-            return { score: 50, status: 'NEUTRAL' };
+            Logger.error("Coach_GetRawData_Error", err);
+            return [];
         }
     },
 
     /**
-     * 3. Ambil data recovery hari ini (WIB)
+     * 3. HELPER METADATA RPE (WAJIB ADA)
+     * Fix Error: "CoachLogic.getRpeMetadata is not a function"
+     */
+    getRpeMetadata(value) {
+        const rpe = parseInt(value);
+        const map = {
+            1: { label: 'Very Easy', color: '#10b981' }, 
+            2: { label: 'Easy', color: '#10b981' },
+            3: { label: 'Moderate', color: '#3b82f6' }, 
+            4: { label: 'Active', color: '#3b82f6' },
+            5: { label: 'Strong', color: '#f59e0b' },   
+            6: { label: 'Hard', color: '#f59e0b' },
+            7: { label: 'Very Hard', color: '#ef4444' }, 
+            8: { label: 'Near Max', color: '#ef4444' },
+            9: { label: 'Max Effort', color: '#7f1d1d' }, 
+            10: { label: 'All Out', color: '#000000' }   
+        };
+        return map[rpe] || { label: 'N/A', color: '#94a3b8' };
+    },
+
+    /**
+     * 4. AMBIL DATA RECOVERY HARI INI (WIB)
      */
     async getTodayRecovery() {
         try {
             const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-
             const { data, error } = await supabase
                 .from('daily_recovery')
                 .select('*')
@@ -88,7 +78,44 @@ export const CoachLogic = {
     },
 
     /**
-     * 4. Simpan Data Recovery (Fix Timezone & Cross-Day Sleep)
+     * 5. SIMPAN RPE
+     */
+    async saveRPE(activityId, rpeValue) {
+        try {
+            const { error } = await supabase
+                .from('activities')
+                .update({ rpe: parseInt(rpeValue) })
+                .eq('id', activityId);
+            if (error) throw error;
+            return true;
+        } catch (err) {
+            Logger.error("Coach_SaveRPE_Error", err);
+            return false;
+        }
+    },
+
+    /**
+     * 6. AMBIL PENDING RPE
+     */
+    async getPendingRPE() {
+        try {
+            const { data, error } = await supabase
+                .from('activities')
+                .select('*')
+                .is('rpe', null)
+                .order('start_date', { ascending: false })
+                .limit(1)
+                .single();
+            if (error && error.code !== 'PGRST116') throw error;
+            return data || null;
+        } catch (err) {
+            Logger.error("Coach_GetPendingRPE_Error", err);
+            return null;
+        }
+    },
+
+    /**
+     * 7. SAVE DAILY RECOVERY (WIB Fix)
      */
     async saveDailyRecovery(payload) {
         try {
@@ -127,7 +154,7 @@ export const CoachLogic = {
     },
 
     /**
-     * 5. Weekly Trend untuk Chart (Sinkron WIB)
+     * 8. WEEKLY TREND (Chart Sinkron WIB)
      */
     async getWeeklyTrend() {
         try {
