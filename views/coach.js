@@ -168,11 +168,13 @@ export default {
         const initCoach = async () => {
             isLoading.value = true;
             try {
-                const [rawActivities, pending, recoveryData, trendData] = await Promise.all([
+                // 1. AMBIL SEMUA DATA (Termasuk WorkloadStats dari SQL)
+                const [rawActivities, pending, recoveryData, trendData, workloadStats] = await Promise.all([
                     CoachLogic.getRawActivityData(),
                     CoachLogic.getPendingRPE(),
                     CoachLogic.getTodayRecovery(),
-                    CoachLogic.getWeeklyTrend()
+                    CoachLogic.getWeeklyTrend(),
+                    CoachLogic.getWorkloadStats() // <--- WAJIB TAMBAH INI
                 ]);
 
                 isRecoverySynced.value = !!recoveryData;
@@ -186,37 +188,42 @@ export default {
                     sorenessValue.value = recoveryData.soreness || 7; 
                 }
 
-                const intel = BioEngine.processIntelligence(rawActivities, recoveryData); 
+                // 2. JALANKAN ENGINE DENGAN DATA WORKLOAD YANG BENAR
+                // Kita kirim workloadStats sebagai argumen ke-3
+                const intel = BioEngine.processIntelligence(rawActivities, recoveryData, workloadStats); 
 
                 // --- INTEGRASI SLEEP BIO-ENGINE ---
-const neuralData = SleepBioEngine.analyzeNeuralRecovery(recoveryData);
-intel.readiness.score += neuralData.adjustment;
+                const neuralData = SleepBioEngine.analyzeNeuralRecovery(recoveryData);
+                intel.readiness.score += neuralData.adjustment;
 
-// Tambahkan insight neural ke daftar insight dashboard
-if (neuralData.insight) {
-    intel.dynamicInsights.unshift(neuralData.insight); // Letakkan di paling atas
-}
+                if (neuralData.insight) {
+                    intel.dynamicInsights.unshift(neuralData.insight); 
+                }
                 
+                // Gunakan RecoveryEngine jika ada boost tambahan
                 intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities, recoveryData);
                 
+                // 3. UPDATE STATE UI
                 dynamicInsights.value = intel.dynamicInsights || []; 
                 coachBrief.value = {
                     recommendation: intel.prescription.recommendation,
                     breathing_tip: intel.prescription.tip
                 };
 
-                readinessScore.value = intel.readiness.score;
+                // Pastikan skor tidak meledak di atas 100 atau di bawah 0
+                readinessScore.value = Math.max(5, Math.min(100, intel.readiness.score));
                 readinessStatus.value = intel.readiness.status;
                 pendingActivity.value = pending;
 
+                // Update History & Efficiency
                 const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
                 coachHistory.value = [{ 
                     id: Date.now(), 
-                    type: intel.readiness.score < 30 ? 'Warning' : 'Success', 
+                    type: readinessScore.value < 30 ? 'Warning' : 'Success', 
                     date: todayStr, 
-                    message: intel.readiness.score < 30 
-                        ? `Fatigue kritis terdeteksi (${intel.readiness.score}%). Wajib rest total.` 
-                        : 'Biometrik sinkron. Kondisi tubuh stabil untuk aktivitas hari ini.' 
+                    message: readinessScore.value < 30 
+                        ? `Fatigue kritis terdeteksi (${readinessScore.value}%). Wajib rest total.` 
+                        : 'Biometrik sinkron. Kondisi tubuh stabil.' 
                 }];
 
                 efficiencyInsights.value = [
@@ -235,47 +242,24 @@ if (neuralData.insight) {
 
         // --- REFACTOR: saveRecovery di coach.js ---
 const saveRecovery = async () => {
-    isLoading.value = true;
-    try {
-        // Kita kirim payload yang HANYA berisi biometrik dashboard
-        // start & end di-set undefined agar CoachLogic menggunakan data existing di DB
-        const payload = { 
-            rhr: recoveryForm.value.rhr,
-            quality: recoveryForm.value.quality,
-            soreness: sorenessValue.value,
-            start: undefined, 
-            end: undefined,
-            latency: undefined,
-            nap: undefined,
-            consistency: undefined,
-            isComplete: undefined
-        };
-        
-        const success = await CoachLogic.saveDailyRecovery(payload);
-        if (success) {
-            isRecoveryModalOpen.value = false;
-            // Penting: Refresh data agar UI tersinkron
-            await initCoach(); 
-        }
-    } catch (err) {
-        Logger.error("SaveRecovery_UI_Error", err);
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-        const saveRpe = async () => {
-            if (!pendingActivity.value) return;
             isLoading.value = true;
             try {
-                const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
+                const payload = { 
+                    rhr: parseInt(recoveryForm.value.rhr),
+                    quality: parseInt(recoveryForm.value.quality),
+                    soreness: parseInt(sorenessValue.value),
+                    // Set undefined agar tidak merubah data yang sudah ada di DB
+                    start: undefined, 
+                    end: undefined 
+                };
+                
+                const success = await CoachLogic.saveDailyRecovery(payload);
                 if (success) {
-                    isModalOpen.value = false;
-                    pendingActivity.value = null; 
-                    setTimeout(async () => { await initCoach(); }, 500);
+                    isRecoveryModalOpen.value = false;
+                    await initCoach(); // Refresh otomatis agar skor update
                 }
             } catch (err) {
-                Logger.error("SaveRpe_UI_Error", err);
+                Logger.error("SaveRecovery_UI_Error", err);
             } finally {
                 isLoading.value = false;
             }
