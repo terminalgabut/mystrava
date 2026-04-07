@@ -11,7 +11,7 @@ export default `
             <span class="text-[10px] font-black text-blue-700 uppercase tracking-wider">Coach Active</span>
         </div>
 
-        <button @click="openSleepModal" 
+        <button @click="openSleepEngine" 
                 class="group flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/10 border border-white/10">
             <i data-lucide="moon" class="w-4 h-4 text-indigo-400 group-hover:text-white transition-colors"></i>
             <span class="text-[10px] font-black uppercase tracking-widest italic">Sleep Engine AASM</span>
