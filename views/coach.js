@@ -265,6 +265,23 @@ const saveRecovery = async () => {
             }
         };
 
+        const saveRpe = async () => {
+            if (!pendingActivity.value) return;
+            isLoading.value = true;
+            try {
+                const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
+                if (success) {
+                    isModalOpen.value = false;
+                    pendingActivity.value = null; 
+                    setTimeout(async () => { await initCoach(); }, 500);
+                }
+            } catch (err) {
+                Logger.error("SaveRpe_UI_Error", err);
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
         onMounted(initCoach);
 
         return {
