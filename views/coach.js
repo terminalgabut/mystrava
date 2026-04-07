@@ -222,21 +222,36 @@ export default {
             }
         };
 
-        const saveRecovery = async () => {
-            isLoading.value = true;
-            try {
-                const payload = { ...recoveryForm.value, soreness: sorenessValue.value };
-                const success = await CoachLogic.saveDailyRecovery(payload);
-                if (success) {
-                    isRecoveryModalOpen.value = false;
-                    await initCoach(); 
-                }
-            } catch (err) {
-                Logger.error("SaveRecovery_UI_Error", err);
-            } finally {
-                isLoading.value = false;
-            }
-        }; 
+        // --- REFACTOR: saveRecovery di coach.js ---
+const saveRecovery = async () => {
+    isLoading.value = true;
+    try {
+        // Kita kirim payload yang HANYA berisi biometrik dashboard
+        // start & end di-set undefined agar CoachLogic menggunakan data existing di DB
+        const payload = { 
+            rhr: recoveryForm.value.rhr,
+            quality: recoveryForm.value.quality,
+            soreness: sorenessValue.value,
+            start: undefined, 
+            end: undefined,
+            latency: undefined,
+            nap: undefined,
+            consistency: undefined,
+            isComplete: undefined
+        };
+        
+        const success = await CoachLogic.saveDailyRecovery(payload);
+        if (success) {
+            isRecoveryModalOpen.value = false;
+            // Penting: Refresh data agar UI tersinkron
+            await initCoach(); 
+        }
+    } catch (err) {
+        Logger.error("SaveRecovery_UI_Error", err);
+    } finally {
+        isLoading.value = false;
+    }
+};
 
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
