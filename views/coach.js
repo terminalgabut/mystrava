@@ -184,6 +184,8 @@ watch(sorenessValue, () => {
                         quality: recoveryData.sleep_quality,
                         rhr: recoveryData.morning_rhr
                     };
+
+                    sorenessValue.value = recoveryData.soreness || 7; 
                 }
 
                 const intel = BioEngine.processIntelligence(rawActivities, recoveryData); 
