@@ -1,3 +1,4 @@
+// root/views/sleep.js
 import sleepTemplate from './sleepView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { Logger } from '../js/services/debug.js';
@@ -8,6 +9,7 @@ export default {
     setup() {
         const { ref, onMounted, nextTick } = Vue;
 
+        // State awal sesuai standar AASM
         const form = ref({
             start: '22:30',
             end: '06:30',
@@ -22,52 +24,60 @@ export default {
         };
 
         const loadExistingData = async () => {
-            const todayData = await CoachLogic.getTodayRecovery();
-            if (todayData) {
-                form.value = {
-                    start: todayData.sleep_start?.split('T')[1]?.substring(0,5) || '22:30',
-                    end: todayData.sleep_end?.split('T')[1]?.substring(0,5) || '06:30',
-                    latency: todayData.sleep_latency_mins || 15,
-                    nap: todayData.nap_duration_mins || 0,
-                    consistency: Math.round(todayData.sleep_consistency_score * 100) || 85,
-                    isComplete: todayData.is_overnight_complete ?? true
-                };
+            try {
+                const todayData = await CoachLogic.getTodayRecovery();
+                if (todayData) {
+                    // Pre-fill data yang sudah ada (misal jam tidur yang sudah diisi di Modal)
+                    form.value = {
+                        start: todayData.sleep_start?.split('T')[1]?.substring(0,5) || '22:30',
+                        end: todayData.sleep_end?.split('T')[1]?.substring(0,5) || '06:30',
+                        latency: todayData.sleep_latency_mins || 15,
+                        nap: todayData.nap_duration_mins || 0,
+                        consistency: Math.round((todayData.sleep_consistency_score || 0.85) * 100),
+                        isComplete: todayData.is_overnight_complete ?? true
+                    };
+                }
+            } catch (err) {
+                Logger.error("SleepView_Load_Error", err);
+            } finally {
+                refreshIcons();
             }
-            refreshIcons();
         };
 
         const saveSleepData = async () => {
             try {
-                // Konversi kembali ke format yang diharapkan CoachLogic
+                // REFACTOR: Jangan kirim RHR & Quality statis
+                // Kirim undefined agar CoachLogic menggunakan data 'existing' di DB
                 const payload = {
                     start: form.value.start,
                     end: form.value.end,
-                    quality: form.value.isComplete ? 9 : 5, // Mapping sederhana kualitas dari isComplete
-                    rhr: 60, // Placeholder jika tidak diinput di sini
                     latency: form.value.latency,
                     nap: form.value.nap,
                     consistency: form.value.consistency / 100,
-                    isComplete: form.value.isComplete
+                    isComplete: form.value.isComplete,
+                    
+                    // Explicitly undefined agar tidak menimpa Bio-Signal Sync
+                    rhr: undefined, 
+                    quality: undefined,
+                    soreness: undefined
                 };
                 
-                // Gunakan CoachLogic untuk menyimpan ke tabel daily_recovery
                 const success = await CoachLogic.saveDailyRecovery(payload);
                 if (success) {
-                    window.location.hash = '#/coach'; // Kembali ke coach dashboard
+                    window.location.hash = '#/coach'; 
                 }
             } catch (err) {
                 Logger.error("SleepView_Save_Error", err);
             }
         };
 
-        onMounted(() => {
-            loadExistingData();
-        });
+        onMounted(loadExistingData);
 
         return {
             form,
             goBack: () => window.location.hash = '#/coach',
-            saveSleepData
+            saveSleepData,
+            refreshIcons // Berguna jika ada interaksi dinamis
         };
     }
 };
