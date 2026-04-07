@@ -143,46 +143,53 @@ export const CoachLogic = {
     },
 
     /**
- * 7. Simpan data recovery harian (WIB) - FIX UNDEFINED TIMESTAMP
+ * 7. Simpan data recovery harian (WIB) - FIX TANGGAL TERBALIK
  */
-
-    async saveDailyRecovery(payload) {
+async saveDailyRecovery(payload) {
     try {
-        const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+        // Tanggal pelaporan (Hari ini)
+        const dateObj = new Date();
+        const todayWib = dateObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
         
-        // 1. Ambil data yang sudah ada di DB untuk hari ini
+        // Tanggal mulai tidur (Kemarin)
+        const yesterdayObj = new Date();
+        yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+        const yesterdayWib = yesterdayObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+
+        // Helper untuk memformat waktu dengan tanggal yang benar
+        const formatTime = (timeStr, isStartTime = false) => {
+            if (!timeStr || timeStr === 'undefined') return undefined;
+            
+            // LOGIKA: Jika jam mulai tidur (Start), gunakan tanggal kemarin. 
+            // Jika jam bangun (End), gunakan tanggal hari ini.
+            const targetDate = isStartTime ? yesterdayWib : todayWib;
+            return `${targetDate}T${timeStr}:00+07:00`;
+        };
+
+        const sleep_start = formatTime(payload.start, true);  // Pakai Yesterday
+        const sleep_end = formatTime(payload.end, false);    // Pakai Today
+
+        // Ambil data existing dulu agar tidak menimpa data dashboard (Safe Merge)
         const { data: existing } = await supabase
             .from('daily_recovery')
             .select('*')
             .eq('check_in_date', todayWib)
             .single();
 
-        const formatTime = (timeStr) => {
-            if (!timeStr || timeStr === 'undefined') return undefined;
-            return `${todayWib}T${timeStr}:00+07:00`;
-        };
-
-        // 2. Gabungkan data: Gunakan data baru jika ada, jika tidak pakai data lama (existing)
         const entry = {
             check_in_date: todayWib,
-            // Jika payload.start ada, pakai itu. Jika tidak, pakai dari DB.
-            sleep_start: formatTime(payload.start) || existing?.sleep_start,
-            sleep_end: formatTime(payload.end) || existing?.sleep_end,
-            
-            // Lakukan hal yang sama untuk kolom numerik
+            sleep_start: sleep_start || existing?.sleep_start,
+            sleep_end: sleep_end || existing?.sleep_end,
             sleep_quality: payload.quality !== undefined ? parseInt(payload.quality) : existing?.sleep_quality,
             morning_rhr: payload.rhr !== undefined ? parseInt(payload.rhr) : existing?.morning_rhr,
             soreness: payload.soreness !== undefined ? parseInt(payload.soreness) : existing?.soreness,
-            
             sleep_latency_mins: payload.latency !== undefined ? parseInt(payload.latency) : existing?.sleep_latency_mins,
             nap_duration_mins: payload.nap !== undefined ? parseInt(payload.nap) : existing?.nap_duration_mins,
             sleep_consistency_score: payload.consistency !== undefined ? parseFloat(payload.consistency) : existing?.sleep_consistency_score,
             is_overnight_complete: payload.isComplete !== undefined ? payload.isComplete : (existing?.is_overnight_complete ?? true),
-            
             notes: payload.notes || existing?.notes || ''
         };
 
-        // 3. Simpan data yang sudah lengkap (merged)
         const { error } = await supabase
             .from('daily_recovery')
             .upsert(entry, { onConflict: 'check_in_date' });
@@ -194,8 +201,6 @@ export const CoachLogic = {
         return false;
     }
 },
- 
-
     // Tambahkan fungsi ini di dalam objek CoachLogic
 
     /**
