@@ -2,6 +2,7 @@ import coachTemplate from './coachView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { BioEngine } from '../logic/bioEngine.js'; 
 import { RecoveryEngine } from '../logic/recoveryEngine.js'; 
+import { SleepBioEngine } from '../logic/sleepBioEngine.js';
 import { Logger } from '../js/services/debug.js';
 
 export default {
@@ -186,6 +187,16 @@ export default {
                 }
 
                 const intel = BioEngine.processIntelligence(rawActivities, recoveryData); 
+
+                // --- INTEGRASI SLEEP BIO-ENGINE ---
+const neuralData = SleepBioEngine.analyzeNeuralRecovery(recoveryData);
+intel.readiness.score += neuralData.adjustment;
+
+// Tambahkan insight neural ke daftar insight dashboard
+if (neuralData.insight) {
+    intel.dynamicInsights.unshift(neuralData.insight); // Letakkan di paling atas
+}
+                
                 intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities, recoveryData);
                 
                 dynamicInsights.value = intel.dynamicInsights || []; 
