@@ -30,27 +30,60 @@ export const BioEngine = {
 
             // 3. BASE READINESS
             const limitKj = 3000;
-            let finalReadiness = Math.max(0, 100 - ((acuteKj / limitKj) * 100));
+            let baseReadiness = Math.max(0, 100 - ((acuteKj / limitKj) * 100));
 
-            // 4. BIOMETRIC MODIFIER (Syncing with DB Column Names)
-            let bioModifier = 1.0;
+            // 4. BIOMETRIC MODIFIER (Enhanced with Active Recovery & Soreness)
+            let finalReadiness = baseReadiness;
+
             if (recovery) {
-                // RHR Penalty
-                if (recovery.morning_rhr > 67) bioModifier -= 0.25; 
-                
-                // Sleep Quality Penalty
+                let bioModifier = 1.0;
+
+                // A. DETEKSI ACTIVE RECOVERY (Bonus Jalan Santai)
+                // Cek jika ada aktivitas 'Walk' hari ini dengan Pace > 15 min/km
+                const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+                const hasWalkedToday = activities.some(a => {
+                    const isWalk = a.type === 'Walk';
+                    const isToday = a.start_date.startsWith(todayWib);
+                    const pace = (a.moving_time / 60) / (a.distance / 1000);
+                    return isWalk && isToday && pace > 15;
+                });
+
+                if (hasWalkedToday) {
+                    finalReadiness += 15; // Berikan boost flat 15% karena kamu melakukan flushing neural
+                }
+
+                // B. SORENESS MULTIPLIER (Logic Multiplier 1-10)
+                // 6 adalah netral. 7-10 memberikan boost, 1-5 memberikan penalti.
+                const soreness = recovery.soreness || 7; 
+                const sorenessMap = {
+                    1: 0.4, 2: 0.5, 3: 0.6, 4: 0.8, 5: 0.9, 
+                    6: 1.0, 7: 1.15, 8: 1.3, 9: 1.45, 10: 1.6
+                };
+                bioModifier *= (sorenessMap[soreness] || 1.0);
+
+                // C. RHR & SLEEP PENALTY (Standar AASM)
+                if (recovery.morning_rhr > 67) bioModifier -= 0.20; 
                 if (recovery.sleep_quality < 6) bioModifier -= 0.15;
 
-                // Sleep Duration Penalty (Menggunakan sleep_start_time & sleep_end_time sesuai coach.js)
                 const start = recovery.sleep_start_time || recovery.sleep_start;
                 const end = recovery.sleep_end_time || recovery.sleep_end;
                 
                 if (start && end) {
                     const hours = (new Date(end) - new Date(start)) / (1000 * 60 * 60);
-                    if (hours > 0 && hours < 6.5) bioModifier -= 0.10;
+                    // Bonus jika tidur cukup (AASM Standard)
+                    if (hours >= 7.5) bioModifier += 0.10;
+                    // Penalti jika kurang tidur
+                    if (hours > 0 && hours < 6.5) bioModifier -= 0.15;
                 }
 
-                finalReadiness = finalReadiness * Math.max(0.2, bioModifier);
+                // Eksekusi pengali ke skor dasar
+                finalReadiness = finalReadiness * Math.max(0.1, bioModifier);
+
+                // D. SAFETY FLOOR (Anti-Zero Policy)
+                // Jika RHR bagus (<=62) dan sudah jalan santai, minimal skor adalah 15%
+                if (recovery.morning_rhr <= 62 && hasWalkedToday && finalReadiness < 15) {
+                    finalReadiness = 15;
+                }
             }
 
             const intel = {
@@ -58,6 +91,7 @@ export const BioEngine = {
                     score: Math.round(finalReadiness),
                     status: this._getReadinessStatus(finalReadiness)
                 },
+         
                 workload: { ratio: parseFloat(ratio.toFixed(2)), status: this._getAcwrStatus(ratio) },
                 resilience: { score: resScore, label: this._getResilienceLabel(resScore) },
                 recoveryData: recovery
