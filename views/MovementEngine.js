@@ -26,33 +26,48 @@ export default {
         };
     },
     computed: {
-        // Label adaptif berdasarkan tipe aktivitas & cadence
-        impactLabel() {
-            if (this.moveForm.activity_type === 'Walk') return 'Low Power Steady';
-            if (this.moveForm.cadence >= 165) return 'Low Impact (Safe)';
-            if (this.moveForm.cadence >= 155) return 'Medium Impact';
-            return 'High Impact (Stress)';
-        },
-        impactColor() {
-            if (this.moveForm.activity_type === 'Walk') return 'bg-blue-500';
-            if (this.moveForm.cadence >= 165) return 'bg-green-500';
-            if (this.moveForm.cadence >= 155) return 'bg-amber-500';
-            return 'bg-red-500';
-        },
-        // Otak dari Bio-Coach: Memberikan saran berdasarkan data real
-        coachAdvice() {
-            if (this.moveForm.activity_type === 'Walk') {
-                return "Jalan kaki terdeteksi. Gunakan sesi ini untuk mengatur ritme napas dan stabilitas postur tubuh.";
-            }
-            if (this.moveForm.cadence > 0 && this.moveForm.cadence < 160) {
-                return "Cadence rendah terdeteksi. Ini meningkatkan beban pada lutut. Coba perpendek langkah di sesi berikutnya.";
-            }
-            if (this.moveForm.propulsion_score > 60) {
-                return "Sangat Efisien! Biomekanika Anda berada pada level optimal untuk tinggi badan 166.5cm.";
-            }
-            return "Analisis Bio-Coach sedang memproses data Strava terbaru Anda. Tetap fokus pada form lari.";
-        }
+    impactLabel() {
+        if (this.moveForm.activity_type === 'Walk') return 'Low Power Steady';
+        
+        // Logika Khusus RUN
+        if (this.moveForm.cadence >= 170) return 'Elite Cadence (Efficient)';
+        if (this.moveForm.cadence >= 160) return 'Safe Zone';
+        return 'High Impact (Heel Strike Risk)';
     },
+    
+    impactColor() {
+        if (this.moveForm.activity_type === 'Walk') return 'bg-blue-500';
+        
+        // Warna Khusus RUN
+        if (this.moveForm.cadence >= 170) return 'bg-green-500';
+        if (this.moveForm.cadence >= 160) return 'bg-emerald-400';
+        return 'bg-rose-500';
+    },
+
+    coachAdvice() {
+        const { activity_type, cadence, propulsion_score } = this.moveForm;
+
+        // JALUR ANALISA: WALK
+        if (activity_type === 'Walk') {
+            if (cadence < 80) return "Sesi jalan santai. Fokus pada pernapasan perut dan postur tulang belakang yang tegak.";
+            return "Power walk terdeteksi. Bagus untuk menjaga mobilitas tanpa membebani sendi terlalu berat.";
+        }
+
+        // JALUR ANALISA: RUN
+        if (activity_type === 'Run') {
+            if (cadence > 0 && cadence < 165) {
+                return "Coach Note: Cadence Anda rendah (Under 165). Ini menandakan 'Overstriding'. Coba perpendek langkah untuk melindungi lutut.";
+            }
+            if (propulsion_score > 75) {
+                return "Efisiensi luar biasa! Dorongan kaki Anda sangat sinkron. Pertahankan form ini untuk lari jarak jauh.";
+            }
+            return "Analisis lari aktif. Fokus pada pendaratan di mid-foot untuk menjaga momentum.";
+        }
+
+        return "Menunggu data biomekanika untuk memberikan insight...";
+    }
+},
+        
     methods: {
         async fetchLatestMovementData() {
             this.isLoading = true;
