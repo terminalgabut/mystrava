@@ -61,6 +61,8 @@ export default {
                 const { data, error } = await supabase
                     .from('activities')
                     .select('id, name, type, cadence, stride_length, step_density, propulsion_score, start_date')
+                    .in('type', ['Run', 'Walk']) 
+                    .gt('steps', 0)
                     .not('cadence', 'is', null)
                     .order('start_date', { ascending: false })
                     .limit(10);
