@@ -10,7 +10,7 @@ export default `
                 <h1 class="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Movement <span class="text-green-600">Engine</span></h1>
                 <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
                     <i data-lucide="activity" class="w-3 h-3 text-green-500"></i>
-                    <span>Biomechanics Calibration (TB 166.5cm)</span>
+                    <span>{{ moveForm.activity_name || 'Biomechanics Calibration' }}</span>
                 </p>
             </div>
         </div>
@@ -68,7 +68,7 @@ export default `
             <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Mechanical Density</p>
                 <div class="flex items-end gap-2">
-                    <span class="text-2xl font-black text-slate-900 italic">{{ stepDensity }}</span>
+                    <span class="text-2xl font-black text-slate-900 italic">{{ moveForm.step_density }}</span>
                     <span class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-tighter italic">Steps / KM</span>
                     
                     <div class="ml-auto flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
@@ -79,9 +79,11 @@ export default `
             </div>
 
             <button @click="saveMovementData" 
-                    class="w-full py-6 text-white rounded-[2rem] font-black italic tracking-[0.2em] text-sm hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-3 bg-slate-900">
-                <i data-lucide="refresh-cw" class="w-5 h-5 text-green-400"></i>
-                SYNC MECHANICAL DATA
+                    :disabled="isLoading"
+                    class="w-full py-6 text-white rounded-[2rem] font-black italic tracking-[0.2em] text-sm hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-3 bg-slate-900 disabled:opacity-50">
+                <i v-if="!isLoading" data-lucide="refresh-cw" class="w-5 h-5 text-green-400"></i>
+                <i v-else data-lucide="loader-2" class="w-5 h-5 animate-spin text-green-400"></i>
+                {{ isLoading ? 'SYNCING...' : 'SYNC MECHANICAL DATA' }}
             </button>
         </div>
 
@@ -97,12 +99,12 @@ export default `
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Propulsion Score</p>
-                            <p class="text-4xl font-black text-green-400">{{ propulsionScore }}<span class="text-lg">%</span></p>
+                            <p class="text-4xl font-black text-green-400">{{ moveForm.propulsion_score }}<span class="text-lg">%</span></p>
                         </div>
                     </div>
                     <div class="p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
                         <p class="text-[10px] text-white/60 font-medium leading-relaxed italic">
-                            "Berdasarkan TB 166.5cm, efisiensi langkah Anda berada di zona optimal untuk meminimalkan beban sendi."
+                            "Berdasarkan TB 166.5cm, efisiensi langkah Anda berada di zona optimal."
                         </p>
                     </div>
                 </div>
