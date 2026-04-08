@@ -166,85 +166,80 @@ export default {
 
         // --- CORE ACTIONS ---
         const initCoach = async () => {
-            isLoading.value = true;
-            try {
-                // 1. AMBIL SEMUA DATA (Termasuk WorkloadStats dari SQL)
-                const [rawActivities, pending, recoveryData, trendData, workloadStats] = await Promise.all([
-                    CoachLogic.getRawActivityData(),
-                    CoachLogic.getPendingRPE(),
-                    CoachLogic.getTodayRecovery(),
-                    CoachLogic.getWeeklyTrend(),
-                    CoachLogic.getWorkloadStats() // <--- WAJIB TAMBAH INI
-                ]);
+    isLoading.value = true;
+    try {
+        const [rawActivities, pending, recoveryData, trendData, workloadStats] = await Promise.all([
+            CoachLogic.getRawActivityData(),
+            CoachLogic.getPendingRPE(),
+            CoachLogic.getTodayRecovery(),
+            CoachLogic.getWeeklyTrend(),
+            CoachLogic.getWorkloadStats()
+        ]);
 
-                pendingActivity.value = pending;
-                if (pending) { 
-                    nextTick(() => refreshIcons());
-                }
+        // 1. Assign Data Pending (Banner RPE)
+        pendingActivity.value = pending;
 
-                isRecoverySynced.value = !!recoveryData;
-                if (recoveryData) {
-                    recoveryForm.value = {
-                        start: recoveryData.sleep_start?.split('T')[1]?.substring(0,5) || '23:00', 
-                        end: recoveryData.sleep_end?.split('T')[1]?.substring(0,5) || '06:00',
-                        quality: recoveryData.sleep_quality,
-                        rhr: recoveryData.morning_rhr
-                    };
-                    sorenessValue.value = recoveryData.soreness || 7; 
-                }
+        // 2. Assign Data Recovery
+        isRecoverySynced.value = !!recoveryData;
+        if (recoveryData) {
+            recoveryForm.value = {
+                start: recoveryData.sleep_start?.split('T')[1]?.substring(0,5) || '23:00', 
+                end: recoveryData.sleep_end?.split('T')[1]?.substring(0,5) || '06:00',
+                quality: recoveryData.sleep_quality,
+                rhr: recoveryData.morning_rhr
+            };
+            sorenessValue.value = recoveryData.soreness || 7; 
+        }
 
-                // 2. JALANKAN ENGINE DENGAN DATA WORKLOAD YANG BENAR
-                // Kita kirim workloadStats sebagai argumen ke-3
-                const intel = BioEngine.processIntelligence(rawActivities, recoveryData, workloadStats); 
-
-                // --- INTEGRASI SLEEP BIO-ENGINE ---
-                const neuralData = SleepBioEngine.analyzeNeuralRecovery(recoveryData);
-                intel.readiness.score += neuralData.adjustment;
-
-                if (neuralData.insight) {
-                    intel.dynamicInsights.unshift(neuralData.insight); 
-                }
-                
-                // Gunakan RecoveryEngine jika ada boost tambahan
-                intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities, recoveryData);
-                
-                // 3. UPDATE STATE UI
-                dynamicInsights.value = intel.dynamicInsights || []; 
-                coachBrief.value = {
-                    recommendation: intel.prescription.recommendation,
-                    breathing_tip: intel.prescription.tip
-                };
-
-                // Pastikan skor tidak meledak di atas 100 atau di bawah 0
-                readinessScore.value = Math.max(5, Math.min(100, intel.readiness.score));
-                readinessStatus.value = intel.readiness.status;
-                pendingActivity.value = pending;
-
-                // Update History & Efficiency
-                const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-                coachHistory.value = [{ 
-                    id: Date.now(), 
-                    type: readinessScore.value < 30 ? 'Warning' : 'Success', 
-                    date: todayStr, 
-                    message: readinessScore.value < 30 
-                        ? `Fatigue kritis terdeteksi (${readinessScore.value}%). Wajib rest total.` 
-                        : 'Biometrik sinkron. Kondisi tubuh stabil.' 
-                }];
-
-                efficiencyInsights.value = [
-                    { label: 'Workload (ACWR)', value: `${intel.workload.ratio}x`, percentage: Math.min(100, intel.workload.ratio * 50) },
-                    { label: 'Leg Resilience', value: intel.resilience.label, percentage: intel.resilience.score }
-                ];
-
-                nextTick(() => { initCharts(trendData); });
-            } catch (err) {
-                Logger.error("Coach_Init_Error", err);
-            } finally {
-                isLoading.value = false;
-                refreshIcons();
-            }
+        // 3. Engine Processing
+        const intel = BioEngine.processIntelligence(rawActivities, recoveryData, workloadStats); 
+        const neuralData = SleepBioEngine.analyzeNeuralRecovery(recoveryData);
+        
+        intel.readiness.score += neuralData.adjustment;
+        if (neuralData.insight) intel.dynamicInsights.unshift(neuralData.insight); 
+        
+        intel.readiness.score = RecoveryEngine.applyRecoveryBoost(intel.readiness.score, rawActivities, recoveryData);
+        
+        // 4. Update UI State
+        dynamicInsights.value = intel.dynamicInsights || []; 
+        coachBrief.value = {
+            recommendation: intel.prescription.recommendation,
+            breathing_tip: intel.prescription.tip
         };
 
+        readinessScore.value = Math.max(5, Math.min(100, intel.readiness.score));
+        readinessStatus.value = intel.readiness.status;
+
+        // --- OPTIMALISASI HISTORY ---
+        const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        coachHistory.value = [{ 
+            id: Date.now(), 
+            type: readinessScore.value < 35 ? 'Warning' : 'Success', 
+            date: todayStr, 
+            message: readinessScore.value < 35 
+                ? `Fatigue kritis terdeteksi (${readinessScore.value}%).` 
+                : 'Biometrik sinkron. Tubuh siap tempur.' 
+        }];
+
+        efficiencyInsights.value = [
+            { label: 'Workload (ACWR)', value: `${intel.workload.ratio}x`, percentage: Math.min(100, intel.workload.ratio * 50) },
+            { label: 'Leg Resilience', value: intel.resilience.label, percentage: intel.resilience.score }
+        ];
+
+        // 5. Chart & Icon Refresh (Cukup sekali di sini)
+        nextTick(() => { 
+            initCharts(trendData); 
+            refreshIcons(); // Menangani banner RPE & elemen chart sekaligus
+        });
+
+    } catch (err) {
+        Logger.error("Coach_Init_Error", err);
+    } finally {
+        isLoading.value = false;
+        // Panggilan terakhir untuk memastikan state isLoading: false sudah ter-render
+        nextTick(() => refreshIcons());
+    }
+};
         // --- REFACTOR: saveRecovery di coach.js ---
 const saveRecovery = async () => {
             isLoading.value = true;
