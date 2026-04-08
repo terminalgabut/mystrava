@@ -8,6 +8,7 @@ const TrainingLog = () => import('../views/TrainingLogView.js');
 const Settings = () => import('../views/settings.js');
 const Coach = () => import('../views/coach.js');
 const Sleep = () => import('../views/sleep.js');
+const Movement = () => import('../views/MovementEngine.js');
 
 const routes = [
     { 
@@ -31,6 +32,12 @@ const routes = [
         name: 'sleep',
         component: Sleep,
         meta: { title: 'Sleep Engine AASM' }
+    },
+    { 
+        path: '/movement', 
+        name: 'movement',
+        component: Movement,
+        meta: { title: 'Movement Engine Biomechanics' }
     },
     { 
         path: '/analysis', 
