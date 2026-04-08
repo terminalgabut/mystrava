@@ -123,7 +123,7 @@ export default {
                         this.initMatrixChart();
                         this.initTrendChart();
                     });
-                },
+                }
     
             } catch (err) {
                 console.error("Movement Engine Fetch Error:", err.message);
