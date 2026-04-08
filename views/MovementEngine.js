@@ -7,12 +7,12 @@ export default {
     template: MovementEngineTemplate,
     data() {
         return {
-            moveMode: 'dynamic',
             isLoading: false,
             charts: {
                 matrix: null,
                 trend: null
             },
+            // Mapping data murni dari database
             moveForm: {
                 cadence: 0,
                 stride: 0,
@@ -22,12 +22,13 @@ export default {
                 activity_name: '',
                 activity_type: ''
             },
-            historyData: [] // Untuk menyimpan data 10 sesi terakhir
+            historyData: [] // Menampung 10 sesi terakhir untuk Charting
         };
     },
     computed: {
+        // Label adaptif berdasarkan tipe aktivitas & cadence
         impactLabel() {
-            if (this.moveForm.activity_type === 'Walk') return 'Steady Movement';
+            if (this.moveForm.activity_type === 'Walk') return 'Low Power Steady';
             if (this.moveForm.cadence >= 165) return 'Low Impact (Safe)';
             if (this.moveForm.cadence >= 155) return 'Medium Impact';
             return 'High Impact (Stress)';
@@ -38,24 +39,25 @@ export default {
             if (this.moveForm.cadence >= 155) return 'bg-amber-500';
             return 'bg-red-500';
         },
+        // Otak dari Bio-Coach: Memberikan saran berdasarkan data real
         coachAdvice() {
             if (this.moveForm.activity_type === 'Walk') {
-                return "Fokus pada postur tegak. Jalan kaki adalah pemulihan aktif yang baik untuk biomekanika Anda.";
+                return "Jalan kaki terdeteksi. Gunakan sesi ini untuk mengatur ritme napas dan stabilitas postur tubuh.";
             }
-            if (this.moveForm.cadence < 160 && this.moveForm.cadence > 0) {
-                return "Cadence Anda rendah. Ini meningkatkan beban pada lutut. Coba perpendek langkah dan tingkatkan frekuensi (170+ SPM).";
+            if (this.moveForm.cadence > 0 && this.moveForm.cadence < 160) {
+                return "Cadence rendah terdeteksi. Ini meningkatkan beban pada lutut. Coba perpendek langkah di sesi berikutnya.";
             }
-            if (this.moveForm.propulsion_score > 70) {
-                return "Luar biasa! Efisiensi dorongan Anda sangat tinggi. Pertahankan stabilitas core untuk menjaga ritme ini.";
+            if (this.moveForm.propulsion_score > 60) {
+                return "Sangat Efisien! Biomekanika Anda berada pada level optimal untuk tinggi badan 166.5cm.";
             }
-            return "Data sedang dianalisis. Tetap jaga hidrasi dan perhatikan sinyal dari sendi pergelangan kaki.";
+            return "Analisis Bio-Coach sedang memproses data Strava terbaru Anda. Tetap fokus pada form lari.";
         }
     },
     methods: {
         async fetchLatestMovementData() {
             this.isLoading = true;
             try {
-                // Ambil 10 data terakhir untuk grafik trend
+                // Mengambil 10 data terbaru yang sudah dikalkulasi di DB
                 const { data, error } = await supabase
                     .from('activities')
                     .select('id, name, type, cadence, stride_length, step_density, propulsion_score, start_date')
@@ -66,19 +68,20 @@ export default {
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    this.historyData = [...data].reverse(); // Urutkan dari lama ke baru untuk chart
+                    this.historyData = [...data].reverse(); // Urutan kronologis untuk Chart
                     const latest = data[0];
                     
                     this.moveForm = {
-                        cadence: Number(latest.cadence || 0),
-                        stride: Number(latest.stride_length || 0),
-                        step_density: Number(latest.step_density || 0),
-                        propulsion_score: Number(latest.propulsion_score || 0),
+                        cadence: Math.round(latest.cadence || 0),
+                        stride: Math.round(latest.stride_length || 0),
+                        step_density: Math.round(latest.step_density || 0),
+                        propulsion_score: Math.round(latest.propulsion_score || 0),
                         activity_id: latest.id,
                         activity_name: latest.name,
                         activity_type: latest.type
                     };
 
+                    // Render chart setelah DOM siap
                     this.$nextTick(() => {
                         this.initMatrixChart();
                         this.initTrendChart();
@@ -94,25 +97,26 @@ export default {
 
         initMatrixChart() {
             const ctx = document.getElementById('efficiencyMatrixChart');
-            if (!ctx) return;
+            if (!ctx || !window.Chart) return;
             if (this.charts.matrix) this.charts.matrix.destroy();
 
             this.charts.matrix = new Chart(ctx, {
                 type: 'scatter',
                 data: {
                     datasets: [{
-                        label: 'Your Activities',
+                        label: 'Biomechanics Position',
                         data: this.historyData.map(d => ({ x: d.cadence, y: d.stride_length })),
                         backgroundColor: '#10b981',
-                        pointRadius: 6
+                        pointRadius: 8,
+                        pointHoverRadius: 10
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { title: { display: true, text: 'Cadence (SPM)', font: { weight: 'bold' } } },
-                        y: { title: { display: true, text: 'Stride (CM)', font: { weight: 'bold' } } }
+                        x: { title: { display: true, text: 'Cadence (SPM)', font: { weight: 'bold', size: 10 } } },
+                        y: { title: { display: true, text: 'Stride (CM)', font: { weight: 'bold', size: 10 } } }
                     },
                     plugins: { legend: { display: false } }
                 }
@@ -121,7 +125,7 @@ export default {
 
         initTrendChart() {
             const ctx = document.getElementById('propulsionTrendChart');
-            if (!ctx) return;
+            if (!ctx || !window.Chart) return;
             if (this.charts.trend) this.charts.trend.destroy();
 
             this.charts.trend = new Chart(ctx, {
@@ -129,12 +133,14 @@ export default {
                 data: {
                     labels: this.historyData.map(d => d.name.substring(0, 10)),
                     datasets: [{
-                        label: 'Propulsion Score %',
+                        label: 'Propulsion Score',
                         data: this.historyData.map(d => d.propulsion_score),
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 0
                     }]
                 },
                 options: {
@@ -142,13 +148,15 @@ export default {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, max: 100 }
+                        y: { beginAtZero: true, max: 100, ticks: { font: { size: 9 } } },
+                        x: { ticks: { display: false } }
                     }
                 }
             });
         },
 
         async saveMovementData() {
+            // Re-calibrate: Memaksa DB Trigger untuk menghitung ulang
             this.isLoading = true;
             try {
                 const { error } = await supabase
@@ -159,7 +167,7 @@ export default {
                 if (error) throw error;
                 await this.fetchLatestMovementData();
             } catch (err) {
-                console.error("Sync Error:", err.message);
+                console.error("Recalibration Error:", err.message);
             } finally {
                 this.isLoading = false;
             }
@@ -173,10 +181,5 @@ export default {
     },
     mounted() {
         this.fetchLatestMovementData();
-    },
-    watch: {
-        moveMode() {
-            this.reinitIcons();
-        }
     }
 };
