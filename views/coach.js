@@ -177,6 +177,7 @@ export default {
                     CoachLogic.getWorkloadStats() // <--- WAJIB TAMBAH INI
                 ]);
 
+                pendingActivity.value = pending;
                 if (pending) { 
                     nextTick(() => refreshIcons());
                 }
