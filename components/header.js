@@ -2,8 +2,19 @@ import headerView from './headerView.js';
 
 export default {
     ...headerView,
-    emits: ['toggle-sidebar'], // Deklarasikan event
+    // Emits dihapus karena tidak ada sidebar
     mounted() {
-        if (window.lucide) window.lucide.createIcons();
+        // Inisialisasi icon saat komponen muncul
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    },
+    // Tambahkan watch route agar icon tidak hilang saat pindah halaman
+    watch: {
+        '$route'() {
+            this.$nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+        }
     }
 };
