@@ -20,6 +20,8 @@ export default {
                 propulsion_score: 0,
                 activity_id: null,
                 activity_name: '',
+                distance: 0,
+                start_date: null,
                 activity_type: ''
             },
             historyData: [] // Menampung 10 sesi terakhir untuk Charting
@@ -69,13 +71,29 @@ export default {
 },
         
     methods: {
+
+        formatDistance(meters) {
+        if (!meters) return '0.00 KM';
+        return (meters / 1000).toFixed(2) + ' KM';
+    },
+
+    // Fungsi untuk mempercantik tampilan tanggal
+    formatDate(dateStr) {
+        if (!dateStr) return '---';
+        const date = new Date(dateStr);
+        return new Intl.DateTimeFormat('id-ID', { 
+            day: 'numeric', 
+            month: 'short' 
+        }).format(date);
+    },
+        
         async fetchLatestMovementData() {
             this.isLoading = true;
             try {
                 // Mengambil 10 data terbaru yang sudah dikalkulasi di DB
                 const { data, error } = await supabase
                     .from('activities')
-                    .select('id, name, type, cadence, stride_length, step_density, propulsion_score, start_date')
+                    .select('id, name, type, distance, cadence, stride_length, step_density, propulsion_score, start_date')
                     .in('type', ['Run', 'Walk']) 
                     .gt('steps', 0)
                     .not('cadence', 'is', null)
@@ -95,7 +113,9 @@ export default {
                         propulsion_score: Math.round(latest.propulsion_score || 0),
                         activity_id: latest.id,
                         activity_name: latest.name,
-                        activity_type: latest.type
+                        activity_type: latest.type,
+                        distance: latest.distance, 
+                        start_date: latest.start_date
                     };
 
                     // Render chart setelah DOM siap
@@ -103,7 +123,8 @@ export default {
                         this.initMatrixChart();
                         this.initTrendChart();
                     });
-                }
+                },
+    
             } catch (err) {
                 console.error("Movement Engine Fetch Error:", err.message);
             } finally {
