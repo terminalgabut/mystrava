@@ -1,4 +1,4 @@
-// logic/MovementEngine.js
+// views/MovementEngine.js
 import { supabase } from '../js/services/supabase.js';
 import MovementEngineTemplate from './MovementEngineView.js';
 
