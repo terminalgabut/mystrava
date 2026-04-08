@@ -9,55 +9,80 @@ export default {
         return {
             moveMode: 'dynamic',
             isLoading: false,
-            // Menampung data murni hasil hitungan DB
+            charts: {
+                matrix: null,
+                trend: null
+            },
             moveForm: {
                 cadence: 0,
                 stride: 0,
                 step_density: 0,
                 propulsion_score: 0,
                 activity_id: null,
-                activity_name: ''
-            }
+                activity_name: '',
+                activity_type: ''
+            },
+            historyData: [] // Untuk menyimpan data 10 sesi terakhir
         };
     },
     computed: {
-        // Status dampak mekanis berdasarkan Cadence (SPM) dari DB
         impactLabel() {
+            if (this.moveForm.activity_type === 'Walk') return 'Steady Movement';
             if (this.moveForm.cadence >= 165) return 'Low Impact (Safe)';
             if (this.moveForm.cadence >= 155) return 'Medium Impact';
             return 'High Impact (Stress)';
         },
-        // Warna indikator sesuai standar efisiensi lari Anda
         impactColor() {
+            if (this.moveForm.activity_type === 'Walk') return 'bg-blue-500';
             if (this.moveForm.cadence >= 165) return 'bg-green-500';
             if (this.moveForm.cadence >= 155) return 'bg-amber-500';
             return 'bg-red-500';
+        },
+        coachAdvice() {
+            if (this.moveForm.activity_type === 'Walk') {
+                return "Fokus pada postur tegak. Jalan kaki adalah pemulihan aktif yang baik untuk biomekanika Anda.";
+            }
+            if (this.moveForm.cadence < 160 && this.moveForm.cadence > 0) {
+                return "Cadence Anda rendah. Ini meningkatkan beban pada lutut. Coba perpendek langkah dan tingkatkan frekuensi (170+ SPM).";
+            }
+            if (this.moveForm.propulsion_score > 70) {
+                return "Luar biasa! Efisiensi dorongan Anda sangat tinggi. Pertahankan stabilitas core untuk menjaga ritme ini.";
+            }
+            return "Data sedang dianalisis. Tetap jaga hidrasi dan perhatikan sinyal dari sendi pergelangan kaki.";
         }
     },
     methods: {
         async fetchLatestMovementData() {
             this.isLoading = true;
             try {
-                // Mengambil kolom-kolom yang tadi kita buat & update di DB
+                // Ambil 10 data terakhir untuk grafik trend
                 const { data, error } = await supabase
                     .from('activities')
-                    .select('id, name, cadence, stride_length, step_density, propulsion_score')
-                    .not('cadence', 'is', null) // Pastikan data sudah terhitung
+                    .select('id, name, type, cadence, stride_length, step_density, propulsion_score, start_date')
+                    .not('cadence', 'is', null)
                     .order('start_date', { ascending: false })
-                    .limit(1)
-                    .single();
+                    .limit(10);
 
                 if (error) throw error;
 
-                if (data) {
+                if (data && data.length > 0) {
+                    this.historyData = [...data].reverse(); // Urutkan dari lama ke baru untuk chart
+                    const latest = data[0];
+                    
                     this.moveForm = {
-                        cadence: data.cadence,
-                        stride: data.stride_length,
-                        step_density: data.step_density,
-                        propulsion_score: data.propulsion_score,
-                        activity_id: data.id,
-                        activity_name: data.name
+                        cadence: Number(latest.cadence || 0),
+                        stride: Number(latest.stride_length || 0),
+                        step_density: Number(latest.step_density || 0),
+                        propulsion_score: Number(latest.propulsion_score || 0),
+                        activity_id: latest.id,
+                        activity_name: latest.name,
+                        activity_type: latest.type
                     };
+
+                    this.$nextTick(() => {
+                        this.initMatrixChart();
+                        this.initTrendChart();
+                    });
                 }
             } catch (err) {
                 console.error("Movement Engine Fetch Error:", err.message);
@@ -67,11 +92,65 @@ export default {
             }
         },
 
+        initMatrixChart() {
+            const ctx = document.getElementById('efficiencyMatrixChart');
+            if (!ctx) return;
+            if (this.charts.matrix) this.charts.matrix.destroy();
+
+            this.charts.matrix = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Your Activities',
+                        data: this.historyData.map(d => ({ x: d.cadence, y: d.stride_length })),
+                        backgroundColor: '#10b981',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Cadence (SPM)', font: { weight: 'bold' } } },
+                        y: { title: { display: true, text: 'Stride (CM)', font: { weight: 'bold' } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        },
+
+        initTrendChart() {
+            const ctx = document.getElementById('propulsionTrendChart');
+            if (!ctx) return;
+            if (this.charts.trend) this.charts.trend.destroy();
+
+            this.charts.trend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: this.historyData.map(d => d.name.substring(0, 10)),
+                    datasets: [{
+                        label: 'Propulsion Score %',
+                        data: this.historyData.map(d => d.propulsion_score),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        },
+
         async saveMovementData() {
-            // Jika Anda ingin melakukan "Force Recalculate" dari UI
             this.isLoading = true;
             try {
-                // Trigger akan otomatis jalan di DB saat kita update record ini
                 const { error } = await supabase
                     .from('activities')
                     .update({ updated_at: new Date() }) 
@@ -96,7 +175,6 @@ export default {
         this.fetchLatestMovementData();
     },
     watch: {
-        // Render ulang icon Lucide saat pindah mode
         moveMode() {
             this.reinitIcons();
         }
