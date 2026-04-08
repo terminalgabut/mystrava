@@ -84,7 +84,7 @@ export const CoachLogic = {
         try {
             const { error } = await supabase
                 .from('activities')
-                .update({ rpe: parseInt(rpeValue) })
+                .update({ user_rpe: parseInt(rpeValue) })
                 .eq('id', activityId);
             if (error) throw error;
             return true;
@@ -106,7 +106,7 @@ async getPendingRPE() {
         const { data, error } = await supabase
             .from('activities')
             .select('id, name, start_date')
-            .is('rpe', null) // RPE masih kosong
+            .is('user_rpe', null) // RPE masih kosong
             .gte('start_date', `${today}T00:00:00`) // <--- WAJIB: Hanya aktivitas sejak jam 00:00 tadi pagi
             .order('start_date', { ascending: false })
             .limit(1)
