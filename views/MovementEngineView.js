@@ -2,11 +2,12 @@
 export default `
 <div class="movement-engine-wrapper animate-in pb-12 px-4">
     <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-4">
-        <div class="flex items-center gap-4">
-            <button @click="$router.back()" class="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
-                <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
-            </button>
-            <div>
+    <div class="flex items-center gap-4">
+        <button @click="$router.back()" class="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+            <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
+        </button>
+
+        <div>
             <div class="flex items-center gap-2 mb-1">
                 <span :class="moveForm.activity_type === 'Run' ? 'bg-green-600' : 'bg-blue-600'" 
                       class="px-2 py-0.5 text-[8px] font-black text-white uppercase tracking-tighter rounded-md italic shadow-sm">
@@ -25,16 +26,15 @@ export default `
             </h1>
         </div>
     </div>
-        </div>
-        
-        <div class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-2xl border border-green-100">
-            <span class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            <span class="text-[10px] font-black text-green-700 uppercase tracking-widest">Live Strava Sync</span>
-        </div>
-    </header>
+    
+    <div class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-2xl border border-green-100 h-fit">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
+        <span class="text-[10px] font-black text-green-700 uppercase tracking-widest">Live Strava Sync</span>
+    </div>
+</header>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
