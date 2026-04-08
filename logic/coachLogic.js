@@ -97,22 +97,28 @@ export const CoachLogic = {
     /**
      * 6. AMBIL PENDING RPE
      */
-    async getPendingRPE() {
-        try {
-            const { data, error } = await supabase
-                .from('activities')
-                .select('*')
-                .is('rpe', null)
-                .order('start_date', { ascending: false })
-                .limit(1)
-                .single();
-            if (error && error.code !== 'PGRST116') throw error;
-            return data || null;
-        } catch (err) {
-            Logger.error("Coach_GetPendingRPE_Error", err);
-            return null;
-        }
-    },
+    // root/logic/coachLogic.js
+async getPendingRPE() {
+    try {
+        // Ambil tanggal hari ini (WIB)
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+
+        const { data, error } = await supabase
+            .from('activities')
+            .select('id, name, start_date')
+            .is('rpe', null) // RPE masih kosong
+            .gte('start_date', `${today}T00:00:00`) // <--- WAJIB: Hanya aktivitas sejak jam 00:00 tadi pagi
+            .order('start_date', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.error("Gagal mengambil pending RPE:", err);
+        return null;
+    }
+},
 
     /**
      * 7. SAVE DAILY RECOVERY (WIB Fix)
