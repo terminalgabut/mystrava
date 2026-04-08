@@ -177,6 +177,10 @@ export default {
                     CoachLogic.getWorkloadStats() // <--- WAJIB TAMBAH INI
                 ]);
 
+                if (pending) { 
+                    nextTick(() => refreshIcons());
+                }
+
                 isRecoverySynced.value = !!recoveryData;
                 if (recoveryData) {
                     recoveryForm.value = {
