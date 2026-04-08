@@ -7,12 +7,24 @@ export default `
                 <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
             </button>
             <div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Movement <span class="text-green-600">Engine</span></h1>
-                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
-                    <i data-lucide="activity" class="w-3 h-3 text-green-500"></i>
-                    <span>{{ moveForm.activity_name || 'Biomechanics Calibration' }}</span>
-                </p>
+            <div class="flex items-center gap-2 mb-1">
+                <span :class="moveForm.activity_type === 'Run' ? 'bg-green-600' : 'bg-blue-600'" 
+                      class="px-2 py-0.5 text-[8px] font-black text-white uppercase tracking-tighter rounded-md italic shadow-sm">
+                    {{ moveForm.activity_type || 'N/A' }}
+                </span>
+                <span class="text-slate-400 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
+                    <i data-lucide="map-pin" class="w-2.5 h-2.5"></i>
+                    {{ formatDistance(moveForm.distance) }} 
+                    <span class="mx-1 text-slate-300">•</span>
+                    {{ formatDate(moveForm.start_date) }}
+                </span>
             </div>
+
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight italic uppercase leading-none">
+                {{ moveForm.activity_name || 'Movement Engine' }}
+            </h1>
+        </div>
+    </div>
         </div>
         
         <div class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-2xl border border-green-100">
