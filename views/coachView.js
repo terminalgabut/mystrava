@@ -16,6 +16,13 @@ export default `
             <i data-lucide="moon" class="w-4 h-4 text-indigo-400 group-hover:text-white transition-colors"></i>
             <span class="text-[10px] font-black uppercase tracking-widest italic">Sleep Engine AASM</span>
         </button>
+
+        <button @click="goToMovementEngine" 
+                class="group flex items-center gap-2 px-4 py-2 bg-white hover:bg-green-50 text-slate-900 rounded-xl transition-all shadow-sm border border-slate-200 hover:border-green-200">
+            <i data-lucide="activity" class="w-4 h-4 text-green-500 transition-colors"></i>
+            <span class="text-[10px] font-black uppercase tracking-widest italic">Movement Engine</span>
+        </button>
+        
     </header>
 
     <div v-if="!isRecoverySynced" class="bento-card p-6 border-2 border-blue-500 bg-slate-900 text-white mb-8 shadow-2xl shadow-blue-500/20">
