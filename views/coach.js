@@ -68,6 +68,10 @@ export default {
             window.location.hash = '#/sleep';
         };
 
+        const goToMovementEngine = () => {
+    window.location.hash = '#/movement';
+};
+
         // --- CHART ENGINE ---
         const initCharts = (trendData) => {
             if (!trendData) return;
@@ -288,7 +292,7 @@ const saveRecovery = async () => {
             isLoading, isRecoverySynced, isRecoveryModalOpen, recoveryForm, sorenessValue, currentSorenessIcon, sorenessLabel,
             isModalOpen, rpeValue, coachBrief, readinessScore, readinessStatus,
             pendingActivity, coachHistory, efficiencyInsights, dynamicInsights, 
-            getStatusColor, getRpeLabel, saveRecovery, saveRpe, goToSleepEngine,
+            getStatusColor, getRpeLabel, saveRecovery, saveRpe, goToSleepEngine, goToMovementEngine,
             openRpeModal: () => { isModalOpen.value = true; refreshIcons(); },
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; refreshIcons(); }
         };
