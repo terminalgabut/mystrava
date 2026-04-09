@@ -1,3 +1,5 @@
+// views/coach.js:
+
 import coachTemplate from './coachView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { IntelligenceCore } from '../logic/IntelligenceCore.js';
@@ -12,6 +14,7 @@ export default {
     name: 'CoachView',
     template: coachTemplate,
     setup() {
+        // AMANKAN IMPORT: Pastikan 'computed' diambil dari Vue
         const { ref, computed, onMounted, nextTick } = Vue;
 
         if (window.Chart && window['chartjs_plugin_annotation']) {
@@ -20,7 +23,7 @@ export default {
 
         // --- STATE DASHBOARD ---
         const isLoading = ref(true);
-        const isRecoverySynced = ref(true); 
+        const isRecoverySynced = ref(false); 
         const readinessScore = ref(0);
         const readinessStatus = ref('CALIBRATING');
         const coachBrief = ref({ recommendation: 'Analyzing...', breathing_tip: 'Hang tight.' });
@@ -28,11 +31,12 @@ export default {
         const dynamicInsights = ref([]); 
         const coachHistory = ref([]);
 
-        // --- STATE MODALS ---
+        // --- STATE MODALS & FORMS ---
         const isRecoveryModalOpen = ref(false);
         const isModalOpen = ref(false); 
         const rpeValue = ref(5);
         const pendingActivity = ref(null);
+        
         const recoveryForm = ref({
             quality: 7,
             rhr: 62
@@ -42,7 +46,12 @@ export default {
         let correlationChart = null;
         let rhrChart = null;
 
-        // --- COMPUTED HELPERS ---
+        // --- HELPERS & COMPUTED ---
+        const getStatusColor = (score) => ReadinessInsights.getStatusMetadata(score).color;
+        
+        // FIX: Fungsi ini wajib ada untuk slider RPE di modal
+        const getRpeLabel = (val) => RpeInsights.getFeedback({ rpe: val }).title;
+
         const sorenessLabel = computed(() => {
             const val = parseInt(sorenessValue.value);
             if (val >= 8) return 'Heavy Fatigue';
@@ -50,7 +59,6 @@ export default {
             return 'Fresh / Ready';
         });
 
-        // Ikon soreness dinamis [cite: 96]
         const currentSorenessIcon = computed(() => {
             const val = parseInt(sorenessValue.value);
             if (val >= 7) return 'flame';
@@ -58,17 +66,14 @@ export default {
             return 'check-circle-2';
         });
 
-        const getStatusColor = (score) => ReadinessInsights.getStatusMetadata(score).color;
-
+        // --- CORE LOGIC ---
         const initCharts = (trendData) => {
             if (!trendData) return;
-            
             const ctxCorr = document.getElementById('correlationChart')?.getContext('2d');
             if (ctxCorr) {
                 if (correlationChart) correlationChart.destroy();
                 correlationChart = CoachCharts.renderCorrelation(ctxCorr, trendData);
             }
-
             const ctxRhr = document.getElementById('rhrChart')?.getContext('2d');
             if (ctxRhr) {
                 if (rhrChart) rhrChart.destroy();
@@ -88,8 +93,6 @@ export default {
                 ]);
 
                 const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats, trend.recoveries);
-                
-                // Sinkronisasi status (Fix Banner UI)
                 isRecoverySynced.value = !!recoveryData;
 
                 const meta = ReadinessInsights.getStatusMetadata(intel.readiness.score);
@@ -102,41 +105,17 @@ export default {
                     breathing_tip: prescription.tip
                 };
 
-                dynamicInsights.value = RecoveryInsights.getDynamicCards(
-                    recoveryData, 
-                    intel,       
-                    isRecoverySynced.value
-                );
+                // Integrasi Narasi Cerdas yang sudah kita buat tadi
+                dynamicInsights.value = RecoveryInsights.getDynamicCards(recoveryData, intel, isRecoverySynced.value);
                 
                 efficiencyInsights.value = [
-                    { 
-                        label: 'Workload (ACWR)', 
-                        value: `${intel.readiness.acwr}x`, 
-                        percentage: Math.min((parseFloat(intel.readiness.acwr) / 1.5) * 100, 100),
-                        color: 'blue' 
-                    },
-                    { 
-                        label: 'Leg Resilience', 
-                        value: ReadinessInsights.getResilienceLabel(intel.resilience.score), 
-                        percentage: intel.resilience.score,
-                        color: 'emerald' 
-                    }
+                    { label: 'Workload (ACWR)', value: `${intel.readiness.acwr}x`, percentage: Math.min((parseFloat(intel.readiness.acwr) / 1.5) * 100, 100) },
+                    { label: 'Leg Resilience', value: ReadinessInsights.getResilienceLabel(intel.resilience.score), percentage: intel.resilience.score }
                 ];
 
-                // FIX 3: Isi Interaction Log (History) agar tidak kosong
                 coachHistory.value = [
-                    { 
-                        id: 1, 
-                        type: 'Success', 
-                        date: 'NOW', 
-                        message: `System Check: ${meta.label} status confirmed.` 
-                    },
-                    { 
-                        id: 2, 
-                        type: 'Info', 
-                        date: 'BIO', 
-                        message: `RHR Baseline: ${intel.recovery.rhr || '--'} BPM detected.` 
-                    }
+                    { id: 1, type: 'Success', date: 'NOW', message: `Intelligence Synced: ${meta.label} state confirmed.` },
+                    { id: 2, type: 'Info', date: 'BIO', message: `Morning RHR: ${recoveryData?.morning_rhr || '--'} BPM detected.` }
                 ];
                 pendingActivity.value = pending;
 
@@ -144,9 +123,22 @@ export default {
                     initCharts(intel.chartData);
                     if (window.lucide) window.lucide.createIcons();
                 });
-
             } catch (err) {
                 Logger.error("Coach_Init_Error", err);
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
+        const saveRpe = async () => {
+            if (!pendingActivity.value) return;
+            isLoading.value = true;
+            try {
+                await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
+                isModalOpen.value = false;
+                await initCoach();
+            } catch (err) {
+                Logger.error("SaveRpe_Error", err);
             } finally {
                 isLoading.value = false;
             }
@@ -171,42 +163,15 @@ export default {
             }
         };
 
-        const saveRpe = async () => {
-            if (!pendingActivity.value) return;
-            isLoading.value = true;
-            try {
-                const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
-                if (success) {
-                    const activities = await CoachLogic.getRawActivityData();
-                    const lastAct = activities.find(a => a.id === pendingActivity.value.id);
-                    const evalResult = RpeEngine.evaluateEffort(rpeValue.value, lastAct?.kilojoules || 0);
-                    const feedback = RpeInsights.getFeedback(evalResult);
-
-                    coachHistory.value.unshift({
-                        id: Date.now(),
-                        type: feedback.type === 'warning' ? 'Warning' : 'Success',
-                        date: 'JUST NOW',
-                        message: `${feedback.title}: ${feedback.message}`
-                    });
-
-                    isModalOpen.value = false;
-                    pendingActivity.value = null;
-                    await initCoach();
-                }
-            } catch (err) {
-                Logger.error("SaveRpe_UI_Error", err);
-            } finally {
-                isLoading.value = false;
-            }
-        };
-
         onMounted(initCoach);
 
+        // --- PENGIRIMAN DATA KE TEMPLATE ---
         return {
             isLoading, isRecoverySynced, readinessScore, readinessStatus, coachBrief,
-            efficiencyInsights, coachHistory, dynamicInsights, getStatusColor,
-            isModalOpen, rpeValue, pendingActivity, saveRpe, getRpeLabel,
-            isRecoveryModalOpen, recoveryForm, sorenessValue, sorenessLabel, currentSorenessIcon, saveRecovery, // FIX 3: Return saveRecovery & helper
+            efficiencyInsights, coachHistory, dynamicInsights,
+            isModalOpen, isRecoveryModalOpen, rpeValue, pendingActivity,
+            recoveryForm, sorenessValue, sorenessLabel, currentSorenessIcon,
+            getStatusColor, getRpeLabel, saveRpe, saveRecovery, // SEMUA WAJIB ADA DI SINI
             openRpeModal: () => { isModalOpen.value = true; },
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; },
             goToSleepEngine: () => window.location.hash = '#/sleep',
