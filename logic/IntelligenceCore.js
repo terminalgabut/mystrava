@@ -94,7 +94,10 @@ export const IntelligenceCore = {
 
     // FIX: Isi rhrSeries dengan angka (contoh range 60-65) agar grafik muncul
     // Idealnya ini ditarik dari history recovery di database
-    const rhrSeries = days.map(() => 60 + Math.floor(Math.random() * 5));
+    const rhrSeries = days.map(day => {
+        const record = recoveryHistory.find(r => r.check_in_date === day);
+        return record ? record.morning_rhr : null; 
+    });
 
     const readinessSeries = workloadSeries.map((load, idx) => {
         const dailyLoad = workloadSeries[idx];
