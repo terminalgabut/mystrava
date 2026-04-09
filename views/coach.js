@@ -172,45 +172,43 @@ export default {
 
         // --- CORE ACTIONS ---
         const initCoach = async () => {
-            isLoading.value = true;
-            try {
-                // AMBIL DATA MENTAH SAJA
-                const [rawActivities, pending, recoveryData, workloadStats] = await Promise.all([
-                    CoachLogic.getRawActivityData(),
-                    CoachLogic.getPendingRPE(),
-                    CoachLogic.getTodayRecovery(),
-                    CoachLogic.getWorkloadStats()
-                ]);
+    isLoading.value = true;
+    try {
+        const [rawActivities, pending, recoveryData, workloadStats] = await Promise.all([
+            CoachLogic.getRawActivityData(),
+            CoachLogic.getPendingRPE(),
+            CoachLogic.getTodayRecovery(),
+            CoachLogic.getWorkloadStats()
+        ]);
 
-                pendingActivity.value = pending;
+        // SATU PINTU PROSES
+        const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats);
 
-                // PROSES SEMUA DI SATU PINTU
-                // Kita kirim semua data mentah ke Core
-                const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats);
+        // MAPPING KE UI
+        pendingActivity.value = pending;
+        isRecoverySynced.value = !!recoveryData;
+        readinessScore.value = intel.readiness.score;
+        readinessStatus.value = intel.readiness.status;
+        dynamicInsights.value = intel.dynamicInsights;
+        coachBrief.value = intel.prescription;
+        
+        efficiencyInsights.value = [
+            { label: 'Workload (ACWR)', value: `${intel.readiness.acwr}x`, percentage: intel.workload.score },
+            { label: 'Leg Resilience', value: intel.resilience.label, percentage: intel.resilience.score }
+        ];
 
-                // UPDATE UI DENGAN HASIL MATANG
-                readinessScore.value = intel.readiness.score;
-                readinessStatus.value = intel.readiness.status;
-                dynamicInsights.value = intel.dynamicInsights;
-                coachBrief.value = intel.prescription;
-                
-                efficiencyInsights.value = [
-                    { label: 'Workload (ACWR)', value: `${intel.workload.ratio}x`, percentage: intel.workload.score },
-                    { label: 'Leg Resilience', value: intel.resilience.label, percentage: intel.resilience.score }
-                ];
+        // CHART IDENTIK DENGAN SKOR
+        nextTick(() => { 
+            initCharts(intel.chartData); 
+            refreshIcons(); 
+        });
 
-                // REFRESH CHART (Menggunakan data dari Core agar identik)
-                nextTick(() => { 
-                    initCharts(intel.chartData); 
-                    refreshIcons(); 
-                });
-
-            } catch (err) {
-                Logger.error("Coach_Init_Error", err);
-            } finally {
-                isLoading.value = false;
-            }
-        };
+    } catch (err) {
+        Logger.error("Coach_Init_Error", err);
+    } finally {
+        isLoading.value = false;
+    }
+};
     
         // --- REFACTOR: saveRecovery di coach.js ---
 const saveRecovery = async () => {
