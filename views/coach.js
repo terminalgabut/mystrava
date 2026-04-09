@@ -3,8 +3,9 @@ import { CoachLogic } from '../logic/coachLogic.js';
 import { IntelligenceCore } from '../logic/IntelligenceCore.js';
 import { ReadinessInsights } from '../logic/insights/readinessInsights.js';
 import { RecoveryInsights } from '../logic/insights/recoveryInsights.js'; 
-import { RpeEngine } from '../logic/engines/rpeEngine.js'; // Import Engine Baru
-import { RpeInsights } from '../logic/insights/rpeInsights.js'; // Import Insight Baru
+import { RpeEngine } from '../logic/engines/rpeEngine.js';
+import { RpeInsights } from '../logic/insights/rpeInsights.js'; 
+import { CoachCharts } from '../logic/renderers/coachCharts.js'; 
 import { Logger } from '../js/services/debug.js';
 
 export default {
@@ -19,6 +20,7 @@ export default {
 
         // --- STATE DASHBOARD ---
         const isLoading = ref(true);
+        const isRecoverySynced = ref(true); 
         const readinessScore = ref(0);
         const readinessStatus = ref('CALIBRATING');
         const coachBrief = ref({ recommendation: 'Analyzing...', breathing_tip: 'Hang tight.' });
@@ -26,46 +28,31 @@ export default {
         const dynamicInsights = ref([]); 
         const coachHistory = ref([]);
 
-        // --- STATE MODALS & INPUT ---
+        // --- STATE MODALS ---
         const isRecoveryModalOpen = ref(false);
         const isModalOpen = ref(false); 
         const rpeValue = ref(5);
-        const sorenessValue = ref(7);
-        const recoveryForm = ref({ rhr: 62, quality: 7 });
         const pendingActivity = ref(null);
 
         let correlationChart = null;
         let rhrChart = null;
 
-        const renderCharts = (trendData) => {
+        // HELPER WARNA (Fix Error Screenshot)
+        const getStatusColor = (score) => ReadinessInsights.getStatusMetadata(score).color;
+
+        const initCharts = (trendData) => {
             if (!trendData) return;
+            
             const ctxCorr = document.getElementById('correlationChart')?.getContext('2d');
             if (ctxCorr) {
                 if (correlationChart) correlationChart.destroy();
-                correlationChart = new Chart(ctxCorr, {
-                    type: 'bar',
-                    data: {
-                        labels: trendData.labels,
-                        datasets: [
-                            { label: 'Load', data: trendData.workloadSeries, backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', borderWidth: 1, yAxisID: 'yWorkload', borderRadius: 4 },
-                            { label: 'Readiness', data: trendData.readinessSeries, type: 'line', borderColor: '#0f172a', borderWidth: 3, tension: 0.4, yAxisID: 'yReadiness' }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { yWorkload: { display: false }, yReadiness: { min: 0, max: 100, display: false } }, plugins: { legend: { display: false } } }
-                });
+                correlationChart = CoachCharts.renderCorrelation(ctxCorr, trendData);
             }
 
             const ctxRhr = document.getElementById('rhrChart')?.getContext('2d');
             if (ctxRhr) {
                 if (rhrChart) rhrChart.destroy();
-                rhrChart = new Chart(ctxRhr, {
-                    type: 'line',
-                    data: {
-                        labels: trendData.labels,
-                        datasets: [{ data: trendData.rhrSeries, borderColor: '#60a5fa', tension: 0.4, fill: false, pointRadius: 4 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
+                rhrChart = CoachCharts.renderRhr(ctxRhr, trendData);
             }
         };
 
@@ -81,13 +68,13 @@ export default {
                 ]);
 
                 const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats, trend.recoveries);
+                
+                // Sinkronisasi status (Fix Banner UI)
+                isRecoverySynced.value = !!recoveryData;
 
                 const meta = ReadinessInsights.getStatusMetadata(intel.readiness.score);
                 const prescription = ReadinessInsights.getPrescription(intel.readiness.score, parseFloat(intel.readiness.acwr));
-                const resLabel = ReadinessInsights.getResilienceLabel(intel.resilience.score);
-
-                dynamicInsights.value = RecoveryInsights.getDynamicCards(recoveryData, intel.recovery.score, intel.recovery.isSynced);
-
+                
                 readinessScore.value = intel.readiness.score;
                 readinessStatus.value = meta.label;
                 coachBrief.value = {
@@ -95,20 +82,17 @@ export default {
                     breathing_tip: prescription.tip
                 };
 
+                dynamicInsights.value = RecoveryInsights.getDynamicCards(recoveryData, intel.recovery.score, intel.recovery.isSynced);
+                
                 efficiencyInsights.value = [
                     { label: 'Workload (ACWR)', value: `${intel.readiness.acwr}x`, color: 'blue' },
-                    { label: 'Leg Resilience', value: resLabel, color: 'emerald' }
-                ];
-
-                coachHistory.value = [
-                    { id: Date.now(), type: 'Success', date: 'NOW', message: `Core Intelligence Synced: ${meta.label} state.` },
-                    { id: Date.now()-1, type: 'Info', date: 'BIO', message: `RHR analyzed at ${intel.recovery.rhr || '--'} BPM.` }
+                    { label: 'Leg Resilience', value: ReadinessInsights.getResilienceLabel(intel.resilience.score), color: 'emerald' }
                 ];
 
                 pendingActivity.value = pending;
 
                 nextTick(() => {
-                    renderCharts(intel.chartData);
+                    initCharts(intel.chartData);
                     if (window.lucide) window.lucide.createIcons();
                 });
 
@@ -119,24 +103,17 @@ export default {
             }
         };
 
-        // --- LOGIKA SAVE RPE ---
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
             isLoading.value = true;
             try {
-                // 1. Simpan ke Database
                 const success = await CoachLogic.saveRPE(pendingActivity.value.id, rpeValue.value);
-                
                 if (success) {
-                    // 2. Evaluasi Subjektif vs Objektif
-                    // Kita ambil data aktivitas terakhir untuk kilojoules-nya
                     const activities = await CoachLogic.getRawActivityData();
                     const lastAct = activities.find(a => a.id === pendingActivity.value.id);
-                    
-                    const evaluation = RpeEngine.evaluateEffort(rpeValue.value, lastAct?.kilojoules || 0);
-                    const feedback = RpeInsights.getFeedback(evaluation);
+                    const evalResult = RpeEngine.evaluateEffort(rpeValue.value, lastAct?.kilojoules || 0);
+                    const feedback = RpeInsights.getFeedback(evalResult);
 
-                    // 3. Tambahkan ke History Dashboard
                     coachHistory.value.unshift({
                         id: Date.now(),
                         type: feedback.type === 'warning' ? 'Warning' : 'Success',
@@ -144,7 +121,6 @@ export default {
                         message: `${feedback.title}: ${feedback.message}`
                     });
 
-                    // 4. Tutup modal & Refresh dashboard
                     isModalOpen.value = false;
                     pendingActivity.value = null;
                     await initCoach();
@@ -159,9 +135,9 @@ export default {
         onMounted(initCoach);
 
         return {
-            isLoading, readinessScore, readinessStatus, coachBrief,
-            efficiencyInsights, coachHistory, dynamicInsights,
-            isModalOpen, rpeValue, pendingActivity, saveRpe, // Return state RPE
+            isLoading, isRecoverySynced, readinessScore, readinessStatus, coachBrief,
+            efficiencyInsights, coachHistory, dynamicInsights, getStatusColor,
+            isModalOpen, rpeValue, pendingActivity, saveRpe,
             openRpeModal: () => { isModalOpen.value = true; },
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; },
             goToSleepEngine: () => window.location.hash = '#/sleep',
