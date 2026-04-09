@@ -179,7 +179,8 @@ export default {
             CoachLogic.getRawActivityData(),
             CoachLogic.getPendingRPE(),
             CoachLogic.getTodayRecovery(),
-            CoachLogic.getWorkloadStats()
+            CoachLogic.getWorkloadStats(),
+            CoachLogic.getWeeklyTrend()
         ]);
 
         // SATU PINTU PROSES
