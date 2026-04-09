@@ -9,6 +9,7 @@ const Settings = () => import('../views/settings.js');
 const Coach = () => import('../views/coach.js');
 const Sleep = () => import('../views/sleep.js');
 const Movement = () => import('../views/MovementEngine.js');
+const Tobacco = () => import('../views/TobaccoEngine.js');
 
 const routes = [
     { 
@@ -38,6 +39,12 @@ const routes = [
         name: 'movement',
         component: Movement,
         meta: { title: 'Movement Engine Biomechanics' }
+    },
+    { 
+        path: '/tobacco', 
+        name: 'tobacco',
+        component: Tobacco,
+        meta: { title: 'Tobacco Engine Toxic Load' }
     },
     { 
         path: '/analysis', 
