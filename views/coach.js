@@ -12,7 +12,7 @@ export default {
     name: 'CoachView',
     template: coachTemplate,
     setup() {
-        const { ref, onMounted, nextTick } = Vue;
+        const { ref, computed, onMounted, nextTick } = Vue;
 
         if (window.Chart && window['chartjs_plugin_annotation']) {
             Chart.register(window['chartjs_plugin_annotation']);
@@ -152,6 +152,25 @@ export default {
             }
         };
 
+        const saveRecovery = async () => {
+            isLoading.value = true;
+            try {
+                const success = await CoachLogic.saveDailyRecovery({
+                    sleep_quality: recoveryForm.value.quality,
+                    morning_rhr: recoveryForm.value.rhr,
+                    soreness: sorenessValue.value
+                });
+                if (success) {
+                    isRecoveryModalOpen.value = false;
+                    await initCoach();
+                }
+            } catch (err) {
+                Logger.error("SaveRecovery_Error", err);
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
         const saveRpe = async () => {
             if (!pendingActivity.value) return;
             isLoading.value = true;
@@ -186,7 +205,8 @@ export default {
         return {
             isLoading, isRecoverySynced, readinessScore, readinessStatus, coachBrief,
             efficiencyInsights, coachHistory, dynamicInsights, getStatusColor,
-            isModalOpen, rpeValue, pendingActivity, saveRpe,
+            isModalOpen, rpeValue, pendingActivity, saveRpe, getRpeLabel,
+            isRecoveryModalOpen, recoveryForm, sorenessValue, sorenessLabel, currentSorenessIcon, saveRecovery, // FIX 3: Return saveRecovery & helper
             openRpeModal: () => { isModalOpen.value = true; },
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; },
             goToSleepEngine: () => window.location.hash = '#/sleep',
