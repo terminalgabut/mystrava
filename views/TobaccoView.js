@@ -143,5 +143,44 @@ export default `
             </div>
         </div>
     </div>
+
+    <div class="mt-8 space-y-6">
+    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <h3 class="font-black text-slate-900 uppercase tracking-tighter italic mb-6 flex items-center gap-2">
+            <i data-lucide="microscope" class="w-5 h-5 text-orange-600"></i> 
+            Biochemical Correlation Analysis
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-orange-50 p-6 rounded-3xl border border-orange-100">
+                <p class="text-[10px] font-black text-orange-800 uppercase tracking-widest mb-2">Est. CO Saturation</p>
+                <p class="text-3xl font-black text-orange-900">{{ coSaturation }}%</p>
+                <p class="text-[10px] text-orange-700 mt-2 leading-relaxed">
+                    Karbon Monoksida mengikat hemoglobin lebih kuat dari oksigen. Angka ini menunjukkan estimasi "ruang" di darah yang diserobot asap.
+                </p>
+            </div>
+
+            <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                <p class="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Oxygen Efficiency</p>
+                <p class="text-3xl font-black text-blue-900">{{ oxygenEfficiency }}%</p>
+                <p class="text-[10px] text-blue-700 mt-2 leading-relaxed">
+                    Estimasi kemampuan alveoli menyerap oksigen. Tar tinggi menciptakan lapisan residu yang menghambat difusi.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-8 opacity-10">
+            <i data-lucide="brain" class="w-32 h-32"></i>
+        </div>
+        <h3 class="font-black text-lg mb-4 flex items-center gap-2 uppercase italic tracking-tighter">
+            <i data-lucide="bot" class="w-6 h-6 text-indigo-400"></i> Coach Intelligence Deep Dive
+        </h3>
+        <p class="text-indigo-100 leading-relaxed font-medium italic">
+            "{{ deepInsight }}"
+        </p>
+        </div>
+    </div>
 </div>
 `;
