@@ -66,11 +66,15 @@ export default {
         // --- NAVIGATION ---
         const goToSleepEngine = () => {
             window.location.hash = '#/sleep';
-        };
-
+        }; 
+        
         const goToMovementEngine = () => {
-    window.location.hash = '#/movement';
-};
+            window.location.hash = '#/movement';
+        };
+        
+        const goToTobaccoEngine = () => {
+            window.location.hash = '#/tobacco';
+        };
 
         // --- CHART ENGINE ---
         const initCharts = (trendData) => {
