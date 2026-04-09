@@ -296,7 +296,7 @@ const saveRecovery = async () => {
             isLoading, isRecoverySynced, isRecoveryModalOpen, recoveryForm, sorenessValue, currentSorenessIcon, sorenessLabel,
             isModalOpen, rpeValue, coachBrief, readinessScore, readinessStatus,
             pendingActivity, coachHistory, efficiencyInsights, dynamicInsights, 
-            getStatusColor, getRpeLabel, saveRecovery, saveRpe, goToSleepEngine, goToMovementEngine,
+            getStatusColor, getRpeLabel, saveRecovery, saveRpe, goToSleepEngine, goToMovementEngine, goToTobaccoEngine,
             openRpeModal: () => { isModalOpen.value = true; refreshIcons(); },
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; refreshIcons(); }
         };
