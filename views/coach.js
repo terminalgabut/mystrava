@@ -33,11 +33,31 @@ export default {
         const isModalOpen = ref(false); 
         const rpeValue = ref(5);
         const pendingActivity = ref(null);
+        const recoveryForm = ref({
+            quality: 7,
+            rhr: 62
+        });
+        const sorenessValue = ref(5);
 
         let correlationChart = null;
         let rhrChart = null;
 
-        // HELPER WARNA (Fix Error Screenshot)
+        // --- COMPUTED HELPERS ---
+        const sorenessLabel = computed(() => {
+            const val = parseInt(sorenessValue.value);
+            if (val >= 8) return 'Heavy Fatigue';
+            if (val >= 5) return 'Moderate';
+            return 'Fresh / Ready';
+        });
+
+        // Ikon soreness dinamis [cite: 96]
+        const currentSorenessIcon = computed(() => {
+            const val = parseInt(sorenessValue.value);
+            if (val >= 7) return 'flame';
+            if (val >= 4) return 'info';
+            return 'check-circle-2';
+        });
+
         const getStatusColor = (score) => ReadinessInsights.getStatusMetadata(score).color;
 
         const initCharts = (trendData) => {
