@@ -192,7 +192,22 @@ export default {
         readinessScore.value = intel.readiness.score;
         readinessStatus.value = aiTalk.status;
         coachBrief.value = aiTalk.prescription;
-        dynamicInsights.value = aiTalk.dynamicInsights;
+        dynamicInsights.value = aiTalk.dynamicInsights || []; 
+        
+        coachHistory.value = [ 
+            { 
+        id: Date.now(), 
+        type: aiTalk.status === 'CRITICAL' ? 'Warning' : 'Success', 
+        date: 'TODAY', 
+        message: `System ${aiTalk.status}: Readiness at ${intel.readiness.score}%` 
+    },
+    { 
+        id: Date.now() - 1, 
+        type: 'Info', 
+        date: 'SYNC', 
+        message: `ACWR detected at ${intel.readiness.acwr}x.` 
+    }
+];
         
         efficiencyInsights.value = [
             { label: 'Workload (ACWR)', value: `${intel.readiness.acwr}x`, percentage: intel.workload.score },
