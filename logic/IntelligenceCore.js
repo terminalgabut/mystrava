@@ -5,59 +5,49 @@ export const IntelligenceCore = {
     calculate(rawActivities, recoveryData, workloadStats) {
         try {
             const acwr = workloadStats?.ratio || 1.0;
-            const acuteLoad = workloadStats?.acute || 0;
+            
+            // 1. BASE CALCULATION
+            let score = (acwr > 1.5) ? 20 : (acwr > 1.3) ? 60 : (acwr >= 0.8) ? 85 : 75;
 
-            // 1. BASE READINESS (ACWR Logic)
-            let baseScore = this._calculateBaseByACWR(acwr);
-
-            // 2. BIOMETRIC & NEURAL MODIFIERS
+            // 2. MODIFIERS (MURNI ANGKA)
             let modifiers = 0;
-            let neuralInsight = null;
-
             if (recoveryData) {
-                // RHR (Baseline 62)
+                // RHR
                 const rhrDiff = (recoveryData.morning_rhr || 62) - 62;
-                if (rhrDiff > 3) modifiers -= Math.min(25, (rhrDiff - 3) * 4);
-                else if (rhrDiff <= 0) modifiers += 5;
-
-                // Sleep & Latency (Neural Recovery)
-                const sleepHours = this._getSleepHours(recoveryData);
-                if (sleepHours > 0 && sleepHours < 6.5) modifiers -= 15;
-                else if (sleepHours >= 7.5) modifiers += 10;
-
-                if (recoveryData.sleep_latency_mins > 30) {
-                    modifiers -= 10;
-                    neuralInsight = { title: "Neural Overdrive", text: "Sistem saraf masih aktif (Overstimulated).", type: "warning" };
-                }
+                modifiers += (rhrDiff > 3) ? -Math.min(25, (rhrDiff - 3) * 4) : (rhrDiff <= 0 ? 5 : 0);
+                
+                // Sleep
+                const sleepH = (new Date(recoveryData.sleep_end) - new Date(recoveryData.sleep_start)) / 3600000;
+                modifiers += (sleepH > 0 && sleepH < 6.5) ? -15 : (sleepH >= 7.5 ? 10 : 0);
+                
+                // Latency
+                if (recoveryData.sleep_latency_mins > 30) modifiers -= 10;
 
                 // Soreness
-                const soreness = recoveryData.soreness || 7;
-                if (soreness <= 3) modifiers -= 20;
-                else if (soreness >= 9) modifiers += 5;
+                const sore = recoveryData.soreness || 7;
+                modifiers += (sore <= 3) ? -20 : (sore === 4 ? -10 : (sore >= 9 ? 5 : 0));
             }
 
-            // 3. RECOVERY BOOST (Walk)
-            const bonus = this._calculateWalkBonus(rawActivities);
-            
-            // 4. FINAL ASSEMBLY
-            const finalScore = Math.max(5, Math.min(100, Math.round(baseScore + modifiers + bonus)));
-            const resilience = this._calculateResilience(rawActivities);
+            // 3. RECOVERY WALK
+            const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            const bonus = rawActivities
+                .filter(a => new Date(a.start_date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) === todayWib && a.type === 'Walk')
+                .reduce((acc, a) => {
+                    const pace = (a.moving_time / 60) / (a.distance / 1000);
+                    return acc + (pace >= 15 ? 15 : (pace >= 10 ? 7 : 0));
+                }, 0);
+
+            const finalScore = Math.max(5, Math.min(100, Math.round(score + modifiers + bonus)));
 
             return {
-                readiness: {
-                    score: finalScore,
-                    status: this._getStatus(finalScore),
-                    acwr: acwr.toFixed(2)
-                },
+                readiness: { score: finalScore },
                 workload: { ratio: acwr, score: Math.min(100, acwr * 50) },
-                resilience: resilience,
-                prescription: this._getPrescription(finalScore, acwr),
-                dynamicInsights: this._generateSmartInsights(finalScore, acwr, recoveryData, neuralInsight),
-                chartData: this._generateChartSeries(rawActivities, recoveryData)
+                recoveryData: recoveryData, // Untuk dilempar ke CoachInsights
+                chartData: this._generateChartSeries(rawActivities)
             };
         } catch (err) {
             Logger.error("IntelligenceCore_Error", err);
-            return this.getDefaults();
+            return null;
         }
     },
 
