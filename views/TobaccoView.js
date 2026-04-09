@@ -182,5 +182,110 @@ export default `
         </p>
         </div>
     </div>
+    
+
+    <div class="mt-12 space-y-8 animate-in pb-16">
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 bg-white rounded-3xl border border-slate-100 shadow-sm">
+        <div class="flex items-center gap-3 px-4 py-2">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center border bg-slate-50 border-slate-100 text-slate-600">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-black text-slate-900 uppercase tracking-tighter italic text-lg">
+                Historical Intake <span class="text-orange-600">Audit</span>
+            </h3>
+        </div>
+
+        <div class="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner w-full md:w-fit">
+            <button @click="changeTimeFilter('weekly')" 
+                    :class="timeFilter === 'weekly' ? 'bg-white shadow-sm text-slate-900 border-slate-100' : 'text-slate-500 hover:text-slate-700'"
+                    class="flex-1 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 border border-transparent">
+                <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Weekly
+            </button>
+            <button @click="changeTimeFilter('monthly')" 
+            :class="timeFilter === 'monthly' ? 'bg-white shadow-sm text-slate-900 border-slate-100' : 'text-slate-500 hover:text-slate-700'"
+            class="flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 border border-transparent min-w-[100px]">
+        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Monthly
+    </button>
+            <button @click="changeTimeFilter('yearly')" 
+                    :class="timeFilter === 'yearly' ? 'bg-white shadow-sm text-slate-900 border-slate-100' : 'text-slate-500 hover:text-slate-700'"
+                    class="flex-1 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 border border-transparent">
+                <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i> Yearly
+            </button>
+            <button @click="changeTimeFilter('alltime')" 
+                    :class="timeFilter === 'alltime' ? 'bg-white shadow-sm text-slate-900 border-slate-100' : 'text-slate-500 hover:text-slate-700'"
+                    class="flex-1 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 border border-transparent">
+                <i data-lucide="infinity" class="w-3.5 h-3.5"></i> All Time
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-8 opacity-[0.03]">
+            <i data-lucide="flame" class="w-64 h-64 text-orange-950"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trend Analysis</p>
+                    <h4 class="text-xl font-black text-slate-900 uppercase italic tracking-tight mt-1">
+                        Accumulated Tar Load <span class="text-orange-500">(grams)</span>
+                    </h4>
+                </div>
+                <div class="px-5 py-2.5 bg-slate-900 rounded-full border border-slate-700 text-white shadow-lg shadow-slate-950/20">
+                    <p class="text-[9px] font-bold uppercase text-white/50 tracking-wider">Total in Period</p>
+                    <p class="text-2xl font-black text-orange-400 mt-0.5">{{ totalPeriodTar }}<span class="text-lg">g</span></p>
+                </div>
+            </div>
+
+            <div class="relative w-full h-80">
+                <canvas id="tobaccoHistoricalChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden border border-slate-800">
+            <div class="absolute -bottom-10 -left-10 p-8 opacity-10">
+                <i data-lucide="activity" class="w-48 h-48 text-green-400"></i>
+            </div>
+            
+            <h5 class="font-black text-lg mb-6 flex items-center gap-2 uppercase italic tracking-tighter relative z-10">
+                <i data-lucide="gauge" class="w-5 h-5 text-green-400"></i> Smoke-Pace Penalty
+            </h5>
+            
+            <div class="grid grid-cols-2 gap-6 relative z-10">
+                <div>
+                    <p class="text-white/40 text-[9px] font-bold uppercase tracking-[0.2em] mb-1">Average Pace (This Period)</p>
+                    <p class="text-4xl font-black text-white">{{ stats.avgPace }}<span class="text-lg">min/km</span></p>
+                </div>
+                <div>
+                    <p class="text-white/40 text-[9px] font-bold uppercase tracking-[0.2em] mb-1">Estimated Penalty</p>
+                    <p class="text-4xl font-black text-red-400">+{{ stats.pacePenalty }}<span class="text-lg">s/km</span></p>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-5 border-t border-white/10 relative z-10">
+                <p class="text-xs text-white/70 leading-relaxed font-medium">
+                    Analisa korelasi menunjukkan: Kenaikan 10% Tar mingguan berpotensi melambatkan Pace lari Bos sejauh <span class="text-red-400 font-bold">{{ stats.pacePenalty }} detik per kilometer</span> karena beban kerja jantung yang meningkat.
+                </p>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 rounded-full border-4 border-orange-100 bg-orange-50 flex items-center justify-center text-orange-600 mb-6">
+                <i data-lucide="battery-charging" class="w-10 h-10 animate-pulse"></i>
+            </div>
+            <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Alveoli Recovery Window</p>
+            <p class="text-4xl font-black text-slate-900 uppercase italic tracking-tight">~{{ stats.recoveryDays }} <span class="text-2xl text-slate-500">Days</span></p>
+            <p class="text-[10px] text-slate-500 mt-3 leading-relaxed max-w-xs">
+                Waktu estimasi untuk membersihkan residu Tar di paru-paru jika Bos berhenti merokok mulai hari ini, berdasarkan akumulasi All-Time.
+            </p>
+        </div>
+    </div>
+</div>
+
+
 </div>
 `;
