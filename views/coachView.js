@@ -22,6 +22,12 @@ export default `
             <i data-lucide="activity" class="w-4 h-4 text-green-500 transition-colors"></i>
             <span class="text-[10px] font-black uppercase tracking-widest italic">Movement Engine</span>
         </button>
+
+        <button @click="goToTobaccoEngine" 
+            class="group flex items-center gap-2 px-4 py-2 bg-white hover:bg-orange-50 text-slate-900 rounded-xl transition-all shadow-sm border border-slate-200 hover:border-orange-200">
+        <i data-lucide="cigarette" class="w-4 h-4 text-orange-500 transition-colors"></i>
+        <span class="text-[10px] font-black uppercase tracking-widest italic">Tobacco Engine</span>
+    </button>
         
     </header>
 
