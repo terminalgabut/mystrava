@@ -1,5 +1,6 @@
 // views/TobaccoEngine.js
 import { supabase } from '../js/services/supabase.js';
+import { stravaService } from '../js/services/stravaService.js'; 
 import TobaccoEngineTemplate from './TobaccoView.js';
 
 export default {
@@ -82,16 +83,24 @@ export default {
                 else if (this.timeFilter === 'yearly') startDate.setFullYear(startDate.getFullYear() - 1);
                 else startDate = new Date('2020-01-01');
 
-                const { data, error } = await supabase
-                    .from('user_smoking_logs')
-                    .select(`log_time, sticks_count, tobacco_products (tar_mg)`)
-                    .gte('log_time', startDate.toISOString())
-                    .order('log_time', { ascending: true });
+                // Eksekusi Paralel: Ambil Data Rokok (Filtered) & Data Pace (All Time)
+                const [tobaccoRes, stravaRes] = await Promise.all([
+                    supabase.from('user_smoking_logs')
+                        .select(`log_time, sticks_count, tobacco_products (tar_mg)`)
+                        .gte('log_time', startDate.toISOString())
+                        .order('log_time', { ascending: true }),
+                    stravaService.getStats('Run', 'all_time', 'total') 
+                ]);
 
-                if (error) throw error;
+                if (tobaccoRes.error) throw tobaccoRes.error;
 
-                // Grouping per hari untuk chart
-                const grouped = data.reduce((acc, curr) => {
+                // 1. Masukkan Avg Pace All-Time ke State
+                if (stravaRes && stravaRes.avgPace) {
+                    this.stats.avgPace = stravaRes.avgPace;
+                }
+
+                // 2. Grouping per hari untuk chart
+                const grouped = (tobaccoRes.data || []).reduce((acc, curr) => {
                     const date = curr.log_time.split('T')[0];
                     const tarLoad = (curr.tobacco_products?.tar_mg || 0) * curr.sticks_count;
                     acc[date] = (acc[date] || 0) + tarLoad;
@@ -103,10 +112,12 @@ export default {
                     total_tar: grouped[date]
                 }));
 
-                // Update correlation stats sederhana
+                // 3. Update Audit Stats (Penalty & Recovery)
                 const totalTarMg = parseFloat(this.totalPeriodTar) * 1000;
-                this.stats.pacePenalty = Math.round((totalTarMg / 500) * 5);
+                // Formula: Tiap 1 gram Tar = +2 detik penalty
+                this.stats.pacePenalty = Math.round((totalTarMg / 1000) * 2); 
                 this.stats.recoveryDays = Math.round(totalTarMg / 25);
+
             } catch (err) {
                 console.error("Historical Fetch Error:", err);
             }
