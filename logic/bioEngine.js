@@ -31,21 +31,28 @@ export const BioEngine = {
                 let modifier = 0;
 
                 // A. RHR Penalty/Bonus (Baseline 62 BPM)
-                const rhrDiff = (recovery.morning_rhr || 62) - 62;
-                if (rhrDiff > 5) modifier -= 20; // Jantung stres
-                else if (rhrDiff <= 0) modifier += 10; // Jantung rileks
+                const currentRhr = recovery.morning_rhr || 62;
+                const rhrDiff = currentRhr - 62;
+                
+                // Perhalus: Setiap kenaikan 1 BPM di atas ambang +3, potong 4 poin
+                if (rhrDiff > 3) {
+                    modifier -= Math.min(25, (rhrDiff - 3) * 4); 
+                } else if (rhrDiff <= 0) {
+                    modifier += 5; // Bonus kecil jika jantung sangat tenang
+                }
 
                 // B. Sleep Quality & Duration
                 const sleepHours = this._calculateSleepHours(recovery);
-                if (sleepHours > 0 && sleepHours < 6.5) modifier -= 15;
-                else if (sleepHours >= 7.5) modifier += 10;
+                if (sleepHours > 0) {
+                    if (sleepHours < 6) modifier -= 15;
+                    else if (sleepHours < 7) modifier -= 5;
+                    else if (sleepHours >= 8) modifier += 10;
+                }
                 
-                if (recovery.sleep_quality < 5) modifier -= 10;
-
-                // C. Soreness (Otot) - Skala 1-10
-                // 1-4: Sakit/Pegel, 5-7: Normal, 8-10: Segar
+                // C. Soreness (Otot)
                 const soreness = recovery.soreness || 7;
-                if (soreness <= 4) modifier -= 15;
+                if (soreness <= 3) modifier -= 20; // Critical Pain
+                else if (soreness === 4) modifier -= 10; // Sore
                 else if (soreness >= 9) modifier += 5;
 
                 finalReadiness += modifier;
