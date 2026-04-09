@@ -10,7 +10,7 @@ export default {
     setup() {
         const { ref, onMounted, nextTick, watch } = Vue;
 
-        const sleepMode = ref('night'); 
+        const sleepMode = ref('night'); // 'night' atau 'nap'
         const isLoading = ref(false);
         
         const form = ref({
@@ -31,14 +31,15 @@ export default {
             try {
                 const todayData = await CoachLogic.getTodayRecovery();
                 if (todayData) {
+                    // Mapping balik dari nama kolom DB asli ke form UI
                     form.value = {
                         ...form.value,
-                        // Mapping balik dari nama kolom DB ke form UI
                         start: todayData.sleep_start?.split('T')[1]?.substring(0,5) || '22:30',
                         end: todayData.sleep_end?.split('T')[1]?.substring(0,5) || '06:30',
                         latency: todayData.sleep_latency_mins || 15,
                         nap: todayData.nap_duration_mins || 0,
-                        quality: todayData.sleep_quality || 7
+                        quality: todayData.sleep_quality || 7,
+                        isComplete: todayData.is_overnight_complete ?? true
                     };
                 }
             } catch (err) {
@@ -51,51 +52,53 @@ export default {
         const saveSleepData = async () => {
             isLoading.value = true;
             try {
-                // Jalur Dinamis: Gunakan tanggal lokal WIB sebagai jangkar (Anchor)
-                const todayLocal = new Date().toLocaleDateString('en-CA'); 
-                let payload = {
-                    check_in_date: todayLocal
-                };
+                let payload = {};
 
                 if (sleepMode.value === 'night') {
-                    // MODE MALAM: Petakan langsung ke nama kolom asli DB
+                    /**
+                     * MODE NIGHT
+                     * Menggunakan KEY LAMA agar diterima oleh CoachLogic.saveDailyRecovery
+                     * CoachLogic akan mengubah:
+                     * start -> sleep_start
+                     * end -> sleep_end
+                     * quality -> sleep_quality
+                     */
                     payload = {
-                        ...payload,
-                        sleep_start: `${todayLocal}T${form.value.start}:00Z`, 
-                        sleep_end: `${todayLocal}T${form.value.end}:00Z`,
-                        sleep_quality: parseInt(form.value.quality),
-                        sleep_latency_mins: parseInt(form.value.latency),
-                        is_overnight_complete: true,
-                        // Amankan data Nap agar tidak tertimpa
-                        nap_duration_mins: undefined 
+                        start: form.value.start,
+                        end: form.value.end,
+                        quality: parseInt(form.value.quality),
+                        isComplete: true,
+                        // Catatan: latency tidak di-map oleh CoachLogic saat ini, 
+                        // tapi kita kirim saja untuk persiapan masa depan
+                        latency: parseInt(form.value.latency)
                     };
-                    
-                    // Logika Ganti Tanggal: Jika jam bangun < jam tidur, berarti bangun besoknya
-                    if (form.value.end < form.value.start) {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        payload.sleep_end = `${tomorrow.toLocaleDateString('en-CA')}T${form.value.end}:00Z`;
-                    }
                 } else {
-                    // MODE NAP: Kalkulasi menit dan amankan jam malam
+                    /**
+                     * MODE NAP
+                     * Menghitung durasi menit untuk dikirim sebagai 'nap'
+                     */
                     const startTime = new Date(`2026-01-01T${form.value.start}:00`);
                     let endTime = new Date(`2026-01-01T${form.value.end}:00`);
+                    
                     if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
                     const diffMins = Math.round((endTime - startTime) / (1000 * 60));
 
                     payload = {
-                        ...payload,
-                        nap_duration_mins: diffMins,
-                        // Set field Night sebagai undefined agar data lama di DB tidak hilang
-                        sleep_start: undefined,
-                        sleep_end: undefined,
-                        sleep_quality: undefined,
-                        is_overnight_complete: false
+                        start: undefined, // undefined agar CoachLogic tidak memproses start/end
+                        end: undefined,
+                        nap: diffMins,
+                        isComplete: false
                     };
                 }
                 
-                // Eksekusi Simpan ke DB melalui CoachLogic
+                /**
+                 * EKSEKUSI
+                 * Karena CoachLogic sudah pakai 'upsert' dengan 'onConflict: check_in_date',
+                 * maka data RHR atau Soreness yang sudah ada di DB TIDAK AKAN tertimpa
+                 * selama kita tidak mengirim key 'rhr' atau 'soreness' dalam payload ini.
+                 */
                 const success = await CoachLogic.saveDailyRecovery(payload);
+                
                 if (success) {
                     window.location.hash = '#/coach'; 
                 }
@@ -106,7 +109,9 @@ export default {
             }
         };
 
+        // Otomatis refresh icon saat toggle mode
         watch(sleepMode, () => refreshIcons());
+
         onMounted(loadExistingData);
 
         return {
