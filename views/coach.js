@@ -82,13 +82,42 @@ export default {
                     breathing_tip: prescription.tip
                 };
 
-                dynamicInsights.value = RecoveryInsights.getDynamicCards(recoveryData, intel.recovery.score, intel.recovery.isSynced);
+                dynamicInsights.value = RecoveryInsights.getDynamicCards(
+                    recoveryData, 
+                    intel.recovery.score, 
+                    intel.recovery.isSynced
+                );
                 
                 efficiencyInsights.value = [
-                    { label: 'Workload (ACWR)', value: `${intel.readiness.acwr}x`, color: 'blue' },
-                    { label: 'Leg Resilience', value: ReadinessInsights.getResilienceLabel(intel.resilience.score), color: 'emerald' }
+                    { 
+                        label: 'Workload (ACWR)', 
+                        value: `${intel.readiness.acwr}x`, 
+                        percentage: Math.min((parseFloat(intel.readiness.acwr) / 1.5) * 100, 100),
+                        color: 'blue' 
+                    },
+                    { 
+                        label: 'Leg Resilience', 
+                        value: ReadinessInsights.getResilienceLabel(intel.resilience.score), 
+                        percentage: intel.resilience.score,
+                        color: 'emerald' 
+                    }
                 ];
 
+                // FIX 3: Isi Interaction Log (History) agar tidak kosong
+                coachHistory.value = [
+                    { 
+                        id: 1, 
+                        type: 'Success', 
+                        date: 'NOW', 
+                        message: `System Check: ${meta.label} status confirmed.` 
+                    },
+                    { 
+                        id: 2, 
+                        type: 'Info', 
+                        date: 'BIO', 
+                        message: `RHR Baseline: ${intel.recovery.rhr || '--'} BPM detected.` 
+                    }
+                ];
                 pendingActivity.value = pending;
 
                 nextTick(() => {
