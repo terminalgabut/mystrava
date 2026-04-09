@@ -2,9 +2,6 @@
 import { Logger } from '../js/services/debug.js';
 
 export const IntelligenceCore = {
-    /**
-     * MENGHITUNG KESELURUHAN STATUS ATLET
-     */
     calculate(rawActivities, recoveryData, workloadStats) {
         try {
             const acwr = workloadStats?.ratio || 1.0;
@@ -13,90 +10,88 @@ export const IntelligenceCore = {
             // 1. BASE READINESS (ACWR Logic)
             let baseScore = this._calculateBaseByACWR(acwr);
 
-            // 2. BIOMETRIC MODIFIERS (RHR, Sleep, Soreness)
-            const modifiers = this._calculateBiometricModifiers(recoveryData);
+            // 2. BIOMETRIC & NEURAL MODIFIERS
+            let modifiers = 0;
+            let neuralInsight = null;
 
-            // 3. RECOVERY BOOST (Walk activities today)
+            if (recoveryData) {
+                // RHR (Baseline 62)
+                const rhrDiff = (recoveryData.morning_rhr || 62) - 62;
+                if (rhrDiff > 3) modifiers -= Math.min(25, (rhrDiff - 3) * 4);
+                else if (rhrDiff <= 0) modifiers += 5;
+
+                // Sleep & Latency (Neural Recovery)
+                const sleepHours = this._getSleepHours(recoveryData);
+                if (sleepHours > 0 && sleepHours < 6.5) modifiers -= 15;
+                else if (sleepHours >= 7.5) modifiers += 10;
+
+                if (recoveryData.sleep_latency_mins > 30) {
+                    modifiers -= 10;
+                    neuralInsight = { title: "Neural Overdrive", text: "Sistem saraf masih aktif (Overstimulated).", type: "warning" };
+                }
+
+                // Soreness
+                const soreness = recoveryData.soreness || 7;
+                if (soreness <= 3) modifiers -= 20;
+                else if (soreness >= 9) modifiers += 5;
+            }
+
+            // 3. RECOVERY BOOST (Walk)
             const bonus = this._calculateWalkBonus(rawActivities);
             
-            // 4. FINAL SCORE ASSEMBLY
+            // 4. FINAL ASSEMBLY
             const finalScore = Math.max(5, Math.min(100, Math.round(baseScore + modifiers + bonus)));
-
-            // 5. RESILIENCE ANALYTICS
             const resilience = this._calculateResilience(rawActivities);
 
             return {
                 readiness: {
                     score: finalScore,
-                    status: this._getReadinessStatus(finalScore),
+                    status: this._getStatus(finalScore),
                     acwr: acwr.toFixed(2)
                 },
-                workload: {
-                    ratio: acwr,
-                    score: Math.min(100, acwr * 50), // Untuk progress bar
-                    acute: acuteLoad
-                },
+                workload: { ratio: acwr, score: Math.min(100, acwr * 50) },
                 resilience: resilience,
                 prescription: this._getPrescription(finalScore, acwr),
-                dynamicInsights: this._generateSmartInsights(finalScore, acwr, recoveryData),
+                dynamicInsights: this._generateSmartInsights(finalScore, acwr, recoveryData, neuralInsight),
                 chartData: this._generateChartSeries(rawActivities, recoveryData)
             };
-
         } catch (err) {
             Logger.error("IntelligenceCore_Error", err);
             return this.getDefaults();
         }
     },
 
-    // --- INTERNAL ENGINES ---
-
     _calculateBaseByACWR(ratio) {
-        if (ratio >= 0.8 && ratio <= 1.3) return 90; // Sweet Spot
-        if (ratio > 1.3 && ratio <= 1.5) return 65;  // Stable but heavy
-        if (ratio > 1.5) return 30;                 // Overload (Garis menukik)
-        return 75;                                  // Maintaining/Fresh
-    },
-
-    _calculateBiometricModifiers(recovery) {
-        if (!recovery) return 0;
-        let mod = 0;
-
-        // A. RHR (Baseline 62)
-        const rhrDiff = (recovery.morning_rhr || 62) - 62;
-        if (rhrDiff > 3) mod -= Math.min(25, rhrDiff * 4);
-        else if (rhrDiff <= 0) mod += 5;
-
-        // B. Sleep (AASM)
-        const sleepHours = this._getSleepHours(recovery);
-        if (sleepHours > 0 && sleepHours < 6.5) mod -= 15;
-        else if (sleepHours >= 7.5) mod += 10;
-
-        // C. Soreness
-        const soreness = recovery.soreness || 7;
-        if (soreness <= 4) mod -= 15;
-        else if (soreness >= 9) mod += 5;
-
-        return mod;
+        if (ratio > 1.5) return 20; 
+        if (ratio > 1.3) return 60;
+        if (ratio >= 0.8) return 85;
+        return 75;
     },
 
     _calculateWalkBonus(activities) {
         const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-        const todayWalks = activities.filter(a => {
-            const date = new Date(a.start_date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-            return date === todayWib && a.type === 'Walk';
-        });
-
+        const todayWalks = activities.filter(a => 
+            new Date(a.start_date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) === todayWib && a.type === 'Walk'
+        );
         let bonus = 0;
         todayWalks.forEach(a => {
             const pace = (a.moving_time / 60) / (a.distance / 1000);
-            if (pace >= 15) bonus += 15; 
-            else if (pace >= 10) bonus += 7;
+            bonus += pace >= 15 ? 15 : (pace >= 10 ? 7 : 0);
         });
         return bonus;
     },
 
+    _calculateResilience(activities) {
+        const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+        const data = activities.filter(a => new Date(a.start_date) >= fourteenDaysAgo);
+        const totalElev = data.reduce((sum, a) => sum + (a.total_elevation_gain || 0), 0);
+        const totalDist = data.reduce((sum, a) => sum + (a.distance || 0), 0) / 1000;
+        const climbRatio = totalDist > 0 ? (totalElev / totalDist) : 0;
+        const score = Math.min(100, Math.round((climbRatio / 60) * 100));
+        return { score, label: score > 75 ? 'Mountain Goat' : (score > 45 ? 'Strong' : 'Developing') };
+    },
+
     _generateChartSeries(activities, recoveryData) {
-        // AMBIL 7 HARI TERAKHIR (WIB)
         const days = [];
         const labels = [];
         for (let i = 6; i >= 0; i--) {
@@ -110,80 +105,31 @@ export const IntelligenceCore = {
             activities.filter(a => a.start_date.startsWith(day)).reduce((sum, a) => sum + (a.kilojoules || 0), 0)
         );
 
-        // GARIS HITAM (READINESS) YANG SINKRON
         const readinessSeries = days.map((day, idx) => {
             const dailyLoad = workloadSeries[idx];
             const last7Days = workloadSeries.slice(Math.max(0, idx - 6), idx + 1);
-            const chronicLoad = last7Days.reduce((a, b) => a + b, 0) / last7Days.length;
-            const ratio = chronicLoad > 0 ? (dailyLoad / chronicLoad) : 1.0;
-
-            // Gunakan logic yang sama dengan calculate()
-            let s = this._calculateBaseByACWR(ratio);
-            
-            // Cek RHR di hari tersebut jika ada
-            // (Asumsi sederhana: kita cuma punya RHR hari ini di parameter, 
-            // untuk historical chart idealnya recoveryData dikirim sebagai array)
-            return Math.max(10, Math.min(100, s));
+            const chronicLoad = (last7Days.reduce((a, b) => a + b, 0) / last7Days.length) || 1;
+            return this._calculateBaseByACWR(dailyLoad / chronicLoad);
         });
 
-        const rhrSeries = days.map(day => {
-            // Logic ambil RHR historical jika ada
-            return null; 
-        });
-
-        return { labels, workloadSeries, readinessSeries, rhrSeries, baselineRhr: 62 };
-    },
-
-    _calculateResilience(activities) {
-        const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-        const data = activities.filter(a => new Date(a.start_date) >= fourteenDaysAgo);
-        const totalElev = data.reduce((sum, a) => sum + (a.total_elevation_gain || 0), 0);
-        const totalDist = data.reduce((sum, a) => sum + (a.distance || 0), 0) / 1000;
-        const climbRatio = totalDist > 0 ? (totalElev / totalDist) : 0;
-        const score = Math.min(100, Math.round((climbRatio / 60) * 100));
-        
-        let label = 'Developing';
-        if (score > 75) label = 'Mountain Goat';
-        else if (score > 45) label = 'Strong';
-        
-        return { score, label };
-    },
-
-    _getReadinessStatus(score) {
-        if (score < 35) return 'CRITICAL';
-        if (score < 65) return 'STABLE';
-        if (score > 85) return 'ELITE';
-        return 'RECOVERING';
+        return { labels, workloadSeries, readinessSeries, rhrSeries: days.map(() => null), baselineRhr: 62 };
     },
 
     _getPrescription(score, acwr) {
         if (acwr > 1.5) return { recommendation: 'Total Rest', tip: 'ACWR Danger! Risiko cedera tinggi.' };
-        if (score < 40) return { recommendation: 'Deep Recovery', tip: 'Hanya jalan santai atau istirahat total.' };
-        if (score < 65) return { recommendation: 'Active Recovery', tip: 'Gowes/Lari Zona 1 saja.' };
+        if (score < 40) return { recommendation: 'Rest Day', tip: 'Sistem kritis. Fokus nutrisi dan tidur.' };
         return { recommendation: 'Train Hard', tip: 'Kondisi prima. Siap untuk sesi intensitas!' };
     },
 
-    _generateSmartInsights(score, acwr, recovery) {
+    _generateSmartInsights(score, acwr, recovery, neural) {
         const insights = [];
-        if (acwr > 1.5) insights.push({ type: 'danger', title: 'Overload', text: 'Beban naik terlalu tajam.' });
-        if (recovery?.morning_rhr > 65) insights.push({ type: 'warning', title: 'High RHR', text: 'Jantung menunjukkan indikasi kelelahan.' });
-        if (insights.length === 0) insights.push({ type: 'success', title: 'Synced', text: 'Sistem tubuh dalam kondisi seimbang.' });
+        if (acwr > 1.5) insights.push({ type: 'danger', title: 'Overload Beban', text: 'Beban naik terlalu tajam.' });
+        if (neural) insights.push(neural);
+        if (insights.length === 0) insights.push({ type: 'success', title: 'Neural Synced', text: 'Kondisi tubuh dan beban seimbang.' });
         return insights;
     },
 
-    _getSleepHours(rec) {
-        if (!rec?.sleep_start || !rec?.sleep_end) return 0;
-        return (new Date(rec.sleep_end) - new Date(rec.sleep_start)) / (1000 * 60 * 60);
-    },
-
-    getDefaults() {
-        return {
-            readiness: { score: 0, status: 'CALIBRATING' },
-            workload: { ratio: 0, acute: 0 },
-            resilience: { score: 0, label: 'N/A' },
-            prescription: { recommendation: 'Analysing...', tip: 'Wait.' },
-            dynamicInsights: [],
-            chartData: null
-        };
-    }
+    _getStatus: (s) => (s < 35 ? 'CRITICAL' : s < 65 ? 'STABLE' : 'ELITE'),
+    _getSleepHours: (rec) => (!rec?.sleep_start || !rec?.sleep_end ? 0 : (new Date(rec.sleep_end) - new Date(rec.sleep_start)) / (1000 * 60 * 60)),
+    getDefaults: () => ({ readiness: { score: 0, status: 'CALIBRATING' }, workload: { ratio: 0 }, resilience: { score: 0, label: 'N/A' }, prescription: { recommendation: '...', tip: '...' }, dynamicInsights: [], chartData: null })
 };
