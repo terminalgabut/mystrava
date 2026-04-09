@@ -1,6 +1,6 @@
-// js/logic/CoachInsights.js
+// js/logic/readinessInsights.js
 
-export const CoachInsights = {
+export const readinessInsights = {
     generate(intel) {
         if (!intel) return this.getDefaults();
 
