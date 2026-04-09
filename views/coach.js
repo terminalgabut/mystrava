@@ -1,6 +1,7 @@
 import coachTemplate from './coachView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { IntelligenceCore } from '../logic/IntelligenceCore.js';
+import { CoachInsights } from '../logic/CoachInsights.js';
 import { Logger } from '../js/services/debug.js';
 
 export default {
@@ -183,14 +184,15 @@ export default {
 
         // SATU PINTU PROSES
         const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats);
+        const aiTalk = CoachInsights.generate(intel); 
 
         // MAPPING KE UI
         pendingActivity.value = pending;
         isRecoverySynced.value = !!recoveryData;
         readinessScore.value = intel.readiness.score;
-        readinessStatus.value = intel.readiness.status;
-        dynamicInsights.value = intel.dynamicInsights;
-        coachBrief.value = intel.prescription;
+        readinessStatus.value = aiTalk.status;
+        coachBrief.value = aiTalk.prescription;
+        dynamicInsights.value = aiTalk.dynamicInsights;
         
         efficiencyInsights.value = [
             { label: 'Workload (ACWR)', value: `${intel.readiness.acwr}x`, percentage: intel.workload.score },
