@@ -55,7 +55,42 @@ export default {
             }
 
             return "Data tercatat. Pastikan hidrasi ekstra untuk membantu ginjal memproses residu metabolisme.";
+        },
+
+    // Estimasi Kejenuhan Karbon Monoksida (CO)
+    // CO bertahan 4-8 jam, kita buat estimasi kasar berdasarkan jumlah batang
+    coSaturation() {
+        const sticks = this.stats.todaySticks;
+        if (sticks === 0) return 0;
+        // Estimasi: 1 batang kretek berat ~ 1-1.5% CO saturation
+        return Math.min((sticks * 1.2), 15).toFixed(1);
+    },
+
+    // Efisiensi Oksigen (Efek Tar terhadap Alveoli)
+    oxygenEfficiency() {
+        const tar = parseFloat(this.stats.todayTar);
+        if (tar === 0) return 100;
+        // Penalti efisiensi: Setiap 100mg Tar mengurangi efisiensi difusi ~2%
+        const penalty = (tar / 100) * 2.5;
+        return Math.max(100 - penalty, 70).toFixed(1);
+    },
+
+    deepInsight() {
+        const tar = parseFloat(this.stats.todayTar);
+        const co = this.coSaturation;
+
+        if (tar === 0) return "Sistem bersih. Ini adalah waktu terbaik untuk melakukan Threshold Run atau mencoba Personal Best (PB).";
+
+        if (tar > 300) {
+            return `Peringatan: Tar akumulasi (${tar}mg) sudah di zona merah. Sensasi benda tumpul di dada saat lari tadi pagi adalah sinyal alveoli Anda 'tercekik'. CO Saturation Anda (${co}%) berarti darah Anda membawa racun lebih banyak dari biasanya. Sangat disarankan hanya melakukan 'Very Easy Walk' untuk hari ini.`;
         }
+
+        if (tar > 100) {
+            return "Kadar Tar menengah. Anda mungkin akan merasa napas lebih pendek (shortness of breath) saat melewati Heart Rate 150 BPM. Fokus pada hidrasi untuk membantu pembersihan sistemik.";
+        }
+
+        return "Beban toksik ringan terdeteksi. Tetap waspada pada ritme jantung Anda.";
+    }
     },
 
     methods: {
