@@ -160,8 +160,8 @@ async getPendingRPE() {
     },
 
     /**
-     * 8. WEEKLY TREND (Chart Sinkron WIB & ACWR-based Readiness)
-     * Sinkronisasi data beban dan simulasi tren kesiapan (garis hitam)
+     * 8. WEEKLY TREND (SINKRON DENGAN BIOENGINE & SQL)
+     * Menghapus logic "Fresh Palsu" dan menggunakan moving average yang lebih cerdas
      */
     async getWeeklyTrend() {
         try {
@@ -171,61 +171,57 @@ async getPendingRPE() {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 days.push(d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }));
-                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' })); // Sen, Sel, dst.
+                labels.push(d.toLocaleDateString('id-ID', { weekday: 'short' }));
             }
 
-            // 1. Ambil data mentah (WIB)
             const [ { data: activities }, { data: recoveries } ] = await Promise.all([
-                supabase
-                    .from('activities')
-                    .select('start_date, kilojoules')
-                    .gte('start_date', days[0]),
-                supabase
-                    .from('daily_recovery')
-                    .select('check_in_date, morning_rhr')
-                    .gte('check_in_date', days[0])
+                supabase.from('activities').select('start_date, kilojoules').gte('start_date', days[0]),
+                supabase.from('daily_recovery').select('check_in_date, morning_rhr').gte('check_in_date', days[0])
             ]);
 
-            // 2. Data Batang: Daily Load (Sudah benar)
             const workloadSeries = days.map(day => 
-                (activities || [])
-                .filter(a => a.start_date.startsWith(day))
-                .reduce((sum, a) => sum + (a.kilojoules || 0), 0)
+                (activities || []).filter(a => a.start_date.startsWith(day)).reduce((sum, a) => sum + (a.kilojoules || 0), 0)
             );
 
-            // 3. Data Titik: Morning RHR (Sudah benar)
             const rhrSeries = days.map(day => {
                 const rec = (recoveries || []).find(r => r.check_in_date === day);
                 return rec ? rec.morning_rhr : null;
             });
 
-            // 4. Data Garis Hitam: Simulasikan Readiness Kumulatif (FIX LOGIKA)
-            // Di sini kita tidak lagi memakai limit 3000 kJ yang kaku.
+            // --- PERBAIKAN LOGIC GARIS HITAM (READINESS) ---
             const readinessSeries = days.map((day, idx) => {
-                // Volume latihan harian dibanding rata-rata 7 hari
                 const dailyLoad = workloadSeries[idx];
-                const totalLoadSoFar = workloadSeries.slice(0, idx + 1).reduce((a, b) => a + b, 0);
-                const avgLoad = totalLoadSoFar / (idx + 1);
-
-                // Perhitungan ACWR kasar untuk simulasi harian
-                // Sweet Spot = ratio 1.0 (Skor 85-100)
-                // Overload = ratio > 1.5 (Skor anjlok)
+                
+                // Gunakan 7-day Moving Average untuk simulasi Chronic Load di Chart
+                const last7Days = workloadSeries.slice(Math.max(0, idx - 6), idx + 1);
+                const avgLoad = last7Days.reduce((a, b) => a + b, 0) / last7Days.length;
+                
+                // Hitung Ratio (ACWR sederhana untuk visualisasi)
                 const tempRatio = avgLoad > 0 ? (dailyLoad / avgLoad) : 1.0;
                 
-                let score = 80; // Baseline netral
+                let score = 75; // Baseline Netral
 
-                if (tempRatio >= 0.8 && tempRatio <= 1.3) score += 15; // Primed
-                else if (tempRatio > 1.3 && tempRatio <= 1.5) score = 65; // Stable
-                else if (tempRatio > 1.5) score = 20; // Fatigued
-                else if (dailyLoad < 100) score = 90; // Fresh
+                if (tempRatio >= 0.8 && tempRatio <= 1.3) {
+                    score = 90; // Optimal / Primed
+                } else if (tempRatio > 1.3 && tempRatio <= 1.5) {
+                    score = 65; // Stable but Tired
+                } else if (tempRatio > 1.5) {
+                    score = 35; // Fatigued (Batang biru tinggi = Garis hitam jatuh)
+                } else {
+                    // Jika dailyLoad rendah, skor naik pelan (Recovery Flow)
+                    // TIDAK LAGI LANGSUNG 90. Kita cek trend RHR juga di sini.
+                    score = 75 + (idx * 2); 
+                }
 
-                // Modifier Biometrik Harian (RHR)
+                // Modifier RHR (Jangkar detak jantung)
                 const dailyRhr = rhrSeries[idx];
                 const rhrBaseline = 62;
-                if (dailyRhr && dailyRhr > rhrBaseline + 5) score -= 15; // Jantung stres
-                else if (dailyRhr && dailyRhr <= rhrBaseline) score += 5; // Jantung segar
+                if (dailyRhr) {
+                    const rhrDiff = dailyRhr - rhrBaseline;
+                    if (rhrDiff > 5) score -= 15;
+                    else if (rhrDiff <= 0) score += 5;
+                }
 
-                // Batas keamanan agar garis tidak lari ke 0 atau 100+
                 return Math.max(10, Math.min(100, Math.round(score)));
             });
 
@@ -235,5 +231,4 @@ async getPendingRPE() {
             return null;
         }
     }
-    
 };
