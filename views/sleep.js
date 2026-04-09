@@ -1,3 +1,5 @@
+// views/sleep.js
+
 import sleepTemplate from './sleepView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { Logger } from '../js/services/debug.js';
@@ -31,7 +33,7 @@ export default {
                 if (todayData) {
                     form.value = {
                         ...form.value,
-                        // Konversi UTC dari DB ke local jam menit untuk UI
+                        // Mapping balik dari nama kolom DB ke form UI
                         start: todayData.sleep_start?.split('T')[1]?.substring(0,5) || '22:30',
                         end: todayData.sleep_end?.split('T')[1]?.substring(0,5) || '06:30',
                         latency: todayData.sleep_latency_mins || 15,
@@ -49,33 +51,33 @@ export default {
         const saveSleepData = async () => {
             isLoading.value = true;
             try {
-                // Jalur Dinamis: Gunakan check_in_date lokal (WIB) sebagai anchor di DB
-                const todayLocal = new Date().toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+                // Jalur Dinamis: Gunakan tanggal lokal WIB sebagai jangkar (Anchor)
+                const todayLocal = new Date().toLocaleDateString('en-CA'); 
                 let payload = {
                     check_in_date: todayLocal
                 };
 
                 if (sleepMode.value === 'night') {
-                    // MODE MALAM: Sinkronkan dengan kolom DB asli
+                    // MODE MALAM: Petakan langsung ke nama kolom asli DB
                     payload = {
                         ...payload,
-                        // Kirim string ISO UTC agar DB tidak bingung
                         sleep_start: `${todayLocal}T${form.value.start}:00Z`, 
                         sleep_end: `${todayLocal}T${form.value.end}:00Z`,
                         sleep_quality: parseInt(form.value.quality),
                         sleep_latency_mins: parseInt(form.value.latency),
                         is_overnight_complete: true,
-                        nap_duration_mins: undefined // Pakai undefined agar data Nap lama di DB aman
+                        // Amankan data Nap agar tidak tertimpa
+                        nap_duration_mins: undefined 
                     };
                     
-                    // Koreksi jika bangun di hari berikutnya
+                    // Logika Ganti Tanggal: Jika jam bangun < jam tidur, berarti bangun besoknya
                     if (form.value.end < form.value.start) {
                         const tomorrow = new Date();
                         tomorrow.setDate(tomorrow.getDate() + 1);
                         payload.sleep_end = `${tomorrow.toLocaleDateString('en-CA')}T${form.value.end}:00Z`;
                     }
                 } else {
-                    // MODE NAP: Hitung durasi dan amankan jam malam
+                    // MODE NAP: Kalkulasi menit dan amankan jam malam
                     const startTime = new Date(`2026-01-01T${form.value.start}:00`);
                     let endTime = new Date(`2026-01-01T${form.value.end}:00`);
                     if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
@@ -84,7 +86,7 @@ export default {
                     payload = {
                         ...payload,
                         nap_duration_mins: diffMins,
-                        // Field Night diset undefined agar Jam Malam di DB tidak tertimpa NULL
+                        // Set field Night sebagai undefined agar data lama di DB tidak hilang
                         sleep_start: undefined,
                         sleep_end: undefined,
                         sleep_quality: undefined,
@@ -92,7 +94,7 @@ export default {
                     };
                 }
                 
-                // Kirim ke CoachLogic yang sudah kita mapping ke kolom DB asli
+                // Eksekusi Simpan ke DB melalui CoachLogic
                 const success = await CoachLogic.saveDailyRecovery(payload);
                 if (success) {
                     window.location.hash = '#/coach'; 
