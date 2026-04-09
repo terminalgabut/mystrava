@@ -2,13 +2,14 @@ import coachTemplate from './coachView.js';
 import { CoachLogic } from '../logic/coachLogic.js';
 import { IntelligenceCore } from '../logic/IntelligenceCore.js';
 import { ReadinessInsights } from '../logic/insights/readinessInsights.js';
+import { RecoveryInsights } from '../logic/insights/recoveryInsights.js'; 
 import { Logger } from '../js/services/debug.js';
 
 export default {
     name: 'CoachView',
     template: coachTemplate,
     setup() {
-        const { ref, onMounted, nextTick, computed } = Vue;
+        const { ref, onMounted, nextTick } = Vue;
 
         // --- REGISTRASI PLUGIN CHART ---
         if (window.Chart && window['chartjs_plugin_annotation']) {
@@ -35,11 +36,11 @@ export default {
         let correlationChart = null;
         let rhrChart = null;
 
-        // --- CHART ENGINE (Visualisasi) ---
+        // --- CHART ENGINE ---
         const renderCharts = (trendData) => {
             if (!trendData) return;
+            console.log("📊 Rendering Charts with data:", trendData);
 
-            // 1. Correlation Chart (Load vs Readiness)
             const ctxCorr = document.getElementById('correlationChart')?.getContext('2d');
             if (ctxCorr) {
                 if (correlationChart) correlationChart.destroy();
@@ -56,7 +57,6 @@ export default {
                 });
             }
 
-            // 2. RHR Chart
             const ctxRhr = document.getElementById('rhrChart')?.getContext('2d');
             if (ctxRhr) {
                 if (rhrChart) rhrChart.destroy();
@@ -64,35 +64,50 @@ export default {
                     type: 'line',
                     data: {
                         labels: trendData.labels,
-                        datasets: [{ data: trendData.rhrSeries, borderColor: '#60a5fa', tension: 0.4, fill: false }]
+                        datasets: [{ data: trendData.rhrSeries, borderColor: '#60a5fa', tension: 0.4, fill: false, pointRadius: 4 }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: false, grid: { display: false } } }
+                    }
                 });
             }
         };
 
         // --- CORE LOGIC: INITIALIZATION ---
         const initCoach = async () => {
+            console.time("⏱️ Coach_Init_Time");
             isLoading.value = true;
             try {
-                // 1. Ambil semua data mentah dari Logic
+                // 1. Ambil data mentah (Mapping Jalur 1 & 2)
                 const [rawActivities, pending, recoveryData, workloadStats, trend] = await Promise.all([
                     CoachLogic.getRawActivityData(),
                     CoachLogic.getPendingRPE(),
                     CoachLogic.getTodayRecovery(),
                     CoachLogic.getWorkloadStats(),
-                    CoachLogic.getWeeklyTrend() // Data mentah 7 hari
+                    CoachLogic.getWeeklyTrend()
                 ]);
 
-                // 2. Hitung angka di IntelligenceCore (Orchestrator)
+                // 2. Proses di IntelligenceCore (Orchestrator + Debugger)
+                // Kita kirim trend.recoveries agar grafik RHR muncul
                 const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats, trend.recoveries);
 
-                // 3. Ambil Narasi dari ReadinessInsights (The Storyteller)
+                // 3. Mapping Kesiapan (Readiness Insights)
                 const meta = ReadinessInsights.getStatusMetadata(intel.readiness.score);
                 const prescription = ReadinessInsights.getPrescription(intel.readiness.score, parseFloat(intel.readiness.acwr));
                 const resLabel = ReadinessInsights.getResilienceLabel(intel.resilience.score);
 
-                // 4. Update UI State
+                // 4. Mapping Pemulihan Dinamis (Recovery Insights)
+                // Ini yang memunculkan kartu "Neural Synced" atau "Elevated RHR"
+                dynamicInsights.value = RecoveryInsights.getDynamicCards(
+                    recoveryData, 
+                    intel.recovery.score, 
+                    intel.recovery.isSynced
+                );
+
+                // 5. Update UI State
                 readinessScore.value = intel.readiness.score;
                 readinessStatus.value = meta.label;
                 coachBrief.value = {
@@ -105,13 +120,13 @@ export default {
                     { label: 'Leg Resilience', value: resLabel, color: 'emerald' }
                 ];
 
-                // 5. Update History
+                // 6. Log History
                 coachHistory.value = [
-                    { id: 1, type: 'Success', date: 'TODAY', message: `Neural Sync: ${meta.label} status confirmed.` },
-                    { id: 2, type: 'Info', date: 'DATA', message: `ACWR stability at ${intel.readiness.acwr}x.` }
+                    { id: Date.now(), type: 'Success', date: 'NOW', message: `Core Intelligence Synced: ${meta.label} state.` },
+                    { id: Date.now()-1, type: 'Info', date: 'BIO', message: `RHR baseline analyzed at ${intel.recovery.rhr || '--'} BPM.` }
                 ];
 
-                // 6. Render Grafik
+                // 7. Render Charts & Icons
                 nextTick(() => {
                     renderCharts(intel.chartData);
                     if (window.lucide) window.lucide.createIcons();
@@ -119,8 +134,10 @@ export default {
 
             } catch (err) {
                 Logger.error("Coach_Init_Error", err);
+                console.error("Critical Coach Init Failure:", err);
             } finally {
                 isLoading.value = false;
+                console.timeEnd("⏱️ Coach_Init_Time");
             }
         };
 
