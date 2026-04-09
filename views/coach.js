@@ -145,23 +145,30 @@ export default {
         };
 
         const saveRecovery = async () => {
-            isLoading.value = true;
-            try {
-                const success = await CoachLogic.saveDailyRecovery({
-                    sleep_quality: recoveryForm.value.quality,
-                    morning_rhr: recoveryForm.value.rhr,
-                    soreness: sorenessValue.value
-                });
-                if (success) {
-                    isRecoveryModalOpen.value = false;
-                    await initCoach();
-                }
-            } catch (err) {
-                Logger.error("SaveRecovery_Error", err);
-            } finally {
-                isLoading.value = false;
-            }
+    isLoading.value = true;
+    try {
+        const payload = { 
+            // Mapping Jalur Baru: Sesuai Kolom DB
+            check_in_date: new Date().toISOString().split('T')[0],
+            morning_rhr: parseInt(recoveryForm.value.rhr),
+            sleep_quality: parseInt(recoveryForm.value.quality),
+            soreness: parseInt(sorenessValue.value),
+            
+            // Logika Lama: Biarkan start/end TIDAK ADA di payload
+            // agar data jam tidur di DB tidak terhapus (tetap aman)
         };
+        
+        const success = await CoachLogic.saveDailyRecovery(payload);
+        if (success) {
+            isRecoveryModalOpen.value = false;
+            await initCoach(); // Memicu Intelligence Core hitung ulang Readiness
+        }
+    } catch (err) {
+        Logger.error("SaveRecovery_UI_Error", err);
+    } finally {
+        isLoading.value = false;
+    }
+};
 
         onMounted(initCoach);
 
