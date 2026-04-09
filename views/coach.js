@@ -184,7 +184,7 @@ export default {
         ]);
 
         // SATU PINTU PROSES
-        const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats);
+        const intel = IntelligenceCore.calculate(rawActivities, recoveryData, workloadStats, weeklyRecovery);
         const aiTalk = CoachInsights.generate(intel); 
 
         // MAPPING KE UI
