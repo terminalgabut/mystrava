@@ -15,8 +15,8 @@ export const RecoveryInsights = {
         if (isSynced) {
             cards.push({
                 id: 'neural-sync',
-                label: 'Neural Synced',
-                desc: 'Sistem saraf dan beban fisik selaras sempurna.',
+                title: 'Neural Synced',
+                text: 'Sistem saraf dan beban fisik selaras sempurna.',
                 type: 'success',
                 icon: 'zap'
             });
@@ -26,8 +26,8 @@ export const RecoveryInsights = {
         if (recoveryData?.morning_rhr > 67) {
             cards.push({
                 id: 'rhr-high',
-                label: 'Elevated RHR',
-                desc: 'Detak jantung di atas baseline. Prioritaskan recovery.',
+                title: 'Elevated RHR',
+                text: 'Detak jantung di atas baseline. Prioritaskan recovery.',
                 type: 'warning',
                 icon: 'activity'
             });
@@ -37,8 +37,8 @@ export const RecoveryInsights = {
         if (recoveryData?.sleep_quality <= 5) {
             cards.push({
                 id: 'sleep-debt',
-                label: 'Sleep Debt',
-                desc: 'Kualitas tidur rendah mempengaruhi kognitif & power.',
+                title: 'Sleep Debt',
+                text: 'Kualitas tidur rendah mempengaruhi kognitif & power.',
                 type: 'danger',
                 icon: 'moon'
             });
@@ -48,8 +48,8 @@ export const RecoveryInsights = {
         if (cards.length === 0) {
             cards.push({
                 id: 'system-stable',
-                label: 'System Stable',
-                desc: 'Tidak ada anomali bio-metrik terdeteksi.',
+                title: 'System Stable',
+                text: 'Tidak ada anomali bio-metrik terdeteksi.',
                 type: 'neutral',
                 icon: 'shield-check'
             });
