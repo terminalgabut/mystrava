@@ -84,8 +84,8 @@ export default {
 
                 dynamicInsights.value = RecoveryInsights.getDynamicCards(
                     recoveryData, 
-                    intel.recovery.score, 
-                    intel.recovery.isSynced
+                    intel,       
+                    isRecoverySynced.value
                 );
                 
                 efficiencyInsights.value = [
