@@ -88,6 +88,50 @@ export const IntelligenceService = {
     },
 
     /**
+     * CEK AKTIVITAS PENDING
+     * Mencari aktivitas hari ini yang belum diberi nilai user_rpe
+     */
+    async getPendingRpeActivity() {
+        const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+        try {
+            const { data, error } = await supabase
+                .from('activities')
+                .select('id, name, type')
+                .gte('start_date', `${todayWib}T00:00:00Z`)
+                .lte('start_date', `${todayWib}T23:59:59Z`)
+                .is('user_rpe', null) // Kuncinya: Mencari yang nilainya NULL
+                .order('start_date', { ascending: false }) // Ambil yang paling baru
+                .limit(1)
+                .maybeSingle();
+
+            if (error) throw error;
+            return { data: data || null };
+        } catch (err) {
+            Logger.error("CHECK_PENDING_ERROR", err);
+            return { data: null };
+        }
+    },
+
+    /**
+     * UPDATE RPE AKTIVITAS
+     * Mengisi kolom user_rpe di tabel activities
+     */
+    async updateActivityRpe(id, rpeValue) {
+        try {
+            const { error } = await supabase
+                .from('activities')
+                .update({ user_rpe: parseInt(rpeValue) })
+                .eq('id', id);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (err) {
+            Logger.error("UPDATE_RPE_ERROR", err);
+            return { success: false, error: err.message };
+        }
+    },
+
+    /**
      * SINKRONISASI TOTAL
      * Pintu utama untuk update data bio (soreness, rhr, quality)
      */
