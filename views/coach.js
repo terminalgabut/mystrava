@@ -36,6 +36,18 @@ export default {
         const sorenessValue = ref(5);
 
         // --- COMPUTED LOGIC (UI HELPER) ---
+        const checkPendingActivities = async () => {
+            try {
+                // Mencari aktivitas hari ini yang user_rpe-nya masih kosong
+                const { data, error } = await IntelligenceService.getPendingRpeActivity();
+                if (data) {
+                    pendingActivity.value = data; 
+                }
+            } catch (err) {
+                Logger.error("Check_Pending_Error", err);
+            }
+        };
+        
         const sorenessLabel = computed(() => {
             const val = parseInt(sorenessValue.value);
             if (val >= 8) return 'Heavy Fatigue';
@@ -162,22 +174,20 @@ export default {
         const saveRpe = async () => {
             isLoading.value = true;
             try {
-                // Dalam sistem baru, RPE manual tetap diproses lewat syncEverything
-                // agar skor readiness langsung ter-update
-                const payload = {
-                    rhr: parseInt(recoveryForm.value.rhr),
-                    quality: parseInt(recoveryForm.value.quality),
-                    soreness: parseInt(sorenessValue.value),
-                    manual_rpe: parseInt(rpeValue.value) 
-                };
+                // 1. Update user_rpe di tabel activities (Data Murni)
+                await IntelligenceService.updateActivityRpe(pendingActivity.value.id, rpeValue.value);
 
-                const result = await IntelligenceService.syncEverything(payload);
-                if (result.success) {
-                    isModalOpen.value = false;
-                    await loadDashboard();
-                }
-            } catch (err) {
-                Logger.error("SaveRpe_Error", err);
+                // 2. Jalankan syncEverything untuk kalkulasi ulang skor "Galak"
+                // Mengambil data bio yang sudah ada di form saat ini
+                await IntelligenceService.syncEverything({
+                    rhr: recoveryForm.value.rhr,
+                    quality: recoveryForm.value.quality,
+                    soreness: sorenessValue.value
+                });
+
+                pendingActivity.value = null; // Sembunyikan kartu feedback
+                isModalOpen.value = false;
+                await loadDashboard(); // Refresh skor total
             } finally {
                 isLoading.value = false;
             }
@@ -189,6 +199,7 @@ export default {
             // States
             isLoading, 
             isRecoverySynced, 
+            pendingActivity,
             readinessScore, 
             readinessStatus, 
             coachBrief,
