@@ -1,97 +1,106 @@
+
+
 // js/utils/fitnessEngine.js
 
 /**
- * Fitness Intelligence Engine
- * Mencerminkan logika SQL "Agresif" di sisi Client
+ * Fitness Intelligence Engine - AASM & Resilience Edition
+ * Menghitung skor Readiness (Sistemik) & Leg Resilience (Lokal)
  */
 
 export const calculateReadiness = (data) => {
     // 1. BASELINE
-    let score = 85; 
+    let readiness = 85; 
+    let legResilience = 90; 
     let penalties = [];
     let bonuses = [];
 
-    // 2. PENALTI BEBAN (ACWR) - Data Otomatis Strava
-    const acwr = parseFloat(data.acwr_ratio || 1.0);
-    if (acwr > 1.5) {
-        score -= 30;
-        penalties.push("Critical Load Spike");
-    } else if (acwr > 1.3) {
-        score -= 15;
-        penalties.push("High Training Load");
-    } else if (acwr < 0.8) {
-        score -= 10;
-        penalties.push("Detraining Risk");
-    }
+    // 2. AASM SLEEP ANALYSIS (The "Cruel" Part)
+    const duration = parseFloat(data.sleep_duration || 0);
+    const efficiency = parseFloat(data.sleep_efficiency || 0);
+    const quality = parseInt(data.sleep_quality || 0);
 
-    // 3. PENALTI SORENESS (Input dari coachView)
-    const soreness = parseInt(data.soreness_level || 0);
-    if (soreness >= 7) {
-        score -= 25;
-        penalties.push("Heavy Muscle Soreness");
-    } else if (soreness >= 5) {
-        score -= 10;
-        penalties.push("Moderate Fatigue");
-    }
+    if (duration > 0) {
+        // Penalti Durasi (AASM: Atlet butuh 7-9 jam)
+        if (duration < 6) {
+            readiness -= 25;
+            legResilience -= 15;
+            penalties.push("Critical Sleep Debt (<6h)");
+        } else if (duration < 7) {
+            readiness -= 10;
+            penalties.push("Sub-optimal Sleep Duration");
+        }
 
-    // 4. PENALTI/BONUS SLEEP (Input dari sleepView)
-    const sleep = parseInt(data.sleep_quality || 0);
-    if (sleep > 0) { // Hanya hitung jika data input ada
-        if (sleep <= 5) {
-            score -= 25;
-            penalties.push("Poor Sleep Recovery");
-        } else if (sleep <= 6) {
-            score -= 15;
-            penalties.push("Insufficient Rest");
-        } else if (sleep >= 8) {
-            score += 5;
-            bonuses.push("Optimal Sleep");
+        // Penalti Efisiensi (AASM: Standar emas > 85%)
+        if (efficiency < 85 && efficiency > 0) {
+            readiness -= 15;
+            penalties.push(`Low Sleep Efficiency (${Math.round(efficiency)}%)`);
+        }
+
+        // Bonus Kualitas (Neural Recharge)
+        if (quality >= 8 && efficiency >= 90) {
+            readiness += 10;
+            bonuses.push("Deep Neural Recovery");
         }
     }
 
-    // 5. PENALTI RPE (Data Otomatis/Manual)
-    const rpe = parseFloat(data.total_rpe || 0);
-    if (rpe >= 10) {
-        score -= 20;
-        penalties.push("High Intensity Strain");
-    } else if (rpe >= 7) {
-        score -= 10;
-        penalties.push("Moderate Intensity");
+    // 3. WORKLOAD ANALYSIS (ACWR) - Impact ke Kaki
+    const acwr = parseFloat(data.acwr_ratio || 1.0);
+    if (acwr > 1.5) {
+        legResilience -= 40; // Kaki paling menderita saat load spike
+        readiness -= 20;
+        penalties.push("Extreme Load: Injury Risk High");
+    } else if (acwr > 1.3) {
+        legResilience -= 20;
+        penalties.push("High Mechanical Stress");
     }
 
-    // 6. BONUS ACTIVE RECOVERY
+    // 4. SORENESS & RPE (Local Muscle Status)
+    const soreness = parseInt(data.soreness_level || 0);
+    const rpe = parseFloat(data.total_rpe || 0);
+
+    if (soreness >= 7) {
+        legResilience -= 30;
+        penalties.push("Heavy Muscle Damage");
+    } else if (soreness >= 5) {
+        legResilience -= 15;
+    }
+
+    if (rpe >= 8) {
+        readiness -= 15;
+        legResilience -= 10;
+        penalties.push("High CNS Fatigue");
+    }
+
+    // 5. RECOVERY BONUSES
     if (data.is_active_recovery) {
-        score += 5;
-        bonuses.push("Active Recovery Bonus");
+        legResilience += 10;
+        readiness += 5;
+        bonuses.push("Active Recovery: Flushing Lactate");
     }
 
     // FINAL CLAMPING
-    score = Math.min(Math.max(score, 0), 100);
+    readiness = Math.min(Math.max(readiness, 0), 100);
+    legResilience = Math.min(Math.max(legResilience, 0), 100);
 
-    // MAPPING STATUS & COLOR
+    // MAPPING STATUS (Berdasarkan Readiness)
     let status = 'Fair';
-    let colorClass = 'text-amber-500';
-    let bgClass = 'bg-amber-500';
+    if (readiness >= 80) status = 'Optimal';
+    else if (readiness >= 65) status = 'Good';
+    else if (readiness < 45) status = 'Rest Required';
 
-    if (score >= 80) {
-        status = 'Optimal';
-        colorClass = 'text-emerald-500';
-        bgClass = 'bg-emerald-500';
-    } else if (score >= 60) {
-        status = 'Good';
-        colorClass = 'text-blue-500';
-        bgClass = 'bg-blue-500';
-    } else if (score < 40) {
-        status = 'Rest Required';
-        colorClass = 'text-red-500';
-        bgClass = 'bg-red-500';
+    // RECOMMENDATION LOGIC
+    let recommendation = "System Status Optimal.";
+    if (penalties.length > 0) {
+        if (acwr > 1.5 || soreness >= 7) recommendation = "CRITICAL: Total Rest or Swim Only.";
+        else if (readiness < 60) recommendation = "Recovery Session Suggested.";
+        else recommendation = penalties[0]; // Ambil penalti terberat
     }
 
     return { 
-        score, 
+        score: Math.round(readiness), 
+        legScore: Math.round(legResilience), // Untuk kolom leg_resilience
         status, 
-        colorClass, 
-        bgClass,
+        recommendation,
         penalties, 
         bonuses 
     };
