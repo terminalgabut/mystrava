@@ -24,14 +24,17 @@ export default {
 
         // --- STATE MODALS & FORMS ---
         const isRecoveryModalOpen = ref(false);
-        const isModalOpen = ref(false); // RPE Modal
+        const isModalOpen = ref(false); 
         const rpeValue = ref(5);
-        const pendingActivity = ref(null);
         
-        const recoveryForm = ref({ quality: 7, rhr: 62 });
+        // Form biometrik yang akan dikirim ke syncEverything
+        const recoveryForm = ref({ 
+            quality: 7, 
+            rhr: 62 
+        });
         const sorenessValue = ref(5);
 
-        // --- COMPUTED LOGIC ---
+        // --- COMPUTED LOGIC (UI HELPER) ---
         const sorenessLabel = computed(() => {
             const val = parseInt(sorenessValue.value);
             if (val >= 8) return 'Heavy Fatigue';
@@ -45,9 +48,10 @@ export default {
         });
 
         const getStatusColor = (score) => {
-            if (score >= 80) return '#10b981'; // Green
-            if (score >= 60) return '#3b82f6'; // Blue
-            return '#ef4444'; // Red
+            if (score >= 80) return '#10b981'; // Optimal (Green)
+            if (score >= 60) return '#3b82f6'; // Good (Blue)
+            if (score >= 40) return '#fbbf24'; // Fair (Amber)
+            return '#ef4444'; // Rest Required (Red)
         };
 
         const getRpeLabel = (val) => {
@@ -56,35 +60,54 @@ export default {
         };
 
         // --- CORE ACTIONS ---
+
+        /**
+         * Mengambil snapshot terbaru dari DB untuk ditampilkan di UI
+         */
         const loadDashboard = async () => {
             isLoading.value = true;
             try {
+                // Menggunakan getTodaySnapshot dari service untuk data terbaru
                 const { data, error } = await IntelligenceService.getTodaySnapshot();
                 
                 if (data) {
                     isRecoverySynced.value = !!data.last_updated;
                     readinessScore.value = data.readiness_score || 0;
                     readinessStatus.value = data.readiness_status || 'READY';
+                    
+                    // Sinkronisasi slider UI dengan data terakhir di DB
+                    recoveryForm.value.quality = data.sleep_quality || 7;
+                    recoveryForm.value.rhr = data.morning_rhr || 62;
+                    sorenessValue.value = data.soreness_level || 5;
+
                     coachBrief.value = {
-                        recommendation: data.recommendation,
-                        breathing_tip: data.activity_summary || "Focus on your form today."
+                        recommendation: data.recommendation || "System calibrated.",
+                        breathing_tip: data.activity_summary || "No activities recorded yet."
                     };
 
-                    // Populate Efficiency & History untuk UI [cite: 132, 135]
+                    // Update Progress Bars di Bento Card
                     efficiencyInsights.value = [
-                        { label: 'Workload (ACWR)', value: `${data.acwr_ratio}x`, percentage: (data.acwr_ratio / 1.5) * 100 },
-                        { label: 'Neural Readiness', value: `${data.readiness_score}%`, percentage: data.readiness_score }
+                        { 
+                            label: 'Workload (ACWR)', 
+                            value: `${data.acwr_ratio || 0}x`, 
+                            percentage: Math.min(((data.acwr_ratio || 0) / 1.5) * 100, 100) 
+                        },
+                        { 
+                            label: 'Neural Readiness', 
+                            value: `${data.readiness_score || 0}%`, 
+                            percentage: data.readiness_score || 0 
+                        }
                     ];
 
+                    // Log History
                     coachHistory.value = [
-                        { id: 1, type: 'Success', date: 'BIO', message: `Morning RHR: ${data.morning_rhr} BPM.` },
-                        { id: 2, type: 'Info', date: 'SYNC', message: `Workload synchronized from Strava.` }
+                        { id: Date.now(), type: 'Success', date: 'BIO', message: `Morning RHR: ${data.morning_rhr || '--'} BPM.` },
+                        { id: Date.now() + 1, type: 'Info', date: 'SYNC', message: `Readiness calculated via FitnessEngine.` }
                     ];
                 }
                 
                 nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
-                    // Di sini Bos bisa memanggil initCharts() jika library chart sudah siap
                 });
             } catch (err) {
                 Logger.error("Coach_Load_Error", err);
@@ -93,6 +116,10 @@ export default {
             }
         };
 
+        /**
+         * Jalur Utama: Menyimpan data biometrik dan menghitung ulang skor
+         * Menghubungkan UI ke IntelligenceService.syncEverything
+         */
         const saveRecovery = async () => {
             isLoading.value = true;
             try {
@@ -102,9 +129,12 @@ export default {
                     soreness: parseInt(sorenessValue.value)
                 };
                 
-                const result = await IntelligenceService.syncDailySnapshot(payload);
+                // Panggil Service Refactor (Jalur Tunggal)
+                const result = await IntelligenceService.syncEverything(payload);
+                
                 if (result.success) {
                     isRecoveryModalOpen.value = false;
+                    // Langsung reload untuk melihat skor "Galak" terbaru
                     await loadDashboard();
                 }
             } catch (err) {
@@ -114,13 +144,22 @@ export default {
             }
         };
 
+        /**
+         * Menyimpan RPE manual jika ada aktivitas yang belum ter-RPE
+         */
         const saveRpe = async () => {
             isLoading.value = true;
             try {
-                // Gunakan service untuk simpan RPE rata-rata ke snapshot harian
-                const result = await IntelligenceService.syncDailySnapshot({ 
-                    avg_daily_rpe: parseInt(rpeValue.value) 
-                });
+                // Dalam sistem baru, RPE manual tetap diproses lewat syncEverything
+                // agar skor readiness langsung ter-update
+                const payload = {
+                    rhr: parseInt(recoveryForm.value.rhr),
+                    quality: parseInt(recoveryForm.value.quality),
+                    soreness: parseInt(sorenessValue.value),
+                    manual_rpe: parseInt(rpeValue.value) 
+                };
+
+                const result = await IntelligenceService.syncEverything(payload);
                 if (result.success) {
                     isModalOpen.value = false;
                     await loadDashboard();
@@ -136,16 +175,29 @@ export default {
 
         return {
             // States
-            isLoading, isRecoverySynced, readinessScore, readinessStatus, coachBrief,
-            dynamicInsights, efficiencyInsights, coachHistory,
-            isRecoveryModalOpen, isModalOpen, rpeValue, pendingActivity,
-            recoveryForm, sorenessValue,
+            isLoading, 
+            isRecoverySynced, 
+            readinessScore, 
+            readinessStatus, 
+            coachBrief,
+            dynamicInsights, 
+            efficiencyInsights, 
+            coachHistory,
+            isRecoveryModalOpen, 
+            isModalOpen, 
+            rpeValue,
+            recoveryForm, 
+            sorenessValue,
             
             // Computed & Helpers
-            sorenessLabel, currentSorenessIcon, getStatusColor, getRpeLabel,
+            sorenessLabel, 
+            currentSorenessIcon, 
+            getStatusColor, 
+            getRpeLabel,
             
             // Methods
-            saveRecovery, saveRpe,
+            saveRecovery, 
+            saveRpe,
             openRecoveryModal: () => { isRecoveryModalOpen.value = true; },
             openRpeModal: () => { isModalOpen.value = true; },
             
