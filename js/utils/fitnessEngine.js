@@ -1,5 +1,4 @@
 
-
 // js/utils/fitnessEngine.js
 
 /**
@@ -18,6 +17,7 @@ export const calculateReadiness = (data) => {
     const duration = parseFloat(data.sleep_duration || 0);
     const efficiency = parseFloat(data.sleep_efficiency || 0);
     const quality = parseInt(data.sleep_quality || 0);
+    const cns = parseInt(data.cns_readiness || 0);
 
     if (duration > 0) {
         // Penalti Durasi (AASM: Atlet butuh 7-9 jam)
@@ -36,10 +36,23 @@ export const calculateReadiness = (data) => {
             penalties.push(`Low Sleep Efficiency (${Math.round(efficiency)}%)`);
         }
 
+        if (cns <= 4) { 
+            readiness -= 30; 
+            penalties.push("Neural Fatigue: High Reaction Time");
+        } else if (cns >= 9) {
+            readiness += 5;
+            bonuses.push("Sharp Mental Focus");
+        }
+
         // Bonus Kualitas (Neural Recharge)
         if (quality >= 8 && efficiency >= 90) {
             readiness += 10;
             bonuses.push("Deep Neural Recovery");
+        }
+
+        if (cns < 5 && quality < 5) {
+        readiness -= 15; // Penalti tambahan karena korelasi buruk
+        recommendation = "CRITICAL: CNS & Physical Collapse. Total Rest.";
         }
     }
 
