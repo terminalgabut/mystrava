@@ -12,6 +12,7 @@ export default {
 
         // --- STATE DASHBOARD ---
         const isLoading = ref(true);
+        const pendingActivity = ref(null); 
         const isRecoverySynced = ref(false); 
         const readinessScore = ref(0);
         const readinessStatus = ref('CALIBRATING');
@@ -89,15 +90,23 @@ export default {
                     efficiencyInsights.value = [
                         { 
                             label: 'Workload (ACWR)', 
-                            value: `${data.acwr_ratio || 0}x`, 
-                            percentage: Math.min(((data.acwr_ratio || 0) / 1.5) * 100, 100) 
+            value: `${data.acwr_ratio || 0}x`, 
+            // Bar akan merah jika mendekati atau lebih dari 1.5
+            percentage: Math.min(((data.acwr_ratio || 0) / 1.5) * 100, 100),
+            color: (data.acwr_ratio > 1.3) ? '#ef4444' : '#3b82f6'
                         },
                         { 
                             label: 'Leg Resilience',     
-                            value: `${data.leg_resilience || 0}%`,
-                            percentage: data.leg_resilience || 0 
+            value: `${data.leg_resilience || 0}%`,
+            percentage: data.leg_resilience || 0,
+            color: getStatusColor(data.leg_resilience)
                         }
                     ];
+
+                    dynamicInsights.value = [
+        { icon: 'brain', label: 'Neural', value: `${data.cns_readiness || 0}/10` },
+        { icon: 'moon', label: 'Sleep', value: `${Math.round(data.sleep_duration || 0)}h` }
+    ];
 
                     // Log History
                     coachHistory.value = [
