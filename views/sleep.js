@@ -19,9 +19,12 @@ export default {
 
         const loadCurrentSleep = async () => {
             const { data } = await IntelligenceService.getTodaySnapshot();
-            if (data && data.sleep_start) {
-                // Tampilkan data jam tidur terakhir jika sudah ada
-                sleepForm.value.quality = data.sleep_quality;
+            if (data) {
+                // Pre-fill data jika sudah ada di DB agar User tidak ketik ulang
+                if (data.sleep_start) sleepForm.value.start = data.sleep_start.substring(0, 5);
+                if (data.sleep_end) sleepForm.value.end = data.sleep_end.substring(0, 5);
+                if (data.latency_mins) sleepForm.value.latency = data.latency_mins;
+                sleepForm.value.quality = data.sleep_quality || 7;
             }
         };
 
