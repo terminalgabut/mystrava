@@ -1,17 +1,42 @@
 // js/services/IntelligenceService.js
 import { supabase } from './supabase.js'
 import { Logger } from './debug.js'; 
-// Ganti import ke fitnessEngine
 import { calculateReadiness } from '../utils/fitnessEngine.js'; 
 
 export const IntelligenceService = {
-    // 1. Ambil data mentah aktivitas dari DB untuk hari ini
+    /**
+     * AMBIL SNAPSHOT HARI INI
+     * Digunakan saat dashboard pertama kali di-load
+     */
+    async getTodaySnapshot() {
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+        try {
+            const { data, error } = await supabase
+                .from('daily_intelligence')
+                .select('*')
+                .eq('check_in_date', todayStr)
+                .single();
+
+            // Jika error 406 (data kosong), return null saja bukan error
+            if (error && error.code !== 'PGRST116') throw error; 
+            return { data: data || null, error: null };
+        } catch (err) {
+            Logger.error("GET_SNAPSHOT_ERROR", err);
+            return { data: null, error: err.message };
+        }
+    },
+
+    /**
+     * AMBIL RINGKASAN AKTIVITAS
+     * Menghitung RPE rata-rata dan bonus Active Recovery
+     */
     async getDailyActivitySummary() {
         const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
         
         const { data, error } = await supabase
             .from('activities')
             .select('user_rpe, type, distance, moving_time')
+            // Gunakan filter yang lebih fleksibel untuk string ISO
             .gte('start_date', `${todayWib}T00:00:00`)
             .lte('start_date', `${todayWib}T23:59:59`);
 
@@ -20,16 +45,14 @@ export const IntelligenceService = {
         let isActiveRecovery = false;
 
         data.forEach(act => {
-            // Logika Active Recovery (Pace 15+)
             if ((act.type === 'Walk' || act.type === 'Hike') && act.distance > 0) {
                 const pace = (act.moving_time / 60) / (act.distance / 1000);
-                if (pace >= 15) {
+                if (pace >= 15) { 
                     isActiveRecovery = true;
                 }
             }
         });
 
-        // Hitung rata-rata RPE hari ini
         const rpeList = data.filter(a => a.user_rpe).map(a => a.user_rpe);
         const avgRpe = rpeList.length ? rpeList.reduce((a, b) => a + b, 0) / rpeList.length : 0;
 
@@ -40,20 +63,21 @@ export const IntelligenceService = {
         };
     },
 
-    // 2. Jembatan Sinkronisasi: Menghubungkan Bio-Data dan Activity
+    /**
+     * SINKRONISASI TOTAL
+     * Pintu utama untuk update data bio (soreness, rhr, quality)
+     */
     async syncEverything(manualBioData = {}) {
         const startTime = Date.now();
         const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
         try {
-            // Fetch data beban (Workload) dan ringkasan aktivitas secara paralel
             const [workloadRes, activityRes] = await Promise.all([
                 supabase.rpc('get_workload_stats'),
                 this.getDailyActivitySummary()
             ]);
 
-            // 3. Masukkan ke FitnessEngine (Point Deduction Logic)
-            // Pastikan key object sesuai dengan yang diminta calculateReadiness di fitnessEngine.js
+            // Logic Point Deduction dari fitnessEngine
             const results = calculateReadiness({
                 acwr_ratio: workloadRes.data?.acwr_ratio || 1.0,
                 soreness_level: manualBioData.soreness,
@@ -62,14 +86,12 @@ export const IntelligenceService = {
                 is_active_recovery: activityRes.isActiveRecovery
             });
 
-            // 4. Siapkan Snapshot untuk Daily Intelligence
             const snapshot = {
                 check_in_date: todayWib,
                 readiness_score: results.score,
                 readiness_status: results.status,
-                // Gunakan recommendation dari engine jika ada, atau fallback
                 recommendation: results.penalties?.length > 0 
-                    ? `Warning: ${results.penalties[0]}` 
+                    ? results.penalties[0] 
                     : 'System Status Optimal',
                 acwr_ratio: workloadRes.data?.acwr_ratio || 1.0,
                 morning_rhr: manualBioData.rhr,
@@ -81,7 +103,6 @@ export const IntelligenceService = {
                 last_updated: new Date().toISOString()
             };
 
-            // Simpan ke DB (Upsert berdasarkan check_in_date)
             const { error: upsertError } = await supabase
                 .from('daily_intelligence')
                 .upsert(snapshot, { onConflict: 'check_in_date' });
