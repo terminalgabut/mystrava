@@ -85,10 +85,10 @@ export default `
                 <div class="space-y-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Quality</p>
-                            <p class="text-4xl font-black text-indigo-400">{{ sleepForm.quality || 0 }}<span class="text-lg">/10</span></p>
+                            <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1"> CNS Quality</p>
+                            <p class="text-4xl font-black text-indigo-400">{{ sleepForm.cns || 0 }}<span class="text-lg">/10</span></p>
                         </div>
-                        <input type="range" v-model="sleepForm.quality" min="1" max="10" class="w-24 accent-indigo-400">
+                        <input type="range" v-model="sleepForm.cns" min="1" max="10" class="w-24 accent-indigo-400">
                     </div>
                 </div>
             </div>
