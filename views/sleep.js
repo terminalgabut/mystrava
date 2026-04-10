@@ -28,7 +28,7 @@ export default {
             }
         };
 
-        const handleSync = async () => {
+        const saveSleepData = async () => {
             Logger.info(`Syncing ${sleepMode.value}...`, "SLEEP_VIEW");
             
             let payload = { quality: parseInt(sleepForm.value.quality) };
@@ -56,7 +56,7 @@ export default {
         return {
             sleepMode,
             sleepForm,
-            handleSync,
+            saveSleepData,
             setMode: (mode) => sleepMode.value = mode
         };
     }
