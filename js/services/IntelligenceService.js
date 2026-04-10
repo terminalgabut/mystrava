@@ -3,6 +3,30 @@ import { supabase } from './supabase.js'
 import { Logger } from './debug.js'; 
 import { calculateReadiness } from '../utils/fitnessEngine.js'; 
 
+/**
+ * HELPER: Kalkulasi standar AASM (Letakkan di luar object atau di atas syncEverything)
+ */
+const calculateAASMMetrics = (start, end, latency) => {
+    if (!start || !end) return { durationHours: 0, efficiency: 0 };
+
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const startTime = new Date(`${today}T${start}:00`);
+    let endTime = new Date(`${today}T${end}:00`);
+
+    // Handle jika tidur lewat tengah malam (contoh: 22:00 s/d 06:00)
+    if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
+
+    const totalMinutesInBed = (endTime - startTime) / (1000 * 60);
+    // WASO diasumsikan 10 menit karena tidak ada input di View (Sesuai Aturan: No UI Change)
+    const wasoEstimate = 10; 
+    const actualSleepMinutes = totalMinutesInBed - parseInt(latency || 0) - wasoEstimate;
+    
+    return {
+        durationHours: Math.max(0, actualSleepMinutes / 60),
+        efficiency: totalMinutesInBed > 0 ? Math.min(100, (actualSleepMinutes / totalMinutesInBed) * 100) : 0
+    };
+};
+
 export const IntelligenceService = {
     /**
      * AMBIL SNAPSHOT HARI INI
@@ -77,11 +101,20 @@ export const IntelligenceService = {
                 this.getDailyActivitySummary()
             ]);
 
+            // 1. Hitung durasi dan efisiensi AASM dari data SleepView
+            const sleepMetrics = calculateAASMMetrics(
+                manualBioData.sleep_start, 
+                manualBioData.sleep_end, 
+                manualBioData.latency_mins
+            );
+
             // Logic Point Deduction dari fitnessEngine
             const results = calculateReadiness({
                 acwr_ratio: workloadRes.data?.acwr_ratio || 1.0,
                 soreness_level: manualBioData.soreness,
                 sleep_quality: manualBioData.quality,
+                sleep_duration: sleepMetrics.durationHours, 
+                sleep_efficiency: sleepMetrics.efficiency,
                 total_rpe: activityRes.avgRpe,
                 is_active_recovery: activityRes.isActiveRecovery
             });
@@ -97,6 +130,11 @@ export const IntelligenceService = {
                 morning_rhr: manualBioData.rhr,
                 soreness_level: manualBioData.soreness,
                 sleep_quality: manualBioData.quality,
+                leg_resilience: results.legScore || results.score, 
+                sleep_start: manualBioData.sleep_start,
+                sleep_end: manualBioData.sleep_end,
+                sleep_efficiency: sleepMetrics.efficiency,
+                latency_mins: manualBioData.latency_mins,
                 total_rpe: activityRes.avgRpe,
                 is_active_recovery: activityRes.isActiveRecovery,
                 activity_summary: activityRes.summary,
