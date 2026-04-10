@@ -1,3 +1,5 @@
+// views/coach.js
+
 import coachTemplate from './coachView.js';
 import { IntelligenceService } from '../js/services/IntelligenceService.js';
 import { Logger } from '../js/services/debug.js';
