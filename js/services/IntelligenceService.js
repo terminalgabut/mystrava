@@ -1,7 +1,7 @@
 // js/services/IntelligenceService.js
 import { supabase } from './supabase.js'
 import { Logger } from './debug.js'; 
-import { IntelligenceEngine } from '../logic/IntelligenceEngine.js';
+import { IntelligenceEngine } from '../../logic/IntelligenceEngine.js';
 
 export const IntelligenceService = {
     // Jembatan: Ambil data mentah aktivitas dari DB
