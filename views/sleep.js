@@ -27,7 +27,7 @@ export default {
                 // Mapping jam dari DB ke UI [cite: 37, 40]
                 if (data.sleep_start) sleepForm.value.start = data.sleep_start.substring(0, 5);
                 if (data.sleep_end) sleepForm.value.end = data.sleep_end.substring(0, 5);
-                if (data.latency_mins) sleepForm.value.latency = data.latency_mins; [cite: 42]
+                if (data.latency_mins) sleepForm.value.latency = data.latency_mins;
                 
                 // Pisahkan penarikan data Bio dan CNS
                 sleepForm.value.quality = data.sleep_quality || 7;
