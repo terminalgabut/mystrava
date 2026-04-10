@@ -1,100 +1,106 @@
 // js/services/debug.js
-// js/services/debug.js
 
 export const Logger = {
-    _history: [], // Tempat menyimpan log mentah agar bisa disalin tanpa terpotong
+    _history: [], // Memori internal untuk salin log penuh
 
-    // Helper internal untuk mengirim log ke UI Custom Console
+    // PRIVATE: Menulis ke UI Custom Console
     _appendToUI(type, message, data = null) {
         const container = document.getElementById('log-container');
-        const logEntry = {
-            time: new Date().toLocaleTimeString('en-GB', { hour12: false }),
-            type,
-            message,
-            data: data ? JSON.parse(JSON.stringify(data)) : null
-        };
-
-        // Simpan ke history (teks mentah)
-        this._history.push(`[${logEntry.time}] [${type}] ${message} ${data ? '\nData: ' + JSON.stringify(data, null, 2) : ''}`);
-        if (this._history.length > 100) this._history.shift(); // Batasi 100 log terakhir
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        
+        // Simpan ke array history untuk fitur COPY ALL (Teks Mentah)
+        const rawLog = `[${time}] [${type}] ${message} ${data ? '\nData: ' + JSON.stringify(data, null, 2) : ''}`;
+        this._history.push(rawLog);
+        if (this._history.length > 200) this._history.shift(); 
 
         if (!container) return;
 
-        const div = document.createElement('div');
-        div.className = `p-2 border-l-2 mb-1 bg-slate-900/50 ${this._getBorderColor(type)}`;
-        div.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
-                <span class="text-[8px] font-bold px-1 rounded bg-slate-800 text-slate-400">${logEntry.time}</span>
-                <span class="text-[8px] font-black uppercase ${this._getTextColor(type)}">${type}</span>
+        const entry = document.createElement('div');
+        entry.className = `p-2 border-l-2 mb-1 bg-slate-900/30 ${this._getTheme(type).border}`;
+        
+        entry.innerHTML = `
+            <div class="flex justify-between items-start mb-1 opacity-50 text-[8px]">
+                <span class="font-bold">${time}</span>
+                <span class="font-black uppercase ${this._getTheme(type).text}">${type}</span>
             </div>
             <div class="text-slate-200 font-medium leading-tight">${message}</div>
-            ${data ? `<pre class="mt-2 p-2 bg-black/40 rounded text-[9px] text-blue-300 overflow-x-auto border border-white/5">${JSON.stringify(data, null, 2)}</pre>` : ''}
+            ${data ? `<pre class="mt-2 p-2 bg-black/50 rounded text-[9px] text-blue-300 overflow-x-auto border border-white/5 tabular-nums">${JSON.stringify(data, null, 2)}</pre>` : ''}
         `;
-        container.appendChild(div);
+        
+        container.appendChild(entry);
         container.scrollTop = container.scrollHeight;
     },
 
-    _getBorderColor(type) {
-        const colors = { 'ERROR': 'border-red-500', 'SYNC': 'border-green-500', 'ENGINE': 'border-indigo-500', 'UI': 'border-purple-500' };
-        return colors[type] || 'border-slate-700';
+    _getTheme(type) {
+        const themes = {
+            'ERROR': { border: 'border-red-500', text: 'text-red-400' },
+            'SYNC': { border: 'border-green-500', text: 'text-green-400' },
+            'ENGINE': { border: 'border-blue-500', text: 'text-blue-400' },
+            'PATH': { border: 'border-cyan-500', text: 'text-cyan-400' },
+            'UI': { border: 'border-purple-500', text: 'text-purple-400' }
+        };
+        return themes[type] || { border: 'border-slate-700', text: 'text-slate-500' };
     },
 
-    _getTextColor(type) {
-        const colors = { 'ERROR': 'text-red-400', 'SYNC': 'text-green-400', 'ENGINE': 'text-indigo-400', 'UI': 'text-purple-400' };
-        return colors[type] || 'text-slate-500';
-    },
-
-    // --- PUBLIC METHODS (Canggih & Terhubung) ---
+    // --- PUBLIC METHODS ---
 
     checkPath(label, dependencies = {}) {
-        console.group(`%c[PATH CHECK @ ${label}]`, 'background: #0f172a; color: #38bdf8; padding: 4px 8px; border-radius: 4px;');
-        this._appendToUI('PATH', `Checking Path: ${label}`);
+        console.group(`%c[PATH CHECK @ ${label}]`, 'background: #0f172a; color: #38bdf8; padding: 4px 8px;');
         Object.entries(dependencies).forEach(([name, ref]) => {
-            const isOk = ref !== undefined && ref !== null && ref !== false;
-            console.log(`%c${isOk ? '✅' : '❌'} %c${name.padEnd(15)} %c${isOk ? 'CONNECTED' : 'BROKEN'}`, '', 'font-weight: bold;', isOk ? 'color: #10b981;' : 'color: #ef4444;');
-            if (!isOk) this._appendToUI('ERROR', `Path Broken: ${name}`);
+            const isOk = !!ref;
+            console.log(`%c${isOk ? '✅' : '❌'} %c${name.padEnd(15)}`, '', isOk ? 'color: #10b981;' : 'color: #ef4444; font-weight: bold;');
+            if(!isOk) this._appendToUI('ERROR', `Path Broken: ${name} in ${label}`);
         });
         console.groupEnd();
+        this._appendToUI('PATH', `Checked dependencies for ${label}`);
     },
 
     debugUI(component, action, state, payload = null) {
-        this.trace(component, 'UI_DEBUG', `${action} (State: ${state})`);
+        console.log(`[UI] ${component} | ${action} | State: ${state}`);
         this._appendToUI('UI', `${component}: ${action}`, { state, payload });
-        console.group(`%c[UI DIAGNOSTIC @ ${component}]`, 'background: #8b5cf6; color: #fff; padding: 2px 6px;');
-        console.log(`Action: ${action} | State: ${state}`);
-        if (payload) console.log('Payload:', payload);
-        console.groupEnd();
     },
 
     trace(component, hook, message = "") {
-        console.log(`%c[${component}] %c${hook.toUpperCase()}%c ${message}`, 'color: #6366f1; font-weight: bold;', 'background: #6366f1; color: #fff; padding: 0 4px;', 'color: #475569;');
+        console.log(`[${component}] ${hook.toUpperCase()} ${message}`);
         this._appendToUI('TRACE', `${component} > ${hook}`, message);
     },
 
     intelligence(score, status) {
-        const colors = { 'Optimal': '#10b981', 'Good': '#3b82f6', 'Fair': '#fbbf24', 'Rest Required': '#ef4444' };
-        console.log(`%c[ENGINE] Readiness: ${score} [${status}]`, `color: ${colors[status] || '#64748b'}; font-weight: bold; font-size: 12px;`);
-        this._appendToUI('ENGINE', `Readiness Updated: ${score}`, { status });
+        this._appendToUI('ENGINE', `Readiness Score: ${score}`, { status });
     },
 
     sync(table, status, duration = 0) {
-        const icon = status === 'success' ? '⚡' : '⚠️';
-        console.log(`%c${icon} [DB SYNC] %c${table} %c${status.toUpperCase()} (${duration}ms)`, '', 'font-weight: bold;', status === 'success' ? 'color: #10b981;' : 'color: #ef4444;');
-        this._appendToUI('SYNC', `${table}: ${status}`, { duration: `${duration}ms` });
+        this._appendToUI('SYNC', `${table} ${status.toUpperCase()}`, { duration: `${duration}ms` });
     },
 
     error(source, err, metadata = {}) {
-        console.group(`%c[CRITICAL ERROR @ ${source}]`, 'background: #ef4444; color: #fff; padding: 4px 8px;');
-        console.error(err);
-        console.groupEnd();
-        this._appendToUI('ERROR', `${source}: ${err.message || err}`, metadata);
-    },
-
-    // Fungsi sakti untuk copy tanpa terpotong
-    copyHistory() {
-        const fullLog = this._history.join('\n------------------\n');
-        navigator.clipboard.writeText(fullLog).then(() => {
-            alert("✅ FULL LOG COPIED! (No truncation)");
-        });
+        console.error(`[${source}]`, err);
+        this._appendToUI('ERROR', `${source}: ${err.message || err}`, { ...metadata, stack: err.stack });
     }
+};
+
+// --- GLOBAL BRIDGE (Agar HTML onclick bisa memanggil fungsi di atas) ---
+window.toggleDebug = () => {
+    const el = document.getElementById('custom-console');
+    if (el) el.classList.toggle('hidden');
+};
+
+window.clearLog = () => {
+    Logger._history = [];
+    const container = document.getElementById('log-container');
+    if (container) container.innerHTML = '';
+};
+
+window.copyFullLog = () => {
+    const fullText = Logger._history.join('\n' + '='.repeat(30) + '\n');
+    navigator.clipboard.writeText(fullText).then(() => {
+        const btn = document.querySelector('button[onclick="copyFullLog()"]');
+        const originalText = btn.innerText;
+        btn.innerText = "COPIED!";
+        btn.classList.replace('bg-blue-600', 'bg-green-600');
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-green-600', 'bg-blue-600');
+        }, 2000);
+    });
 };
