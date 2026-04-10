@@ -1,6 +1,7 @@
 // js/services/IntelligenceService.js
 
 import { supabase } from './supabase.js'
+import { Logger } from './debug.js'; // path sudah saya sesuaikan 
 
 export const IntelligenceService = {
     // 1. Fungsi Utama: Sinkronisasi dan Hitung
