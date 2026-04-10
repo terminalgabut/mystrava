@@ -1,0 +1,20 @@
+contoh gaya penulisannya 
+hanya kode lama sekarang kita buat fresh tidak pakai code dibawa
+
+
+// views/coach.js:
+
+limport coachTemplate from './coachView.js';
+import { CoachLogic } from '../logic/coachLogic.js';
+import { IntelligenceCore } from '../logic/IntelligenceCore.js';
+import { ReadinessInsights } from '../logic/insights/readinessInsights.js';
+import { RecoveryInsights } from '../logic/insights/recoveryInsights.js'; 
+import { RpeEngine } from '../logic/engines/rpeEngine.js';
+import { RpeInsights } from '../logic/insights/rpeInsights.js'; 
+import { CoachCharts } from '../logic/renderers/coachCharts.js'; 
+import { Logger } from '../js/services/debug.js';
+
+
+goToSleepEngine: () => window.location.hash = '#/sleep',
+            goToMovementEngine: () => window.location.hash = '#/movement',
+            goToTobaccoEngine: () => window.location.hash = '#/tobacco'
