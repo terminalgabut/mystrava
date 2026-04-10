@@ -93,9 +93,9 @@ export default {
                             percentage: Math.min(((data.acwr_ratio || 0) / 1.5) * 100, 100) 
                         },
                         { 
-                            label: 'Neural Readiness', 
-                            value: `${data.readiness_score || 0}%`, 
-                            percentage: data.readiness_score || 0 
+                            label: 'Leg Resilience',     
+                            value: `${data.leg_resilience || 0}%`,
+                            percentage: data.leg_resilience || 0 
                         }
                     ];
 
