@@ -71,7 +71,7 @@ export default {
                 const { data, error } = await IntelligenceService.getTodaySnapshot();
                 
                 if (data) {
-                    isRecoverySynced.value = !!data.last_updated;
+                    isRecoverySynced.value = (data.morning_rhr !== null && data.sleep_quality !== null);
                     readinessScore.value = data.readiness_score || 0;
                     readinessStatus.value = data.readiness_status || 'READY';
                     
@@ -104,6 +104,9 @@ export default {
                         { id: Date.now(), type: 'Success', date: 'BIO', message: `Morning RHR: ${data.morning_rhr || '--'} BPM.` },
                         { id: Date.now() + 1, type: 'Info', date: 'SYNC', message: `Readiness calculated via FitnessEngine.` }
                     ];
+                } else {
+            // Jika benar-benar belum ada row sama sekali di DB
+            isRecoverySynced.value = false;
                 }
                 
                 nextTick(() => {
