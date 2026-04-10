@@ -8,6 +8,14 @@ export default {
     name: 'CoachView',
     template: coachTemplate,
     setup() {
+
+        Logger.checkPath("Coach_Init", {
+            Vue: !!window.Vue,
+            Supabase: !!window.supabase, 
+            Service: !!IntelligenceService,
+            Template: !!coachTemplate
+        });
+        
         const { ref, computed, onMounted, nextTick } = Vue;
 
         // --- STATE DASHBOARD ---
