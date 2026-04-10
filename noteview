@@ -1,0 +1,47 @@
+Berdasarkan file `coachView.js` dan `sleepView.js` yang Anda berikan, berikut adalah daftar seluruh elemen judul (headings/labels) dan kontainer isi (div/cards) yang ada di dalam tampilan tersebut:
+
+## 1. Coach View (`coachView.js`)
+[cite_start]Tampilan utama kecerdasan AI Coach[cite: 175].
+
+### **Header & Navigasi**
+* [cite_start]**Judul Utama**: "AI Coach Intelligence" dengan sub-deskripsi "Personalized guidance based on your bio-signals"[cite: 175].
+* [cite_start]**Status Badge**: "Coach Active"[cite: 176].
+* **Tombol Navigasi**:
+    * [cite_start]"Sleep Engine AASM"[cite: 177].
+    * [cite_start]"Movement Engine"[cite: 177].
+    * [cite_start]"Tobacco Engine"[cite: 178].
+
+### **Kontainer & Card (Bento Grid)**
+* **Bio-Signal Sync Required (Alert Card)**: Muncul jika data belum sinkron. [cite_start]Berisi teks "Bio-Signal Sync Required" dan instruksi input data RHR[cite: 180, 181].
+* [cite_start]**Readiness Score Card**: Menampilkan judul "Readiness Score", gauge persentase skor, dan status teks (misal: OPTIMAL)[cite: 182, 183].
+* [cite_start]**Today's Prescription Card**: Menampilkan judul "Today's Prescription" serta teks rekomendasi otomatis dan tip pernapasan[cite: 184, 185, 186].
+* [cite_start]**Dynamic Insights Card**: Kontainer berulang (`v-for`) yang menampilkan "Neural Alert" atau "System Insight" berdasarkan data mesin[cite: 187, 192].
+* **Feedback Required Card**: Muncul jika ada aktivitas yang butuh penilaian (RPE). [cite_start]Menampilkan judul "Feedback Required"[cite: 201, 202].
+* [cite_start]**Power Efficiency Card**: Menampilkan judul "Power Efficiency" dan daftar metrik seperti "Workload (ACWR)" serta "Leg Resilience" dalam bentuk progress bar[cite: 204, 205].
+* [cite_start]**Interaction Log Card**: Menampilkan judul "Interaction Log" dan daftar riwayat aktivitas sistem[cite: 206, 207].
+* [cite_start]**Charts Section**: Dua kontainer grafik untuk "Load vs Readiness Correlation" dan "RHR Baseline Analysis"[cite: 224, 225, 227].
+
+---
+
+## 2. Sleep View (`sleepView.js`)
+[cite_start]Tampilan untuk sinkronisasi data tidur dan pemulihan CNS[cite: 115].
+
+### **Header**
+* [cite_start]**Judul Utama**: "Sleep Engine AASM" disertai tampilan tanggal otomatis[cite: 116, 117].
+
+### **Kontainer & Input Utama**
+* [cite_start]**Mode Selector**: Tab untuk memilih antara "Utama (Malam)" dan "Power Nap (Siang)"[cite: 118, 120].
+* [cite_start]**Sleep Window Card**: Kontainer input waktu yang judulnya berubah secara dinamis antara "Main Sleep Window" atau "Nap Time Duration"[cite: 122, 125].
+    * [cite_start]**Input**: "Start Time" dan "Wake Up"[cite: 127, 129].
+* [cite_start]**Latency Card**: (Hanya mode malam) Menampilkan judul "Latency (AASM)" untuk input menit waktu yang dibutuhkan hingga tertidur[cite: 132, 133].
+* [cite_start]**CNS Readiness Card**: Menampilkan judul "CNS Readiness"[cite: 136].
+    * [cite_start]**Isi**: Slider dan indikator angka untuk "Quality" (skor 1-10)[cite: 137, 138].
+
+### **Tombol Aksi**
+* [cite_start]**Sync Button**: Tombol dinamis bertuliskan "SYNC NEURAL DATA" atau "SYNC NAP DATA"[cite: 134, 135].
+
+---
+
+## 3. Modals (Muncul di atas View)
+* [cite_start]**Bio-Signal Sync Modal**: Berisi input "Sleep Quality", "Morning RHR", dan slider "Leg Soreness" (dengan label Heavy/Fresh)[cite: 210, 212, 213, 214, 218].
+* [cite_start]**Rate Your Effort Modal**: Berisi slider untuk menilai intensitas latihan dengan label dinamis (misal: Rest, Easy, Max Effort)[cite: 221, 222, 223].
