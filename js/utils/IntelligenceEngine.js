@@ -1,4 +1,4 @@
-// js/logic/IntelligenceEngine.js
+// js/utils/IntelligenceEngine.js
 import { Logger } from '../services/debug.js';
 
 export const IntelligenceEngine = {
