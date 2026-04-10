@@ -92,69 +92,87 @@ export const IntelligenceService = {
      * Pintu utama untuk update data bio (soreness, rhr, quality)
      */
     async syncEverything(manualBioData = {}) {
-        const startTime = Date.now();
-        const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const startTime = Date.now();
+    // 1. FORMAT TANGGAL (WIB)
+    const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    
+    // Untuk format Timestamp ISO (kemarin & hari ini)
+    const yesterdayObj = new Date();
+    yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+    const yesterdayWib = yesterdayObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
-        try {
-            const [workloadRes, activityRes] = await Promise.all([
-                supabase.rpc('get_workload_stats'),
-                this.getDailyActivitySummary()
-            ]);
+    try {
+        const [workloadRes, activityRes] = await Promise.all([
+            supabase.rpc('get_workload_stats'),
+            this.getDailyActivitySummary()
+        ]);
 
-            // 1. Hitung durasi dan efisiensi AASM dari data SleepView
-            const sleepMetrics = calculateAASMMetrics(
-                manualBioData.sleep_start, 
-                manualBioData.sleep_end, 
-                manualBioData.latency_mins
-            );
+        // 2. FIX: KONVERSI JAM KE TIMESTAMP ISO (Mencegah Syntax Error)
+        // Pola: Jam tidur (kemarin malam) -> Bangun (hari ini)
+        const sleepStartTs = manualBioData.sleep_start 
+            ? `${yesterdayWib}T${manualBioData.sleep_start}:00+07:00` 
+            : null;
+        const sleepEndTs = manualBioData.sleep_end 
+            ? `${todayWib}T${manualBioData.sleep_end}:00+07:00` 
+            : null;
 
-            // Logic Point Deduction dari fitnessEngine
-            const results = calculateReadiness({
-                acwr_ratio: workloadRes.data?.acwr_ratio || 1.0,
-                soreness_level: manualBioData.soreness,
-                sleep_quality: manualBioData.quality,
-                cns_readiness: manualBioData.cns_score,
-                sleep_duration: sleepMetrics.durationHours, 
-                sleep_efficiency: sleepMetrics.efficiency,
-                total_rpe: activityRes.avgRpe,
-                is_active_recovery: activityRes.isActiveRecovery
-            });
+        // 3. HITUNG METRICS AASM
+        // Kirim data timestamp lengkap ke fungsi calculateAASMMetrics
+        const sleepMetrics = calculateAASMMetrics(
+            sleepStartTs, 
+            sleepEndTs, 
+            manualBioData.latency_mins
+        );
 
-            const snapshot = {
-                check_in_date: todayWib,
-                readiness_score: results.score,
-                readiness_status: results.status,
-                recommendation: results.penalties?.length > 0 
-                    ? results.penalties[0] 
-                    : 'System Status Optimal',
-                acwr_ratio: workloadRes.data?.acwr_ratio || 1.0,
-                morning_rhr: manualBioData.rhr,
-                soreness_level: manualBioData.soreness,
-                sleep_quality: manualBioData.quality,
-                cns_readiness: manualBioData.cns_score,
-                leg_resilience: results.legScore || results.score, 
-                sleep_start: manualBioData.sleep_start,
-                sleep_end: manualBioData.sleep_end,
-                sleep_efficiency: sleepMetrics.efficiency,
-                latency_mins: manualBioData.latency_mins,
-                total_rpe: activityRes.avgRpe,
-                is_active_recovery: activityRes.isActiveRecovery,
-                activity_summary: activityRes.summary,
-                last_updated: new Date().toISOString()
-            };
+        // Logic Point Deduction dari fitnessEngine
+        const results = calculateReadiness({
+            acwr_ratio: workloadRes.data?.[0]?.acwr_ratio || 1.0, // RPC biasanya return array
+            soreness_level: manualBioData.soreness,
+            sleep_quality: manualBioData.quality,
+            cns_readiness: manualBioData.cns_score, // Dari slider CNS
+            sleep_duration: sleepMetrics.durationHours, 
+            sleep_efficiency: sleepMetrics.efficiency,
+            total_rpe: activityRes.avgRpe,
+            is_active_recovery: activityRes.isActiveRecovery
+        });
 
-            const { error: upsertError } = await supabase
-                .from('daily_intelligence')
-                .upsert(snapshot, { onConflict: 'check_in_date' });
+        const snapshot = {
+            check_in_date: todayWib,
+            readiness_score: results.score,
+            readiness_status: results.status,
+            recommendation: results.recommendation, // Pakai string rekomen dari engine
+            acwr_ratio: workloadRes.data?.[0]?.acwr_ratio || 1.0,
+            morning_rhr: manualBioData.rhr,
+            soreness_level: manualBioData.soreness,
+            sleep_quality: manualBioData.quality,
+            cns_readiness: manualBioData.cns_score,
+            leg_resilience: results.legScore, // Kolom baru leg_resilience
+            
+            // Simpan format ISO ke DB agar Postgres tidak protes
+            sleep_start: sleepStartTs,
+            sleep_end: sleepEndTs,
+            
+            sleep_duration: sleepMetrics.durationHours, // Simpan durasi bersih
+            sleep_efficiency: sleepMetrics.efficiency,
+            latency_mins: manualBioData.latency_mins,
+            total_rpe: activityRes.avgRpe,
+            is_active_recovery: activityRes.isActiveRecovery,
+            activity_summary: activityRes.summary,
+            last_updated: new Date().toISOString()
+        };
 
-            if (upsertError) throw upsertError;
+        const { error: upsertError } = await supabase
+            .from('daily_intelligence')
+            .upsert(snapshot, { onConflict: 'check_in_date' });
 
-            Logger.sync("daily_intelligence", "success", Date.now() - startTime);
-            return { success: true, data: snapshot, analysis: results };
+        if (upsertError) throw upsertError;
 
-        } catch (err) {
-            Logger.error("SERVICE_BRIDGE_ERROR", err);
-            return { success: false, error: err.message };
-        }
+        Logger.sync("daily_intelligence", "success", Date.now() - startTime);
+        return { success: true, data: snapshot, analysis: results };
+
+    } catch (err) {
+        Logger.error("SERVICE_BRIDGE_ERROR", err);
+        return { success: false, error: err.message };
+    }
     }
 };
