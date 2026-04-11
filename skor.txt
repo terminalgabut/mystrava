@@ -1,60 +1,117 @@
-Berdasarkan logika terbaru Bos (**1 = Terburuk, 10 = Terbaik**), berikut adalah rincian rumus kalkulasi skor yang digunakan oleh engine Bos untuk melakukan evaluasi:
+Waduh, maaf Bos! Saya terlalu muter-muter pakai rumus matematika tadi. Oke, kita buat **Mapping Fix** per angka. Jadi Bos tidak perlu hitung manual lagi, tinggal lihat tabel ini untuk tahu "harga" setiap angka di slider Bos.
+
+Berikut rincian **Linear Point Mapping** (1 s/d 10):
 
 ---
 
-### 1. Rumus Readiness (Kondisi Umum)
-**Skor Awal: 85**
+### 1. 🧠 CNS Quality (Neural Drive)
+*Titik Netral di angka 7 (0 poin).*
 
-* **CNS (Sistem Saraf)**
-    * $1 - 3$: **-35** (Neural Crash)
-    * $4 - 6$: **-15** (Low Drive)
-    * $9 - 10$: **+10** (Alpha State)
-* **Sleep Quality (Kualitas Tidur)**
-    * $1 - 3$: **-25** (Poor Recovery)
-    * $4 - 6$: **-10** (Sub-optimal)
-    * $9 - 10$: **+5** (Deep Repair)
-* **RPE (Exertion Control)**
-    * $1 - 2$: **-25** (Sangat Berat/Hancur)
-    * $3 - 4$: **-15** (Berat)
-    * $8 - 10$: **+5** (Active Recovery)
-
----
-
-### 2. Rumus Leg Resilience (Kekuatan Kaki)
-**Skor Awal: 90**
-
-* **Soreness (Muscle State)**
-    * $1 - 2$: **-50** (Muscle Failure)
-    * $3 - 4$: **-35** (Heavy Damage)
-    * $5 - 6$: **-15** (Moderate)
-    * $9 - 10$: **+5** (Fresh)
-* **Workload (ACWR)**
-    * $> 1.5$: **-40** (Danger Zone)
-    * $1.3 - 1.5$: **-20** (Caution)
-
----
-
-### 3. Matriks Penalti Ganda (Cross-Penalty)
-Ini adalah "Logic Kejam" yang memotong skor lebih dalam jika ada dua kondisi buruk yang bertemu:
-
-| Nama Penalti | Syarat (Kombinasi) | Dampak Skor |
+| Angka | Skor | Keterangan |
 | :--- | :--- | :--- |
-| **Synergy of Exhaustion** | Soreness $\le 4$ **+** CNS $\le 4$ | **Leg -20, Readiness -10** |
-| **Recovery Blackout** | Sleep Quality $\le 4$ **+** RPE $\le 4$ | **Readiness -20** |
-| **Neural Overshoot** | ACWR $> 1.3$ **+** CNS $\le 5$ | **Readiness -15, Leg -15** |
-| **Double Sleep Debt** | Durasi $< 6j$ **+** Quality $\le 4$ | **Readiness -15** |
+| **1** | **-30** | Neural Crash |
+| **2** | **-25** | Sangat Lemas |
+| **3** | **-20** | Brain Fog Parah |
+| **4** | **-15** | Kurang Fokus |
+| **5** | **-10** | Low Energy |
+| **6** | **-5** | Sedikit Ngantuk |
+| **7** | **0** | **Baseline (Netral)** |
+| **8** | **+5** | Sharp |
+| **9** | **+10** | Locked In |
+| **10** | **+15** | **Alpha State** |
 
 ---
 
-### 4. Threshold Status Akhir
-Setelah semua rumus di atas dijumlahkan, status ditentukan oleh nilai akhir **Readiness**:
+### 2. 😴 Sleep Quality (Recovery)
+*Titik Netral di angka 7 (0 poin).*
 
-* **$\ge 80$**: **Optimal** (Siap Hajar)
-* **$65 - 79$**: **Good** (Aman)
-* **$45 - 64$**: **Fair** (Waspada/Latihan Ringan)
-* **$< 45$**: **Rest Required** (Wajib Istirahat)
+| Angka | Skor | Keterangan |
+| :--- | :--- | :--- |
+| **1** | **-24** | Begadang / Insomnia |
+| **2** | **-20** | Tidur Hancur |
+| **3** | **-16** | Sering Terbangun |
+| **4** | **-12** | Kurang Pulas |
+| **5** | **-8** | Tidur Tanggung |
+| **6** | **-4** | Hampir Cukup |
+| **7** | **0** | **Baseline (Netral)** |
+| **8** | **+4** | Nyenyak |
+| **9** | **+8** | Sangat Segar |
+| **10** | **+12** | **Perfect Recovery** |
 
-> **Contoh Kasus:**
-> Jika Soreness Bos di angka **3** (Pegal Berat) dan CNS di angka **3** (Saraf Lelah), maka kaki Bos kena potong **-35** (Soreness) dan tambahan **-20** (Synergy Penalty). Total potong **55 poin**. Dari baseline 90, sisa skor kaki Bos cuma **35**.
+---
 
-Dengan rincian ini, Bos bisa langsung tahu variabel mana yang bikin grafik di dashboard jadi merah. Aman, Bos?
+### 3. 🦵 Soreness (Muscle State)
+*Titik Netral di angka 8 (0 poin).*
+
+| Angka | Skor | Keterangan |
+| :--- | :--- | :--- |
+| **1** | **-42** | Kaki Kaku / Nyeri |
+| **2** | **-36** | Pegal Parah |
+| **3** | **-30** | Sangat Berat |
+| **4** | **-24** | Pegal Terasa |
+| **5** | **-18** | DOMS Ringan |
+| **6** | **-12** | Terasa Sedikit |
+| **7** | **-6** | Hampir Segar |
+| **8** | **0** | **Baseline (Netral)** |
+| **9** | **+6** | Light & Ready |
+| **10** | **+12** | **Bionic Legs** |
+
+---
+
+### 4. 📈 RPE (Intensity/Difficulty)
+*Makin tinggi angkanya, makin besar pengurang skornya (Fatigue).*
+
+| Angka | Skor | Keterangan |
+| :--- | :--- | :--- |
+| **1** | **+12** | Recovery Pace (Bonus) |
+| **2** | **+9** | Sangat Enteng |
+| **3** | **+6** | Ringan |
+| **4** | **+3** | Nyaman |
+| **5** | **0** | **Baseline (Netral)** |
+| **6** | **-3** | Mulai Berat |
+| **7** | **-6** | Latihan Intens |
+| **8** | **-9** | Sangat Berat |
+| **9** | **-12** | Menuju Limit |
+| **10** | **-15** | **Max Effort / Fail** |
+
+---
+
+Nah, ini rincian **Mapping Logika** untuk **Pinalti** dan **Bonus Kebugaran** Bos. Logikanya sekarang bukan cuma angka statis, tapi melihat "siapa ketemu siapa".
+
+Sesuai permintaan Bos: **Pinalti** fokus ke dominasi variabel buruk, sedangkan **Bonus** fokus ke adaptasi kebugaran (saat kondisi baik mampu menahan beban).
+
+---
+
+### 🚫 Mapping Pinalti (Dominasi Buruk)
+Pinalti ini langsung memotong total skor akhir jika kondisi buruk lebih dominan.
+
+| Kategori | Syarat (Kondisi Buruk) | Potongan Skor | Filosofi AI |
+| :--- | :--- | :--- | :--- |
+| **Neural Burnout** | **CNS < 5** + **RPE > 7** | **-20** | Saraf soak tapi dipaksa latihan intens. |
+| **Injury Risk** | **Soreness < 5** + **CNS < 5** | **-25** | Otot rusak + kontrol motorik saraf lemot. |
+| **Recovery Debt** | **Sleep < 5** + **RPE > 7** | **-15** | Menghajar badan tanpa modal istirahat. |
+| **System Overload**| **ACWR > 1.3** + **CNS < 5** | **-15** | Beban mingguan naik saat saraf drop. |
+
+---
+
+### ✨ Mapping Bonus (Dominasi Baik / Kebugaran Naik)
+Bonus ini aktif jika kondisi pemulihan Bos kuat atau ada sinergi positif antar variabel.
+
+| Kategori | Syarat (Kondisi Baik) | Bonus Skor | Filosofi AI |
+| :--- | :--- | :--- | :--- |
+| **Adaptation** | **RPE > 7** + **CNS > 7** | **+10** | Saraf kuat menahan beban berat = **Fisik Naik**. |
+| **Active Recovery**| **Soreness < 5** + **RPE < 4** | **+15** | Latihan ringan saat pegal = **Sirkulasi Lancar**. |
+| **Super Sleep** | **Sleep > 8** + **Soreness > 8** | **+8** | Tidur pulas + otot segar = **Maximum Repair**. |
+| **Resilience** | **ACWR > 1.2** + **Soreness > 7**| **+12** | Beban tinggi tapi kaki tetap kuat = **Leg Power**. |
+
+---
+
+### 💡 Cara Kerja Evaluasi (Natural)
+
+Sistem akan membandingkan **Total Pinalti** vs **Total Bonus**. 
+
+1.  **Jika Pinalti lebih banyak:** AI akan mengabaikan bonus kecil dan fokus memperingatkan Bos (Status: *Rest Required*).
+2.  **Jika Bonus lebih dominan:** (Misal: Bos latihan berat [RPE 9] tapi CNS Bos 9), maka penalti latihan berat akan **dinetralisir** oleh bonus *Adaptation*. Hasilnya skor Bos tetap tinggi karena dianggap "Mampu beradaptasi".
+3.  **Selisih Tidak Jauh:** Jika antara kondisi buruk dan baik nilainya mepet (misal Soreness 4 tapi RPE 5), AI akan memberikan skor **Netral** (0), menganggap tubuh Bos sedang dalam fase transisi.
+
+Dengan mapping ini, dashboard Bos akan terasa lebih "pintar" karena bisa membedakan mana **capek yang merusak** dan mana **capek yang bikin kuat**. Aman, Bos?
