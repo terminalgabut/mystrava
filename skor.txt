@@ -1,38 +1,60 @@
-Sesuai dengan logika **"Makin Tinggi Makin Bagus (1-10)"** yang baru saja kita sepakati, berikut adalah ringkasan aturan skornya agar Bos mudah menghafalnya saat evaluasi:
-
-### 1. Matrix Readiness (Kondisi Tubuh Umum)
-Baseline awal: **85 Poin**
-
-| Skala (1-10) |      Status.         | Dampak Skor            |
-| :---         | :---                 | :---                   |
-| **1 - 3**    | **Buruk / Crash**    | **Potong -25 s/d -35** |
-| **4 - 6**    | **Rata-rata / Low**  | **Potong -10 s/d -15** |
-| **7 - 8**    | **Bagus / Aman**     | **0 (Netral)**         |
-| **9 - 10**   | **Sempurna / Fresh** | **Bonus +5 s/d +10**   |
+Berdasarkan logika terbaru Bos (**1 = Terburuk, 10 = Terbaik**), berikut adalah rincian rumus kalkulasi skor yang digunakan oleh engine Bos untuk melakukan evaluasi:
 
 ---
 
-### 2. Matrix Leg Resilience (Kondisi Kaki)
-Baseline awal: **90 Poin**
+### 1. Rumus Readiness (Kondisi Umum)
+**Skor Awal: 85**
 
-| Skala (1-10) | Status | Dampak Skor |
+* **CNS (Sistem Saraf)**
+    * $1 - 3$: **-35** (Neural Crash)
+    * $4 - 6$: **-15** (Low Drive)
+    * $9 - 10$: **+10** (Alpha State)
+* **Sleep Quality (Kualitas Tidur)**
+    * $1 - 3$: **-25** (Poor Recovery)
+    * $4 - 6$: **-10** (Sub-optimal)
+    * $9 - 10$: **+5** (Deep Repair)
+* **RPE (Exertion Control)**
+    * $1 - 2$: **-25** (Sangat Berat/Hancur)
+    * $3 - 4$: **-15** (Berat)
+    * $8 - 10$: **+5** (Active Recovery)
+
+---
+
+### 2. Rumus Leg Resilience (Kekuatan Kaki)
+**Skor Awal: 90**
+
+* **Soreness (Muscle State)**
+    * $1 - 2$: **-50** (Muscle Failure)
+    * $3 - 4$: **-35** (Heavy Damage)
+    * $5 - 6$: **-15** (Moderate)
+    * $9 - 10$: **+5** (Fresh)
+* **Workload (ACWR)**
+    * $> 1.5$: **-40** (Danger Zone)
+    * $1.3 - 1.5$: **-20** (Caution)
+
+---
+
+### 3. Matriks Penalti Ganda (Cross-Penalty)
+Ini adalah "Logic Kejam" yang memotong skor lebih dalam jika ada dua kondisi buruk yang bertemu:
+
+| Nama Penalti | Syarat (Kombinasi) | Dampak Skor |
 | :--- | :--- | :--- |
-| **1 - 2** | **Kritis / Cedera** | **Potong -50** |
-| **3 - 4** | **Pegal / Berat** | **Potong -35** |
-| **5 - 6** | **Terasa (Moderate)** | **Potong -15** |
-| **7 - 8** | **Normal** | **0 (Netral)** |
-| **9 - 10** | **Segar (Fully Recovered)**| **Bonus +5** |
+| **Synergy of Exhaustion** | Soreness $\le 4$ **+** CNS $\le 4$ | **Leg -20, Readiness -10** |
+| **Recovery Blackout** | Sleep Quality $\le 4$ **+** RPE $\le 4$ | **Readiness -20** |
+| **Neural Overshoot** | ACWR $> 1.3$ **+** CNS $\le 5$ | **Readiness -15, Leg -15** |
+| **Double Sleep Debt** | Durasi $< 6j$ **+** Quality $\le 4$ | **Readiness -15** |
 
 ---
 
-### 3. Ringkasan Cepat untuk Evaluasi
-Jika Bos melihat dashboard dan skornya anjlok, cek variabel mana yang masuk ke **Zona Merah**:
+### 4. Threshold Status Akhir
+Setelah semua rumus di atas dijumlahkan, status ditentukan oleh nilai akhir **Readiness**:
 
-* **CNS & Sleep Quality**: Kalau input di bawah **3**, Readiness Bos dipotong rata-rata **30 poin**.
-* **Muscle State (Dulu Soreness)**: Kalau input di bawah **4**, kaki Bos langsung dipotong minimal **35 poin**.
-* **Exertion (Dulu RPE)**: Kalau input di bawah **3** (artinya latihan sangat berat), Readiness dipotong **25 poin**.
+* **$\ge 80$**: **Optimal** (Siap Hajar)
+* **$65 - 79$**: **Good** (Aman)
+* **$45 - 64$**: **Fair** (Waspada/Latihan Ringan)
+* **$< 45$**: **Rest Required** (Wajib Istirahat)
 
-### Aturan Tambahan (Penalti Ganda)
-Ingat **"Logika Kejam"** Bos: Jika ada **dua variabel** yang sama-sama di angka **1-4**, sistem akan memberikan potongan tambahan **-15 s/d -20** lagi karena dianggap kondisi Bos sangat berisiko.
+> **Contoh Kasus:**
+> Jika Soreness Bos di angka **3** (Pegal Berat) dan CNS di angka **3** (Saraf Lelah), maka kaki Bos kena potong **-35** (Soreness) dan tambahan **-20** (Synergy Penalty). Total potong **55 poin**. Dari baseline 90, sisa skor kaki Bos cuma **35**.
 
-Jadi, kalau mau skor aman, usahakan semua slider Bos ada di angka **7 ke atas**. Begitu ada yang geser ke **6 atau drastis ke 1-2**, dashboard Bos akan langsung berubah jadi **Rest Required**. Aman, Bos!
+Dengan rincian ini, Bos bisa langsung tahu variabel mana yang bikin grafik di dashboard jadi merah. Aman, Bos?
