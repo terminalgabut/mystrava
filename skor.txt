@@ -1,0 +1,38 @@
+Sesuai dengan logika **"Makin Tinggi Makin Bagus (1-10)"** yang baru saja kita sepakati, berikut adalah ringkasan aturan skornya agar Bos mudah menghafalnya saat evaluasi:
+
+### 1. Matrix Readiness (Kondisi Tubuh Umum)
+Baseline awal: **85 Poin**
+
+| Skala (1-10) | Status | Dampak Skor |
+| :--- | :--- | :--- |
+| **1 - 3** | **Buruk / Crash** | **Potong -25 s/d -35** |
+| **4 - 6** | **Rata-rata / Low** | **Potong -10 s/d -15** |
+| **7 - 8** | **Bagus / Aman** | **0 (Netral)** |
+| **9 - 10** | **Sempurna / Fresh** | **Bonus +5 s/d +10** |
+
+---
+
+### 2. Matrix Leg Resilience (Kondisi Kaki)
+Baseline awal: **90 Poin**
+
+| Skala (1-10) | Status | Dampak Skor |
+| :--- | :--- | :--- |
+| **1 - 2** | **Kritis / Cedera** | **Potong -50** |
+| **3 - 4** | **Pegal / Berat** | **Potong -35** |
+| **5 - 6** | **Terasa (Moderate)** | **Potong -15** |
+| **7 - 8** | **Normal** | **0 (Netral)** |
+| **9 - 10** | **Segar (Fully Recovered)**| **Bonus +5** |
+
+---
+
+### 3. Ringkasan Cepat untuk Evaluasi
+Jika Bos melihat dashboard dan skornya anjlok, cek variabel mana yang masuk ke **Zona Merah**:
+
+* **CNS & Sleep Quality**: Kalau input di bawah **3**, Readiness Bos dipotong rata-rata **30 poin**.
+* **Muscle State (Dulu Soreness)**: Kalau input di bawah **4**, kaki Bos langsung dipotong minimal **35 poin**.
+* **Exertion (Dulu RPE)**: Kalau input di bawah **3** (artinya latihan sangat berat), Readiness dipotong **25 poin**.
+
+### Aturan Tambahan (Penalti Ganda)
+Ingat **"Logika Kejam"** Bos: Jika ada **dua variabel** yang sama-sama di angka **1-4**, sistem akan memberikan potongan tambahan **-15 s/d -20** lagi karena dianggap kondisi Bos sangat berisiko.
+
+Jadi, kalau mau skor aman, usahakan semua slider Bos ada di angka **7 ke atas**. Begitu ada yang geser ke **6 atau drastis ke 1-2**, dashboard Bos akan langsung berubah jadi **Rest Required**. Aman, Bos!
