@@ -145,6 +145,11 @@ export default {
                 Logger.error("Coach_Load_Error", err);
             } finally {
                 isLoading.value = false;
+                
+                setTimeout(async () => {
+                    Logger.info("Dashboard Load Complete, checking for RPE...", "SYSTEM");
+                    await checkPendingActivities(); 
+                }, 100);
             }
         };
 
