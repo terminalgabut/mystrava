@@ -1,8 +1,11 @@
 // js/utils/fitnessEngine.js
 
 /**
- * Fitness Intelligence Engine - AASM & Resilience Edition
- * Update: Matrix 1-10 & Cross-Penalty Logic
+ * Fitness Intelligence Engine - Linear & Dynamic Matrix Edition
+ * Updated: 2026-04-12
+ * Logic: 
+ * - CNS, Sleep, Soreness: 1 (Bad) - 10 (Good)
+ * - RPE: 1 (Easy) - 10 (Hard/Fatigue)
  */
 
 export const calculateReadiness = (data) => {
@@ -16,88 +19,103 @@ export const calculateReadiness = (data) => {
     // 2. DATA PARSING
     const duration = parseFloat(data.sleep_duration || 0);
     const efficiency = parseFloat(data.sleep_efficiency || 0);
-    const quality = parseInt(data.sleep_quality || 0); // 1-10
-    const cns = parseInt(data.cns_readiness || 0);    // 1-10
-    const soreness = parseInt(data.soreness_level || 0); // 1-10
-    const rpe = parseFloat(data.total_rpe || 0);      // 1-10
+    const quality = parseInt(data.sleep_quality || 0); 
+    const cns = parseInt(data.cns_readiness || 0);    
+    const soreness = parseInt(data.soreness_level || 0); 
+    const rpe = parseFloat(data.total_rpe || 0);      
     const acwr = parseFloat(data.acwr_ratio || 1.0);
 
-    // 3. MATRIX IMPACT 1-10 (LINEAR & STEP PENALTY)
+    // 3. LINEAR SCALING IMPACT (Specific Point Mapping)
+    
+    // CNS Impact: (CNS - 7) * 5
+    const cnsImpact = (cns - 7) * 5;
+    readiness += cnsImpact;
 
-    // --- CNS READINESS ---
-    if (cns <= 3) { readiness -= 35; penalties.push("Neural System Crash"); }
-    else if (cns <= 6) { readiness -= 15; }
-    else if (cns >= 9) { readiness += 10; bonuses.push("Alpha Neural State"); }
+    // Sleep Impact: (Quality - 7) * 4
+    const sleepImpact = (quality - 7) * 4;
+    readiness += sleepImpact;
 
-    // --- SORENESS (Impact ke Kaki) ---
-    if (soreness >= 9) { legResilience -= 50; penalties.push("Muscle Failure Imminent"); }
-    else if (soreness >= 7) { legResilience -= 35; penalties.push("Heavy Muscle Damage"); }
-    else if (soreness >= 4) { legResilience -= 15; }
+    // Soreness Impact: (Soreness - 8) * 6
+    const sorenessImpact = (soreness - 8) * 6;
+    legResilience += sorenessImpact;
 
-    // --- SLEEP QUALITY ---
-    if (quality <= 3) { readiness -= 25; penalties.push("Poor Physical Recovery"); }
-    else if (quality <= 6) { readiness -= 10; }
-    else if (quality >= 9) { readiness += 5; bonuses.push("Deep Tissue Repair"); }
-
-    // --- TOTAL RPE ---
-    if (rpe >= 9) { readiness -= 25; penalties.push("High CNS Fatigue"); }
-    else if (rpe >= 7) { readiness -= 15; }
-    else if (rpe <= 3 && rpe > 0) { readiness += 5; bonuses.push("Active Recovery Bonus"); }
+    // RPE Fatigue Impact: (5 - RPE) * 3
+    const rpeImpact = (5 - rpe) * 3;
+    readiness += rpeImpact;
 
 
-    // 4. CROSS-PENALTY (The "Cruel" Logic)
+    // 4. DYNAMIC PENALTIES (Scanning for "Weak Links")
 
-    // A. SYNERGY OF EXHAUSTION (Soreness Tinggi + CNS Rendah)
-    // Dampak: Kontrol motorik buruk saat otot rusak = Resiko Cedera Akut.
-    if (soreness >= 7 && cns <= 4) {
-        legResilience -= 20;
-        readiness -= 10;
-        recommendation = "CRITICAL: High Injury Risk. Motor Control Impaired.";
-    }
-
-    // B. RECOVERY BLACKOUT (Sleep Quality Rendah + RPE Tinggi)
-    // Dampak: Menghajar tubuh saat sistem pemulihan mati.
-    if (quality <= 4 && rpe >= 7) {
+    // A. Neural Burnout: Saraf soak tapi dipaksa latihan intens
+    if (cns < 5 && rpe > 7) {
         readiness -= 20;
-        penalties.push("Recovery Blackout: System Overtaxed");
+        penalties.push("Neural Burnout: Motor Drive Crash");
     }
 
-    // C. OVERSHOOT (ACWR Tinggi + CNS Rendah)
-    // Dampak: Beban latihan naik saat saraf lelah.
-    if (acwr > 1.3 && cns <= 5) {
+    // B. Injury Risk: Otot rusak + kontrol motorik saraf hancur
+    if (soreness < 5 && cns < 5) {
+        legResilience -= 25;
+        penalties.push("High Injury Risk: Impaired Motor Control");
+        recommendation = "CRITICAL: High Injury Risk. Focus on Mobility.";
+    }
+
+    // C. Recovery Debt: Latihan berat tanpa modal tidur
+    if (quality < 5 && rpe > 7) {
+        readiness -= 15;
+        penalties.push("Recovery Blackout: Overtaxed System");
+    }
+
+    // D. Neural Overshoot: Beban mingguan naik saat saraf drop
+    if (acwr > 1.3 && cns < 5) {
         readiness -= 15;
         legResilience -= 15;
         penalties.push("Neural Overshoot: Mechanical Stress Peak");
     }
 
-    // D. AASM DEBT (Duration Rendah + Sleep Quality Rendah)
-    if (duration < 6 && quality <= 4) {
-        readiness -= 15;
-        penalties.push("Double Sleep Debt: Structural & Neural");
+
+    // 5. DYNAMIC BONUSES (Scanning for "Adaptation")
+
+    // A. Adaptation: Latihan keras saat saraf segar = Kebugaran Naik
+    if (rpe > 7 && cns > 7) {
+        readiness += 10;
+        bonuses.push("Fitness Adaptation: High Capacity State");
+    }
+
+    // B. Active Recovery: Pegal tapi dibawa gerak santai (Sirkulasi)
+    if (soreness < 5 && rpe < 4 && rpe > 0) {
+        legResilience += 15;
+        bonuses.push("Active Recovery: Tissue Flushing");
+    }
+
+    // C. Resilience Bonus: Beban tinggi tapi kaki tetap segar
+    if (acwr > 1.2 && soreness > 7) {
+        legResilience += 12;
+        bonuses.push("Leg Resilience: Mechanical Efficiency");
     }
 
 
-    // 5. WORKLOAD ANALYSIS (Standard ACWR)
+    // 6. STANDARD CONSTRAINTS (AASM & ACWR)
     if (acwr > 1.5) {
         legResilience -= 40;
         readiness -= 20;
-    } else if (acwr > 1.3) {
-        legResilience -= 20;
+    }
+    
+    if (duration > 0 && duration < 6) {
+        readiness -= 20;
+        legResilience -= 10;
+        penalties.push("AASM Sleep Debt");
     }
 
-    // 6. DURATION & EFFICIENCY (AASM Standard)
-    if (duration > 0) {
-        if (duration < 6) { readiness -= 20; legResilience -= 10; }
-        if (efficiency < 85 && efficiency > 0) { readiness -= 15; }
+    if (efficiency < 85 && efficiency > 0) {
+        readiness -= 15;
     }
 
-    // 7. RECOVERY BONUSES
     if (data.is_active_recovery) {
         legResilience += 10;
         readiness += 5;
     }
 
-    // FINAL CLAMPING
+    // 7. FINAL CLAMPING (0 - 100)
     readiness = Math.min(Math.max(readiness, 0), 100);
     legResilience = Math.min(Math.max(legResilience, 0), 100);
 
