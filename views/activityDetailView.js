@@ -129,7 +129,7 @@ export default `
         </p>
     </div>
 </div>
-            <div v-if="activity?.type === 'Ride'" class="grid grid-cols-2 gap-4 mt-4">
+            <div class="grid grid-cols-2 gap-4 mt-4">
             <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-blue-500">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Power</p>
             <p class="text-xl font-black text-slate-900 leading-none">
