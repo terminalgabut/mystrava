@@ -12,6 +12,7 @@ export default `
                 <option value="Run">Running</option>
                 <option value="Ride">Cycling</option>
                 <option value="Walk">Walking</option>
+                <option value="Hike">Hiking</option>
             </select>
             <select v-model="selectedPeriodKey" class="select-clean" :disabled="isLoading">
                 <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">
