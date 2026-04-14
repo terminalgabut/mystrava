@@ -141,6 +141,14 @@ export default {
             recordUnit: '/km', 
             icon: 'timer', 
             showSteps: false 
+        },
+        'Hike': { 
+            label: 'Total Steps', 
+            unit: 'steps', 
+            recordLabel: 'Best VAM', 
+            recordUnit: 'm/h', 
+            icon: 'mountain', 
+            showSteps: true 
         }
     };
     return configs[selectedType.value] || configs['Run'];
