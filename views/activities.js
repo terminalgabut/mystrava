@@ -50,9 +50,10 @@ export default {
         // Sporty Icons Selector
         const getIconName = (type) => {
             const icons = {
-                'Run': 'footprints',
+                'Run': 'sport-shoe',
                 'Ride': 'bike',
-                'Walk': 'person-standing'
+                'Walk': 'footprints',
+                'Hike': 'mountain'
             };
             return icons[type] || 'activity';
         };
