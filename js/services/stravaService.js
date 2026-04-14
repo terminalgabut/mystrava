@@ -149,6 +149,15 @@ export const stravaService = {
                 
                 bestEffort = mostSteps?.steps ? mostSteps.steps.toLocaleString('id-ID') : '0';
             }
+            else if (activityType === 'Hike') {
+                const { data: bestVam } = await supabase.from('activities')
+                    .select('avg_vam_hour')
+                    .eq('type', 'Hike')
+                    .order('avg_vam_hour', { ascending: false })
+                    .limit(1).maybeSingle();
+                
+                bestEffort = bestVam?.avg_vam_hour ? Math.round(bestVam.avg_vam_hour).toString() : '0';
+            }
 
             return {
                 longestDistance: (Number(longest?.distance || 0) / 1000).toFixed(2),
