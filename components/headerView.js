@@ -12,8 +12,8 @@ export default {
             </router-link>
             
             <div class="header-nav ml-auto flex gap-2">
-                <router-link to="/statistics" class="nav-icon" title="Statistik">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                <router-link to="/profil" class="nav-icon" title="Profil">
+                    <i data-lucide="circle-user" class="w-5 h-5"></i>
                 </router-link>
             </div>
         </div>
