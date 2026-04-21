@@ -70,7 +70,22 @@ export default {
             return classes[type] || 'bg-slate-100 text-slate-600 ring-1 ring-slate-200';
         };
 
-        const goToDetail = (id) => router.push(`/activity/${id}`);
+       // const goToDetail = (id) => router.push(`/activity/${id}`);
+        const goToDetail = (id) => {
+        const act = activities.value.find(a => a.id === id);
+        
+        if (act && act.type === 'WeightTraining') {
+            router.push({ 
+                name: 'weight-training-detail', 
+                params: { id: id } 
+            });
+        } else {
+            router.push({ 
+                name: 'activity-detail', 
+                params: { id: id } 
+            });
+        }
+    };
         
         const formatDate = (dateStr) => {
             if (!dateStr) return '-';
