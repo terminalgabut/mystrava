@@ -20,7 +20,7 @@ export default `
     </header>
 
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-        <button v-for="type in ['All', 'Run', 'Ride', 'Walk', 'Hike']" 
+        <button v-for="type in ['All', 'Run', 'Ride', 'Walk', 'Hike', 'Weighttraining']" 
                 :key="type"
                 @click="filterType = type"
                 :class="filterType === type ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'"
