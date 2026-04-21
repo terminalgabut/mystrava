@@ -46,70 +46,63 @@ export default {
         };
 
         const handleLyftaUpload = async (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-            // Validasi format file sederhana
-            if (!file.name.endsWith('.csv')) {
-                alert('⚠️ Mohon unggah file format .csv');
-                return;
-            }
+    uploading.value = true;
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+        try {
+            const text = e.target.result;
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) throw new Error('File CSV tidak memiliki data.');
 
-            uploading.value = true;
-            const reader = new FileReader();
-            
-            reader.onload = async (e) => {
-                try {
-                    const text = e.target.result;
-                    // Split baris dengan handle kemungkinan \r\n (Windows)
-                    const lines = text.trim().split(/\r?\n/).slice(1);
+            // Ambil header untuk mendeteksi kolom secara dinamis
+            const headerLine = lines[0].replace(/"/g, '');
+            // Deteksi apakah pakai ; atau ,
+            const delimiter = headerLine.includes(';') ? ';' : ',';
+            const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
 
-                    if (lines.length === 0) {
-                        throw new Error('File CSV kosong atau tidak memiliki data.');
-                    }
-
-                    const payload = lines.map(line => {
-                        const v = line.split(',').map(item => item.replace(/"/g, '').trim());
-                        
-                        // Menyesuaikan dengan struktur Lyfta CSV:
-                        // Index 3: Exercise, Index 5: Weight, Index 6: Reps, Index 9: Set Type
-                        return {
-                            activity_id: props.id,
-                            exercise_name: v[3] || 'Unknown Exercise',
-                            // Handle kolom kosong/null agar tidak NaN di DB
-                            weight: parseFloat(v[5]) || 0, 
-                            reps: parseInt(v[6]) || 0,
-                            set_type: v[9] || 'NORMAL_SET'
-                        };
-                    });
-
-                    Logger.info('WeightDetail: Attempting to insert payload', payload);
-
-                    const { error } = await supabase.from('workout_details').insert(payload);
-                    if (error) throw error;
-
-                    // Berhasil
-                    await fetchWorkoutDetails();
-                    alert(`✅ Sukses! ${payload.length} set latihan berhasil diimpor.`);
-                    Logger.info('WeightDetail: Upload success');
-
-                } catch (err) {
-                    Logger.error('WeightDetail: Upload failed', err);
-                    alert(`❌ Gagal Mengimpor: ${err.message || 'Terjadi kesalahan pada struktur file'}`);
-                } finally {
-                    uploading.value = false;
-                    // Reset input agar bisa re-upload file yang sama jika diperlukan
-                    event.target.value = '';
-                }
+            // Cari indeks kolom secara dinamis agar tidak salah urutan
+            const idx = {
+                exercise: headers.indexOf('exercise'),
+                weight: headers.indexOf('weight'),
+                reps: headers.indexOf('reps'),
+                set_type: headers.indexOf('set type')
             };
 
-            reader.onerror = () => {
-                alert('❌ Gagal membaca file.');
-                uploading.value = false;
-            };
+            Logger.info('WeightDetail: Detected Delimiter:', delimiter, 'Indices:', idx);
 
-            reader.readAsText(file);
-        };
+            const payload = lines.slice(1).map(line => {
+                const v = line.split(delimiter).map(item => item.replace(/"/g, '').trim());
+                
+                return {
+                    activity_id: props.id,
+                    exercise_name: v[idx.exercise] || 'Unknown Exercise',
+                    // Ganti koma ke titik jika ada (format Eropa/Indo) lalu parse
+                    weight: parseFloat(v[idx.weight]?.replace(',', '.') || 0) || 0,
+                    reps: parseInt(v[idx.reps]) || 0,
+                    set_type: v[idx.set_type] || 'NORMAL_SET'
+                };
+            });
+
+            const { error } = await supabase.from('workout_details').insert(payload);
+            if (error) throw error;
+
+            await fetchWorkoutDetails();
+            alert(`✅ Sukses! ${payload.length} data latihan berhasil dihubungkan.`);
+
+        } catch (err) {
+            Logger.error('WeightDetail: Upload failed', err);
+            alert(`❌ Gagal: ${err.message}`);
+        } finally {
+            uploading.value = false;
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+};
 
         const totalVolume = computed(() => {
             return workoutDetails.value.reduce((acc, item) => acc + (item.weight * item.reps), 0);
