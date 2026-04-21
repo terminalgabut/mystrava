@@ -4,6 +4,7 @@ const Dashboard = () => import('../views/dashboard.js');
 const Activities = () => import('../views/activities.js');
 const Analysis = () => import('../views/AnalysisView.js');
 const ActivityDetail = () => import('../views/activityDetail.js'); 
+const WeightTrainingDetail = () => import('../views/WeightTrainingDetail.js');
 const TrainingLog = () => import('../views/TrainingLogView.js');
 const Settings = () => import('../views/settings.js');
 const Coach = () => import('../views/coach.js');
@@ -57,6 +58,12 @@ const routes = [
         component: ActivityDetail,
         props: true 
     }, 
+    { 
+        path: '/activity/weight/:id', 
+        name: 'weight-training-detail',
+        component: WeightTrainingDetail,
+        props: true 
+    },
     { 
         path: '/training-log', 
         name: 'training-log',
