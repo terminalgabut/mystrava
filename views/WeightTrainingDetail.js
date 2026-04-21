@@ -1,6 +1,7 @@
 // root/views/WeightTrainingDetail.js
 
 import { Logger } from '../js/services/debug.js';
+import { supabase } from '../js/services/supabase.js';
 import template from './WeightTrainingDetailView.js';
 
 export default {
