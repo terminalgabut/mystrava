@@ -54,7 +54,7 @@ export default {
                 'Ride': 'bike',
                 'Walk': 'footprints',
                 'Hike': 'mountain',
-                'WeightTraining': 'bumbbell'
+                'WeightTraining': 'dumbbell'
             };
             return icons[type] || 'activity';
         };
