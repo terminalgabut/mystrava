@@ -59,19 +59,6 @@ export default {
             return icons[type] || 'activity';
         }; 
 
-        // Ganti fungsi getIconName lama dengan ini
-const getIconName = (type) => {
-    const icons = {
-        'Run': 'icon/run.png', // Sesuaikan dengan path folder Anda
-        'Ride': 'icon/ride.png',
-        'Walk': 'icon/walk.png',
-        'Hike': 'icon/hike.png',
-        'WeightTraining': 'icon/dumbbell.png'
-    };
-    // Berikan fallback jika tipe tidak ditemukan
-    return icons[type] || 'icon/default.png'; 
-};
-
         const getTypeIconClass = (type) => {
             const classes = {
                 'Run': 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200',
