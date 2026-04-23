@@ -1,3 +1,10 @@
+/* <td class="px-6 py-4 text-center">
+    <div :class="getTypeIconClass(act.type)" 
+         class="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all group-hover:scale-110 shadow-sm">
+        <i :data-lucide="getIconName(act.type)" class="w-5 h-5 stroke-[2.5px]"></i>
+    </div>
+</td> */
+
 export default `
 <div class="activities-wrapper animate-in">
     <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -55,11 +62,12 @@ export default `
                         
 <td class="px-6 py-4 text-center">
     <div :class="getTypeIconClass(act.type)" 
-         class="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all group-hover:scale-110 shadow-sm">
-        <i :data-lucide="getIconName(act.type)" class="w-5 h-5 stroke-[2.5px]"></i>
+         class="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all group-hover:scale-110 shadow-sm overflow-hidden">
+        <img :src="getIconName(act.type)" 
+             :alt="act.type" 
+             class="w-6 h-6 object-contain mix-blend-multiply brightness-90">
     </div>
 </td>
-
                         <td class="px-6 py-4 text-right">
                             <span class="text-sm font-black text-slate-700">{{ (act.distance / 1000).toFixed(2) }}</span>
                             <span class="text-[10px] text-slate-400 ml-1">km</span>
