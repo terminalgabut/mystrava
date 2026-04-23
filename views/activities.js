@@ -74,7 +74,7 @@ export default {
 const getIconName = (type) => {
     const icons = {
         'Run': 'icon/run.png',
-        'Ride': 'icon/bike.png',
+        'Ride': 'icon/ride.png',
         'Walk': 'icon/walk.png',
         'Hike': 'icon/hike.png',
         'WeightTraining': 'icon/wheighttraining.png'
