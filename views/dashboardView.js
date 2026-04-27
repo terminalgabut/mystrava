@@ -10,6 +10,7 @@ export default `
         <div class="filter-group">
             <select v-model="selectedType" class="select-clean" :disabled="isLoading">
                 <option value="Run">Running</option>
+                <option value="TrailRun">Trail Running</option>
                 <option value="Ride">Cycling</option>
                 <option value="Walk">Walking</option>
                 <option value="Hike">Hiking</option>
