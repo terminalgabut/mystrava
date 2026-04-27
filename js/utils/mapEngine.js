@@ -12,7 +12,7 @@ export const initActivityMap = (containerId, activity) => {
 
     try {
         const isExportMode = containerId === 'export-map';
-        const isHike = activity.type === 'Hike', 'TrailRun';
+        const isHike = activity.type === 'Hike' || activity.type === 'TrailRun';
 
         // 1. SMART STYLE SELECTION
         // Tetap gunakan Outdoors untuk Hike agar gunung tetap hijau & cerah
