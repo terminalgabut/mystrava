@@ -88,7 +88,7 @@ const getTypeIconClass = (type) => {
     // Menggunakan background transparan tipis agar ikon .png lebih menonjol
     const classes = {
         'Run': 'bg-emerald-500/10 ring-1 ring-emerald-500/20',
-        'TrailRun': 'bg-amber-900/10 ring-1 ring-amber-900/20 text-amber-900',
+        'TrailRun': 'bg-slate-700/10 ring-1 ring-slate-700/20',
         'Ride': 'bg-blue-500/10 ring-1 ring-blue-500/20',
         'Walk': 'bg-orange-500/10 ring-1 ring-orange-500/20',
         'Hike': 'bg-violet-500/10 ring-1 ring-violet-500/20',
