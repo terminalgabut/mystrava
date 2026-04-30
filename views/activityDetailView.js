@@ -140,7 +140,7 @@ export default `
     <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-teal-500">
         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Stride Length</p>
         <p class="text-xl font-black text-slate-900 leading-none">
-            {{ activity?.stride_cm || 0 }} <span class="text-xs text-slate-400 font-bold">cm</span>
+            {{ activity?.stride_length || 0 }} <span class="text-xs text-slate-400 font-bold">cm</span>
         </p>
     </div>
 </div>
