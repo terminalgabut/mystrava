@@ -129,6 +129,23 @@ export default `
         </p>
     </div>
 </div>
+
+<div v-if="['Run', 'Ride', 'Walk'].includes(activity?.type)" class="grid grid-cols-2 gap-4 mt-4">
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-purple-500">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cadence</p>
+        <p class="text-xl font-black text-slate-900 leading-none">
+            {{ activity?.cadence || 0 }} <span class="text-xs text-slate-400 font-bold">spm</span>
+        </p>
+    </div>
+    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-teal-500">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Stride Length</p>
+        <p class="text-xl font-black text-slate-900 leading-none">
+            {{ activity?.stride_cm || 0 }} <span class="text-xs text-slate-400 font-bold">cm</span>
+        </p>
+    </div>
+</div>
+
+
             <div class="grid grid-cols-2 gap-4 mt-4">
             <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm border-l-4 border-l-blue-500">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Power</p>
