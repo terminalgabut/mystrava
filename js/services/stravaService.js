@@ -99,7 +99,10 @@ export const stravaService = {
     }
 
     const { data } = await query;
-    if (error || !data) return [];
+    if (error) {
+            Logger.error('Supabase_Fetch_Error', error);
+            return [];
+        }
         
     return (data || []).map(act => ({
         ...act,
