@@ -177,7 +177,7 @@ export default `
                         </div>
                         <div>
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Rest Time</p>
-                            <p class="text-3xl font-black tabular-nums tracking-tighter text-emerald-400">
+                            <p class="text-4xl font-black tabular-nums tracking-tighter text-emerald-400">
                                 {{ formatTime((activity?.elapsed_time_seconds || activity?.elapsed_time || 0) - activity?.moving_time) }}
                             </p>
                         </div>      
