@@ -111,7 +111,7 @@ export const stravaService = {
         distance: (Number(act.distance) / 1000).toFixed(2),
         steps: act.steps || 0,
         cadence: act.cadence || 0,
-        stride_cm: act.stride_length || 0
+        stride_length: act.stride_length || 0
     }));
 },
 
