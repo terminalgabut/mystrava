@@ -83,8 +83,10 @@ export const stravaService = {
             total_elevation_gain, 
             average_watts, 
             kilojoules,
-            steps
-        `) // <-- Tambahkan 'steps' di sini agar tersedia di halaman Detail
+            steps,
+            cadence, 
+            stride_length
+        `) 
         .eq('type', type)
         .order('start_date', { ascending: false });
 
@@ -100,8 +102,9 @@ export const stravaService = {
     return (data || []).map(act => ({
         ...act,
         distance: (Number(act.distance) / 1000).toFixed(2),
-        // Pastikan steps disertakan dalam objek yang dikembalikan
-        steps: act.steps || 0 
+        steps: act.steps || 0,
+        cadence: act.cadence || 0,
+        stride_cm: act.stride_length ? Math.round(act.stride_length) : 0
     }));
 },
 
