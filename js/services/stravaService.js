@@ -99,6 +99,8 @@ export const stravaService = {
     }
 
     const { data, error } = await query;
+    console.log('DEBUG RAW DATA:', data ? data[0] : 'Data Null');
+        
     if (error) {
             Logger.error('Supabase_Fetch_Error', error);
             return [];
