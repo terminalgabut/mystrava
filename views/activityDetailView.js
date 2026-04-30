@@ -168,20 +168,26 @@ export default `
                     <h3 class="font-black text-lg mb-6 flex items-center gap-2">
                         <i data-lucide="timer" class="w-5 h-5 text-blue-400"></i> Time Analysis
                     </h3>
-                    <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-6 mb-8">
                         <div>
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Moving Time</p>
                             <p class="text-4xl font-black tabular-nums tracking-tighter text-blue-400">
                                 {{ formatTime(activity?.moving_time) }}
                             </p>
                         </div>
+                        <div>
+                            <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Rest Time</p>
+                            <p class="text-3xl font-black tabular-nums tracking-tighter text-emerald-400">
+                                {{ formatTime((activity?.elapsed_time_seconds || activity?.elapsed_time || 0) - activity?.moving_time) }}
+                            </p>
+                        </div>      
+                    </div>
                         <div class="pt-6 border-t border-white/10">
                             <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Elapsed Time</p>
                             <p class="text-2xl font-bold text-white tabular-nums">
                                 {{ formatTime(activity?.elapsed_time_seconds || activity?.elapsed_time || 0) }}
                             </p>
                         </div>
-                    </div>
                 </div>
                 <i data-lucide="clock" class="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12"></i>
             </div>
