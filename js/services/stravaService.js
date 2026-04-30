@@ -98,7 +98,7 @@ export const stravaService = {
         query = query.limit(20);
     }
 
-    const { data } = await query;
+    const { data, error } = await query;
     if (error) {
             Logger.error('Supabase_Fetch_Error', error);
             return [];
