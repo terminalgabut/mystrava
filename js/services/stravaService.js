@@ -99,6 +99,7 @@ export const stravaService = {
     }
 
     const { data } = await query;
+    console.log('Cek Data Raw dari DB:', data[0]);
     return (data || []).map(act => ({
         ...act,
         distance: (Number(act.distance) / 1000).toFixed(2),
