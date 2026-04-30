@@ -83,9 +83,7 @@ export const stravaService = {
             total_elevation_gain, 
             average_watts, 
             kilojoules,
-            steps,
-            cadence, 
-            stride_length
+            steps
         `) 
         .eq('type', type)
         .order('start_date', { ascending: false });
@@ -99,13 +97,10 @@ export const stravaService = {
     }
 
     const { data } = await query;
-    console.log('Cek Data Raw dari DB:', data[0]);
     return (data || []).map(act => ({
         ...act,
         distance: (Number(act.distance) / 1000).toFixed(2),
         steps: act.steps || 0,
-        cadence: act.cadence || 0,
-        stride_cm: Math.round(act.stride_length || 0)
     }));
 },
 
