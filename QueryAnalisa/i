@@ -1,0 +1,13 @@
+DECLARE
+    v_score DOUBLE PRECISION;
+BEGIN
+    v_score := GREATEST(0, LEAST(1, (p_elev / NULLIF(p_dist, 0)) * 10));
+
+    RETURN QUERY
+    SELECT
+        v_score,
+        CASE
+            WHEN v_score > 0.5 THEN 0.6::double precision
+            ELSE 0.85::double precision
+        END;
+END;
