@@ -1,0 +1,36 @@
+DECLARE
+  r RECORD;
+  v_total_sf DOUBLE PRECISION := 0;
+  v_count INT := 0;
+  v_speed DOUBLE PRECISION;
+
+BEGIN
+  -- Guard
+  IF p_splits IS NULL
+     OR jsonb_typeof(p_splits) <> 'array'
+     OR jsonb_array_length(p_splits) = 0 THEN
+    RETURN QUERY SELECT NULL, 'unknown', FALSE;
+    RETURN;
+  END IF;
+
+  FOR r IN
+    SELECT * FROM jsonb_to_recordset(p_splits)
+    AS x(distance FLOAT, average_speed FLOAT)
+  LOOP
+    v_speed := COALESCE(r.average_speed, 0);
+
+    -- Simple stride logic (SAFE)
+    v_total_sf := v_total_sf + (
+      0.49 + (GREATEST(v_speed - 1.98, 0) * 0.015)
+    );
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN QUERY
+  SELECT
+    v_total_sf / NULLIF(v_count, 0),
+    'mixed',
+    TRUE;
+
+END;
