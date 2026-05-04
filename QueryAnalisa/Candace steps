@@ -1,0 +1,233 @@
+DECLARE
+  v_athlete_height FLOAT;
+  v_cadence FLOAT;
+  v_stride_length FLOAT;
+  v_grade FLOAT;
+  v_fatigue FLOAT;
+  v_mode TEXT;
+
+  -- stride engine
+  v_base_sf FLOAT;
+  v_user_baseline FLOAT;
+  v_final_sf FLOAT;
+  v_last_sf FLOAT;
+  v_features RECORD;
+  v_segmental RECORD;
+
+BEGIN
+
+  -- 🔴 Guard
+  IF NEW.distance < 30 OR NEW.distance IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- 🔥 FILTER ACTIVITY TYPE (WAJIB)
+  IF NEW.type IS NOT NULL AND NEW.type NOT IN ('Run', 'Walk', 'Hike') THEN
+    RETURN NEW;
+  END IF;
+
+  -- filter kecepatan tidak manusia
+  IF NEW.average_speed > 3.5 THEN
+    RETURN NEW;
+  END IF;
+
+  -- Height
+  SELECT height INTO v_athlete_height
+  FROM public.profile
+  WHERE id = NEW.id::text
+  LIMIT 1;
+
+  v_athlete_height := COALESCE(v_athlete_height, 166);
+
+  -- 🔥 0. GRADE & MODE DETECTION
+  v_grade := COALESCE(NEW.total_elevation_gain / NULLIF(NEW.distance, 0), 0);
+
+  -- 🔥 MODE CLASSIFIER V2
+  IF v_grade > 0.08 THEN
+    v_mode := 'hike';
+
+  ELSIF v_grade > 0.04 THEN
+    v_mode := 'uphill_run';
+
+  ELSE
+    IF NEW.average_speed < 1.2 THEN
+      v_mode := 'walk_easy';
+
+    ELSIF NEW.average_speed < 1.6 THEN
+      v_mode := 'walk_normal';
+
+    ELSIF NEW.average_speed < 2.0 THEN
+      v_mode := 'power_walk';
+
+    ELSIF NEW.average_speed < 2.4 THEN
+      v_mode := 'jog';
+
+    ELSE
+      v_mode := 'run';
+    END IF;
+  END IF;
+
+  -- 🔥 1. CADENCE ENGINE
+  CASE v_mode
+    WHEN 'walk_easy' THEN
+      v_cadence := 75 + (NEW.average_speed * 8);
+
+    WHEN 'walk_normal' THEN
+      v_cadence := 85 + (NEW.average_speed * 10);
+
+    WHEN 'power_walk' THEN
+      v_cadence := 95 + (NEW.average_speed * 12);
+
+    WHEN 'jog' THEN
+      v_cadence := 145 + (NEW.average_speed * 8);
+
+    WHEN 'run' THEN
+      v_cadence := 160 + (NEW.average_speed * 10);
+
+    WHEN 'uphill_run' THEN
+      v_cadence := 155 + (NEW.average_speed * 8);
+
+    WHEN 'hike' THEN
+      v_cadence := 90 + (NEW.average_speed * 6);
+
+    ELSE
+      v_cadence := 120;
+  END CASE;
+
+  -- 🔥 SMART CORRECTION
+  IF v_mode LIKE 'walk%' AND v_cadence > 135 THEN
+    v_mode := 'jog';
+  END IF;
+
+  IF v_mode = 'run' AND v_cadence < 150 THEN
+    v_mode := 'jog';
+  END IF;
+
+  -- tinggi badan adjust
+  v_cadence := v_cadence * (170.0 / v_athlete_height);
+
+  -- fatigue
+  v_fatigue := LEAST(1, NEW.moving_time / 5400.0);
+  v_cadence := v_cadence - (v_fatigue * 6);
+
+  -- noise
+  v_cadence := v_cadence + ((random() - 0.5) * 6);
+
+  -- clamp walking
+  IF v_mode LIKE 'walk%' THEN
+    v_cadence := LEAST(v_cadence, 125);
+  END IF;
+
+  v_cadence := LEAST(GREATEST(v_cadence, 85), 190);
+
+  NEW.cadence := ROUND(v_cadence);
+
+  -- 🔥 3. STRIDE LENGTH
+  IF v_cadence > 0 THEN
+    v_stride_length := NEW.average_speed / (v_cadence / 60.0);
+  END IF;
+
+  CASE v_mode
+    WHEN 'walk_easy' THEN
+      v_stride_length := v_stride_length * 0.7;
+
+    WHEN 'walk_normal' THEN
+      v_stride_length := v_stride_length * 0.8;
+
+    WHEN 'power_walk' THEN
+      v_stride_length := v_stride_length * 0.9;
+
+    WHEN 'jog' THEN
+      v_stride_length := v_stride_length * 1.0;
+
+    WHEN 'run' THEN
+      v_stride_length := v_stride_length * 1.05;
+
+    WHEN 'uphill_run' THEN
+      v_stride_length := v_stride_length * (1 - v_grade * 0.5);
+
+    WHEN 'hike' THEN
+      v_stride_length := v_stride_length * 0.6;
+  END CASE;
+
+  NEW.stride_length := ROUND(v_stride_length * 100);
+
+  -- 🔥 4. STRIDE FACTOR ENGINE
+  v_base_sf :=
+      0.48
+    + (GREATEST(NEW.average_speed - 2.0, 0) * 0.015)
+    + (POWER(GREATEST(NEW.average_speed - 2.5, 0), 2) * 0.004);
+
+  SELECT * INTO v_features
+  FROM fn_extract_activity_features(
+    NEW.distance,
+    NEW.total_elevation_gain,
+    NEW.average_speed
+  );
+
+  SELECT * INTO v_segmental
+  FROM fn_calculate_segmental_metrics(
+    NEW.splits_metric,
+    v_athlete_height
+  );
+
+  SELECT AVG(stride_factor_final)
+  INTO v_user_baseline
+  FROM activities
+  WHERE created_at > NOW() - INTERVAL '14 days'
+    AND stride_factor_final IS NOT NULL;
+
+  v_final_sf :=
+      (v_base_sf * 0.7)
+    + (COALESCE(v_segmental.avg_segmental_sf, v_base_sf) * 0.3);
+
+  v_final_sf :=
+      (v_final_sf * 0.9)
+    + (COALESCE(v_user_baseline, v_base_sf) * 0.1);
+
+  SELECT stride_factor_final
+  INTO v_last_sf
+  FROM activities
+  WHERE id = NEW.id
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  IF v_last_sf IS NOT NULL THEN
+    v_final_sf :=
+        (v_final_sf * 0.85)
+      + (v_last_sf * 0.15);
+  END IF;
+
+  -- noise kecil
+  v_final_sf := v_final_sf + ((random() - 0.5) * 0.01);
+  v_final_sf := LEAST(GREATEST(v_final_sf, 0.30), 0.75);
+
+  NEW.stride_factor_final := v_final_sf;
+
+  -- 🔥 5. PROPULSION
+  IF NEW.stride_length IS NOT NULL THEN
+    NEW.propulsion_score :=
+      ROUND(
+        ((NEW.stride_length / v_athlete_height) * 70) +
+        ((NEW.cadence / 180.0) * 30)
+      );
+  END IF;
+
+  -- 🔥 6. STEP DENSITY
+  IF NEW.distance > 0 THEN
+    NEW.step_density :=
+      ROUND(NEW.steps / (NEW.distance / 1000.0));
+  END IF;
+
+  -- DEBUG
+  NEW.debug_info := jsonb_build_object(
+    'mode', v_mode,
+    'cadence', NEW.cadence,
+    'fatigue', ROUND(v_fatigue::numeric, 3),
+    'grade', ROUND(v_grade::numeric, 5),
+    'stride_cm', NEW.stride_length,
+    'final_sf', ROUND(v_final_sf::numeric, 3)
+  );
+
+  RETURN NEW;
+END;
