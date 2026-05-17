@@ -3,10 +3,10 @@ export const ChartLogic = {
     process(activities, activityType) {
         const fullLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         
-        // Inisialisasi wadah data sederhana untuk 12 bulan
+        // REFACTOR: Wadah penampung dirubah untuk mengumpulkan jarak dan waktu murni
         const monthly = Array.from({ length: 12 }, () => ({
-            total: 0,
-            count: 0
+            totalDistance: 0,
+            totalMovingTime: 0
         }));
 
         const now = new Date();
@@ -21,32 +21,15 @@ export const ChartLogic = {
             
             const monthIdx = date.getMonth();
             
-            // Update bulan terakhir yang memiliki data untuk keperluan slicing grafik
             if (monthIdx > lastMonthWithData) {
                 lastMonthWithData = monthIdx;
             }
             
-            let val = 0;
-            const avgSpeed = Number(act.average_speed) || 0;
-
-            if (activityType === 'Ride') {
-                val = avgSpeed * 3.6; // Konversi ke km/h
-            } else {
-                // Konversi speed (m/s) ke Pace (menit/km)
-                val = avgSpeed > 0 ? (1000 / avgSpeed / 60) : 0; 
-            }
-
-            if (val > 0) {
-                monthly[monthIdx].total += val;
-                monthly[monthIdx].count++;
-            }
+            // Akumulasikan data mentah dari database ke wadah bulanan
+            monthly[monthIdx].totalDistance += Number(act.distance) || 0;
+            monthly[monthIdx].totalMovingTime += Number(act.moving_time) || 0;
         });
 
-        /**
-         * PENENTUAN BATAS TAMPILAN (Slicing)
-         * Jika data tahun ini, tampilkan sampai bulan berjalan. 
-         * Jika data tahun lalu, tampilkan full 12 bulan.
-         */
         const isCurrentYear = activities.length > 0 && new Date(activities[0].start_date).getFullYear() === currentYear;
         const displayLimit = isCurrentYear ? Math.max(lastMonthWithData, currentMonth) : 11;
         
@@ -54,15 +37,24 @@ export const ChartLogic = {
 
         return {
             labels: slicedLabels,
-            // Dataset tunggal (Rata-rata murni)
             paceDatasets: [{
                 label: activityType === 'Ride' ? 'Avg Speed' : 'Avg Pace',
-                data: monthly.slice(0, displayLimit + 1).map(m => 
-                    m.count > 0 ? parseFloat((m.total / m.count).toFixed(2)) : 0
-                ),
-                color: '#3b82f6' // Biru standar
+                data: monthly.slice(0, displayLimit + 1).map(m => {
+                    // Jika tidak ada aktivitas di bulan tersebut, kembalikan 0
+                    if (m.totalDistance <= 0 || m.totalMovingTime <= 0) return 0;
+
+                    if (activityType === 'Ride') {
+                        // Formula Bersepeda: (Total Jarak Meter / Total Waktu Detik) * 3.6 = km/jam
+                        return parseFloat(((m.totalDistance / m.totalMovingTime) * 3.6).toFixed(2));
+                    } else {
+                        // Formula Lari/Jalan Murni: (Total Menit / Total Kilometer) = Pace Desimal
+                        const totalMinutes = m.totalMovingTime / 60;
+                        const totalKm = m.totalDistance / 1000;
+                        return parseFloat((totalMinutes / totalKm).toFixed(2)); 
+                    }
+                }),
+                color: '#3b82f6'
             }],
-            // Kosongkan comparisonDatasets untuk menghilangkan grafik Road vs Trail
             comparisonDatasets: []
         };
     }
