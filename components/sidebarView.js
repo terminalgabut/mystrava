@@ -23,6 +23,14 @@ export default {
                     <div class="active-indicator"></div>
                 </router-link>
 
+                <router-link to="/advanced-analytics" class="sidebar-item group" active-class="is-active">
+                    <div class="sidebar-icon-box">
+                        <i data-lucide="line-chart" class="w-5 h-5 text-emerald-500"></i>
+                    </div>
+                    <span class="font-semibold text-sm text-emerald-600">Adv Analytics</span>
+                    <div class="active-indicator"></div>
+                </router-link>
+
                 <router-link to="/activities" class="sidebar-item group" active-class="is-active">
                     <div class="sidebar-icon-box">
                         <i data-lucide="activity" class="w-5 h-5"></i>
