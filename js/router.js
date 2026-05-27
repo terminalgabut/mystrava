@@ -1,6 +1,7 @@
 import { Logger } from './services/debug.js';
 
 const Dashboard = () => import('../views/dashboard.js');
+const AdvancedAnalytics = () => import('../views/advancedAnalytics.js');
 const Activities = () => import('../views/activities.js');
 const Analysis = () => import('../views/AnalysisView.js');
 const ActivityDetail = () => import('../views/activityDetail.js'); 
@@ -17,6 +18,12 @@ const routes = [
         path: '/', 
         name: 'dashboard',
         component: Dashboard 
+    },
+    { 
+        path: '/advanced-analytics', 
+        name: 'advanced-analytics',
+        component: AdvancedAnalytics,
+        meta: { title: 'Advanced Biomechanics Analytics' }
     },
     { 
         path: '/activities', 
