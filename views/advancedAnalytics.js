@@ -1,7 +1,7 @@
 // advancedAnalytics.js
 import advancedAnalyticsTemplate from './advancedAnalyticsView.js';
-import AdvancedMekanikaChart from './components/AdvancedMekanikaChart.js';
-import SplitsBreakdownChart from './components/SplitsBreakdownChart.js';
+//import AdvancedMekanikaChart from './components/AdvancedMekanikaChart.js';
+//import SplitsBreakdownChart from './components/SplitsBreakdownChart.js';
 import { advancedAnalyticsService } from '../js/services/advancedAnalyticsService.js';
 import { Logger } from '../js/services/debug.js';
 
