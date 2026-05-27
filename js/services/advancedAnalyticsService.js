@@ -1,95 +1,81 @@
 // js/services/advancedAnalyticsService.js
-import { supabase } from './supabase.js'; // Sesuaikan dengan config db kamu
+import { supabase } from './supabase.js';
 import { Logger } from './debug.js';
 
 export const advancedAnalyticsService = {
-    /**
-     * Mengambil daftar opsi minggu yang tersedia dari View Tren Mingguan
-     */
-    async getWeeklyOptions() {
+    async getSportScienceStats() {
         try {
+            // Ambil data lari 30 hari terakhir untuk mendapatkan context Acute & Chronic
             const { data, error } = await supabase
-                .from('view_weekly_performance_trend')
-                .select('year_week, week_start_date')
-                .order('week_start_date', { ascending: false });
+                .from('view_advanced_running_efficiency')
+                .select('*')
+                .order('start_date_local', { ascending: false });
 
             if (error) throw error;
-            
-            return (data || []).map(row => ({
-                value: row.year_week,
-                label: `Wk ${row.year_week.split('-W')[1]} (${row.week_start_date})`
-            }));
-        } catch (err) {
-            Logger.error("AdvService_GetWeeklyOptions_Error", err);
-            return [];
-        }
-    },
-
-    /**
-     * Mengambil metrik ringkasan tingkat lanjut (Efisiensi & Mekanika murni)
-     */
-    async getAdvancedStats(weekPeriod = 'all') {
-        try {
-            let query = supabase.from('view_advanced_running_efficiency').select('*');
-            
-            // Jika filter tidak 'all', pecah string '2026-W22' untuk parsing filter jika diperlukan
-            // Atau jika data view_advanced_running_efficiency direlasikan via weekly_period
-            if (weekPeriod !== 'all') {
-                // Contoh pengondisian jika ada kolom pembantu pencocokan minggu
-                // query = query.eq('weekly_group', weekPeriod);
-            }
-
-            const { data, error } = await query.order('start_date_local', { ascending: false });
-            if (error) throw error;
-
             if (!data || data.length === 0) return this.getEmptyState();
 
-            // Kalkulasi Agregasi Serverless/Client-side untuk Bento Cards
-            const totalRuns = data.length;
-            const sumRpeEff = data.reduce((acc, row) => acc + parseFloat(row.rpe_efficiency_index || 0), 0);
-            const sumPropulsion = data.reduce((acc, row) => acc + parseFloat(row.propulsion_score || 0), 0);
-            const sumDensity = data.reduce((acc, row) => acc + parseFloat(row.steps_per_meter || 0), 0);
-            const sumFatigue = data.reduce((acc, row) => acc + parseFloat(row.fatigue_score || 0), 0);
+            // 1. Ambil Sesi Lari Terakhir untuk Snapshot Metric
+            const latestRun = data[0];
+
+            // 2. Kalkulasi ACR (Acute-to-Chronic Workload Ratio)
+            const now = new Date();
+            const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            const fourWeeksAgo = new Date(now.getTime() - (28 * 24 * 60 * 60 * 1000));
+
+            const acuteLoads = data.filter(r => new Date(r.start_date_local) >= oneWeekAgo);
+            const chronicLoads = data.filter(r => new Date(r.start_date_local) >= fourWeeksAgo);
+
+            const acuteTotal = acuteLoads.reduce((acc, r) => acc + (r.session_workload || 0), 0);
+            const chronicTotal = chronicLoads.reduce((acc, r) => acc + (r.session_workload || 0), 0);
+
+            // Rata-rata beban mingguan (7 hari) vs Bulanan (4 minggu)
+            const acuteAverage = acuteTotal / 7;
+            const chronicAverage = chronicTotal / 28;
+
+            let acrRatio = 0.00;
+            if (chronicAverage > 0) {
+                acrRatio = parseFloat((acuteAverage / chronicAverage).toFixed(2));
+            }
+
+            // Tentukan status zona ACR berdasarkan Sport Science
+            let acrZone = 'Under-training';
+            let acrClass = 'text-slate-500 bg-slate-50 border-slate-100';
+            if (acrRatio >= 0.8 && acrRatio <= 1.3) {
+                acrZone = 'Optimal Sweet Spot';
+                acrClass = 'text-emerald-600 bg-emerald-50 border-emerald-100';
+            } else if (acrRatio > 1.3 && acrRatio <= 1.5) {
+                acrZone = 'Overreaching (Caution)';
+                acrClass = 'text-amber-600 bg-amber-50 border-amber-100';
+            } else if (acrRatio > 1.5) {
+                acrZone = 'Danger Zone (Injury Risk)';
+                acrClass = 'text-red-600 bg-red-50 border-red-100';
+            }
+
+            // 3. Ambil Rata-rata VO2 Max dari 3 lari terakhir untuk stabilitas tren
+            const recentRunsForVo2 = data.slice(0, 3);
+            const avgVo2Max = recentRunsForVo2.reduce((acc, r) => acc + parseFloat(r.vo2max_estimate || 0), 0) / recentRunsForVo2.length;
 
             return {
-                avgRpeEfficiency: (sumRpeEff / totalRuns).toFixed(2),
-                avgPropulsion: Math.round(sumPropulsion / totalRuns),
-                stepsPerMeter: (sumDensity / totalRuns).toFixed(2),
-                fatigueScore: (sumFatigue / totalRuns).toFixed(3),
-                recentAdvancedLogs: data // Mengirim raw data view untuk log list
+                acrRatio,
+                acrZone,
+                acrClass,
+                currentVo2Max: avgVo2Max.toFixed(1),
+                latestPropulsion: latestRun.propulsion_score || 0,
+                latestCadence: latestRun.cadence || 0,
+                latestStride: latestRun.stride_length || 0,
+                latestStepsPerMeter: latestRun.steps_per_meter || 0,
+                allRuns: data // untuk dikirim ke grafik garis kemajuan
             };
         } catch (err) {
-            Logger.error("AdvService_GetAdvancedStats_Error", err);
+            Logger.error("SportScienceService_Error", err);
             return this.getEmptyState();
-        }
-    },
-
-    /**
-     * Mengambil data split kilometer granular untuk satu aktivitas tertentu
-     */
-    async getSplitsBreakdown(activityId) {
-        try {
-            const { data, error } = await supabase
-                .from('view_granular_splits_breakdown')
-                .select('*')
-                .eq('activity_id', activityId)
-                .order('split_number', { ascending: true });
-
-            if (error) throw error;
-            return data || [];
-        } catch (err) {
-            Logger.error("AdvService_GetSplitsBreakdown_Error", err);
-            return [];
         }
     },
 
     getEmptyState() {
         return {
-            avgRpeEfficiency: "0.00",
-            avgPropulsion: 0,
-            stepsPerMeter: "0.00",
-            fatigueScore: "0.000",
-            recentAdvancedLogs: []
+            acrRatio: 1.0, acrZone: 'Optimal', acrClass: 'text-emerald-500',
+            currentVo2Max: '0.0', latestPropulsion: 0, latestCadence: 0, latestStride: 0, latestStepsPerMeter: 0, allRuns: []
         };
     }
 };
