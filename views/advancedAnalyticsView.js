@@ -1,161 +1,111 @@
 // advancedAnalyticsView.js
 export default `
 <div class="dashboard-wrapper animate-in" :class="{ 'is-loading': isLoading }">
-    <!-- Header Seragam -->
     <header class="dashboard-header">
         <div>
-            <h1 class="text-display">Advanced Analytics</h1>
-            <p class="text-caption mt-1">Deep dive into custom biomechanics and efficiency models</p>
+            <h1 class="text-display">Biomechanical & Sport Science Lab</h1>
+            <p class="text-caption mt-1">Advanced metrics engineered exclusively for running performance</p>
         </div>
-        
         <div class="filter-group">
-            <!-- Filter Mingguan Menggunakan view_weekly_performance_trend -->
-            <select v-model="selectedWeeklyPeriod" class="select-clean" :disabled="isLoading">
-                <option value="all">All Weeks</option>
-                <option v-for="week in weeklyOptions" :key="week.value" :value="week.value">
-                    {{ week.label }}
-                </option>
-            </select>
+            <span class="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full font-black text-[10px] tracking-wider uppercase">
+                <i data-lucide="shield-check" class="w-3 h-3 inline mr-1"></i> Running Mode Only
+            </span>
         </div>
     </header>
 
-    <!-- Bento Grid Summary: Khusus Metrik Kalkulasi Tingkat Lanjut -->
+    <!-- Bento Grid Summary: Sport Science Engine -->
     <div class="bento-grid-summary">
-        <!-- 1. RPE Efficiency Index (Subjektif Pengganti HR) -->
+        <!-- 1. METRIK BARU: VO2 Max Estimate -->
         <div class="bento-card">
             <div class="card-header">
-                <span class="label-muted">RPE Efficiency Index</span>
-                <div class="icon-box"><i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i></div>
+                <span class="label-muted">Aerobic Capacity (VO2 Max)</span>
+                <div class="icon-box"><i data-lucide="wind" class="w-4 h-4 text-blue-500"></i></div>
             </div>
-            <h2 class="stat-value text-2xl">
-                {{ advStats.avgRpeEfficiency || '0.00' }}
+            <h2 class="stat-value text-3xl font-black text-blue-600">
+                {{ sciStats.currentVo2Max }} <span class="text-xs font-bold text-slate-400">mL/kg/min</span>
             </h2>
             <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
-                Speed per RPE Unit
+                Velocity-based estimate
             </p>
         </div>
         
-        <!-- 2. Propulsion Score (Mekanika Dorongan) -->
+        <!-- 2. METRIK BARU: ACR Workload Ratio -->
         <div class="bento-card">
             <div class="card-header">
-                <span class="label-muted">Avg Propulsion Score</span>
+                <span class="label-muted">Acute:Chronic Workload (ACR)</span>
+                <div class="icon-box"><i data-lucide="scale" class="w-4 h-4 text-purple-500"></i></div>
+            </div>
+            <h2 class="stat-value text-3xl font-black text-purple-600">
+                {{ sciStats.acrRatio }}
+            </h2>
+            <div class="mt-1 px-2 py-0.5 rounded border inline-block text-[8px] font-black uppercase tracking-wider" :class="sciStats.acrClass">
+                {{ sciStats.acrZone }}
+            </div>
+        </div>
+
+        <!-- 3. Propulsion Score Sesi Terakhir -->
+        <div class="bento-card">
+            <div class="card-header">
+                <span class="label-muted">Latest Propulsion Efficiency</span>
                 <div class="icon-box"><i data-lucide="zap" class="w-4 h-4 text-amber-500"></i></div>
             </div>
             <h2 class="stat-value text-2xl">
-                {{ advStats.avgPropulsion || 0 }} <span class="text-xs font-medium text-slate-400">%</span>
+                {{ sciStats.latestPropulsion }} <span class="text-xs font-medium text-slate-400">%</span>
             </h2>
             <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
-                Stride push efficiency
+                True push-off force ratio
             </p>
         </div>
 
-        <!-- 3. Step Density (Kerapatan Langkah) -->
+        <!-- 4. Kerapatan Langkah (Barefoot Metric Indicator) -->
         <div class="bento-card">
             <div class="card-header">
-                <span class="label-muted">Steps Per Meter</span>
-                <div class="icon-box"><i data-lucide="footprints" class="w-4 h-4"></i></div>
+                <span class="label-muted">Barefoot Step Density</span>
+                <div class="icon-box"><i data-lucide="footprints" class="w-4 h-4 text-emerald-500"></i></div>
             </div>
             <h2 class="stat-value text-2xl">
-                {{ advStats.stepsPerMeter || '0.00' }}
+                {{ sciStats.latestStepsPerMeter }} <span class="text-xs font-medium text-slate-400">steps/m</span>
             </h2>
             <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
-                Step concentration
-            </p>
-        </div>
-
-        <!-- 4. Fatigue Baseline (Dari debug_info JSON) -->
-        <div class="bento-card">
-            <div class="card-header">
-                <span class="label-muted">Accumulated Fatigue</span>
-                <div class="icon-box"><i data-lucide="brain-circuit" class="w-4 h-4 text-red-500"></i></div>
-            </div>
-            <h2 class="stat-value text-2xl">
-                {{ advStats.fatigueScore || '0.00' }}
-            </h2>
-            <p class="text-slate-400 uppercase tracking-tighter" style="font-size: 8px; font-weight: 800; margin-top: 4px;">
-                Algorithmic fatigue level
+                Ground contact cadence map
             </p>
         </div>
     </div>
 
-    <!-- Detailed Section: Grafik Korelasi Mekanika Lari & Pemecah Kilometer -->
+    <!-- Charts & Advanced Status Section -->
     <div class="bento-grid-detailed">
-        <!-- Grafik 1: Tren Komparasi Cadence vs Stride Length (Meniru Sensor Garmin Pod) -->
         <div class="grid grid-cols-1 gap-6 mb-6">
             <AdvancedMekanikaChart 
                 chartId="biomechanicsTrend"
-                title="Running Dynamics: Cadence & Stride Length Trend"
-                :labels="advTrendData.labels"
-                :cadenceDataset="advTrendData.cadence"
-                :strideDataset="advTrendData.stride"
+                title="Running Dynamics: Cadence & Stride Length Execution"
+                :labels="chartData.labels"
+                :cadenceDataset="chartData.cadence"
+                :strideDataset="chartData.stride"
             />
         </div>
 
-        <!-- Grafik 2: Pemecah Kilometer (Unboxing Data Splits JSON) -->
-        <div class="bento-card p-6 mb-6">
-             <div class="flex items-center justify-between mb-6">
-                 <h3 class="text-card-title">Pacing Strategy per Split Kilometer</h3>
-                 <span class="px-2 py-1 bg-slate-100 rounded text-slate-600 uppercase font-black" style="font-size: 8px;">
-                     From view_granular_splits_breakdown
-                 </span>
-             </div>
-             <div class="grid grid-cols-1 gap-4">
-                 <!-- Komponen Grafik Bar/Line internal untuk melihat fluktuasi pace per kilometer lari -->
-                 <SplitsBreakdownChart 
-                     :splits="selectedActivitySplits"
-                 />
-             </div>
-        </div>
-
-        <!-- Log Sesi Khusus: Memantau Gaya Lari Tanpa Alas Kaki (Barefoot / Nyeker) -->
-        <div class="bento-card p-6">
-            <h3 class="text-card-title mb-6">Barefoot Dynamics & Substantive Logs</h3>
-            <div class="space-y-4">
-                <template v-if="isLoading && advStats.recentAdvancedLogs.length === 0">
-                    <div v-for="i in 3" class="h-16 bg-slate-50 rounded-2xl animate-pulse"></div>
-                </template>
-
-                <template v-else>
-                    <div v-for="log in advStats.recentAdvancedLogs" :key="log.activity_id" 
-                         class="flex items-center justify-between p-3 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/50 transition-all cursor-pointer group">
-                        
-                        <div class="flex items-center gap-4 min-w-0">
-                            <!-- Kondisi Icon Berubah jika ada kata 'nyeker' di nama aktivitas -->
-                            <div class="icon-box group-hover:bg-white transition-all shadow-sm"
-                                 :class="{ 'bg-emerald-50 text-emerald-600': log.name.toLowerCase().includes('nyeker') }">
-                                <i :data-lucide="log.name.toLowerCase().includes('nyeker') ? 'leaf' : 'run'" class="w-4 h-4"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-black text-slate-900 truncate">
-                                    {{ log.name }} 
-                                    <span v-if="log.name.toLowerCase().includes('nyeker')" class="ml-1 text-[8px] font-extrabold px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">BAREFOOT</span>
-                                </p>
-                                <div class="flex items-center gap-2 mt-0.5">
-                                    <span class="label-muted whitespace-nowrap" style="font-size: 8px;">{{ log.start_date_local }}</span>
-                                    <span class="text-slate-200">•</span>
-                                    <span class="label-muted truncate" style="font-size: 8px;">
-                                        Stride Factor: <strong>{{ log.stride_factor_final }}</strong>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sisi Kanan: Tampilkan Kontras Metrik Mekanika vs Kelelahan -->
-                        <div class="flex items-center gap-6">
-                            <div class="text-right hidden sm:block">
-                                <p class="label-muted" style="font-size: 8px;">CADENCE / STRIDE</p>
-                                <p class="stat-value text-xs text-slate-900">{{ log.cadence }} SPM / {{ log.stride_length }} cm</p>
-                            </div>
-                            
-                            <div class="text-right px-2.5 py-1 bg-slate-100/50 rounded-xl border border-slate-200/40">
-                                <p class="label-muted" style="font-size: 8px; font-weight: 800;">FATIGUE</p>
-                                <p class="stat-value text-xs" :class="log.fatigue_score > 0.7 ? 'text-red-500' : 'text-slate-700'">
-                                    {{ log.fatigue_score || '0.00' }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </template>
+        <!-- STRATEGI BARU REFACTOR: EDUKASI ACUAN DIAGNOSIS SPORT SCIENCE (MENGGANTIKAN RECENT LOG) -->
+        <div class="bento-card p-6 border-l-4 border-l-purple-500 bg-white">
+            <h3 class="text-card-title text-purple-900 mb-3 flex items-center gap-2">
+                <i data-lucide="activity-square" class="w-5 h-5 text-purple-600"></i>
+                Sport Science Diagnostics: Injury Prevention Guide
+            </h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                Sistem mendeteksi rasio kelelahan akut latihan kamu menggunakan formula <strong>ACR (Foster Load)</strong>. Ini membandingkan akumulasi stressor fisik 7 hari terakhir dengan fondasi kebugaran 28 hari terakhir kamu untuk menghindari bahaya cedera jaringan lunak atau tendon kaki akibat lari tanpa alas kaki (*barefoot*).
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Under-training (&lt; 0.8)</p>
+                    <p class="text-xs text-slate-600 font-medium mt-1">Beban kurang, kapasitas kebugaran tubuh berisiko menurun.</p>
+                </div>
+                <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                    <p class="text-[10px] font-black text-emerald-700 uppercase tracking-wider">The Sweet Spot (0.8 - 1.3)</p>
+                    <p class="text-xs text-emerald-800 font-semibold mt-1">Zona latihan paling aman untuk memicu adaptasi paru & otot.</p>
+                </div>
+                <div class="p-3 bg-red-50 border border-red-100 rounded-xl">
+                    <p class="text-[10px] font-black text-red-700 uppercase tracking-wider">Danger Zone (&gt; 1.5)</p>
+                    <p class="text-xs text-red-800 font-semibold mt-1">Risiko cedera meningkat 4x lipat. Kurangi volume lari segera!</p>
+                </div>
             </div>
         </div>
     </div>
