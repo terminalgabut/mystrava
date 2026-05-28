@@ -5,43 +5,39 @@ import { Logger } from './debug.js';
 export const advancedAnalyticsService = {
     async getSportScienceStats() {
         try {
-            // Eksekusi penarikan data dari 3 VIEW sekaligus secara paralel (Efisiensi Query)
             const [efficiencyRes, splitsRes, weeklyRes] = await Promise.all([
-                // View 1: Efisiensi & Kesiapan Fisik (Murni Run & Hike 30 Hari Terakhir)
                 supabase
                     .from('view_advanced_running_efficiency')
                     .select('*')
-                    .in('type', ['Run', 'Hike'])
                     .order('start_date_local', { ascending: false }),
 
-                // View 2: Granular Splits untuk Sesi Lari Terakhir (Slicing per KM)
                 supabase
                     .from('view_granular_splits_breakdown')
                     .select('*')
                     .order('split_number', { ascending: true }),
 
-                // View 3: Tren Beban Mingguan (Agar Grafik Tidak Berdempetan)
                 supabase
                     .from('view_weekly_performance_trend')
                     .select('*')
                     .order('year_week', { ascending: false })
-                    .limit(8) // Kita ambil 8 minggu terakhir saja untuk grafik yang lega
+                    .limit(8)
             ]);
 
             if (efficiencyRes.error) throw efficiencyRes.error;
+            if (splitsRes.error) throw splitsRes.error;
+            if (weeklyRes.error) throw weeklyRes.error;
             
             const efficiencyData = efficiencyRes.data || [];
             if (efficiencyData.length === 0) return this.getEmptyState();
 
-            // 1. Snapshot Sesi Terakhir (Terbaru)
             const latestRun = efficiencyData[0];
 
-            // 2. Filter data splits murni milik sesi terakhir saja
+            -- PERBAIKAN DI SINI: Ganti latestRun.id menjadi latestRun.activity_id
             const latestSplits = splitsRes.data 
-                ? splitsRes.data.filter(s => s.activity_id === latestRun.id)
+                ? splitsRes.data.filter(s => s.activity_id === latestRun.activity_id)
                 : [];
 
-            // 3. Kalkulasi ACR (Acute-to-Chronic Workload Ratio) dari Data Kesiapan
+            // Perhitungan ACWR (Acute-to-Chronic Workload Ratio)
             const now = new Date();
             const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
             const fourWeeksAgo = new Date(now.getTime() - (28 * 24 * 60 * 60 * 1000));
@@ -60,7 +56,6 @@ export const advancedAnalyticsService = {
                 acrRatio = parseFloat((acuteAverage / chronicAverage).toFixed(2));
             }
 
-            // Klasifikasi Zona Olahraga Berdasarkan ACR
             let acrZone = 'Under-training';
             let acrClass = 'text-slate-500 bg-slate-50 border-slate-100';
             if (acrRatio >= 0.8 && acrRatio <= 1.3) {
@@ -74,7 +69,6 @@ export const advancedAnalyticsService = {
                 acrClass = 'text-red-600 bg-red-50 border-red-100';
             }
 
-            // 4. Hitung Rata-rata VO2 Max Kontinu (3 Sesi Terakhir)
             const recentRunsForVo2 = efficiencyData.slice(0, 3);
             const avgVo2Max = recentRunsForVo2.reduce((acc, r) => acc + parseFloat(r.vo2max_estimate || 0), 0) / recentRunsForVo2.length;
 
@@ -87,15 +81,8 @@ export const advancedAnalyticsService = {
                 latestCadence: latestRun.cadence || 0,
                 latestStride: latestRun.stride_length || 0,
                 latestStepsPerMeter: latestRun.steps_per_meter || 0,
-                
-                // DATA REFACTOR UNTUK GRAFIK:
-                // Kita batasi grafik harian biomekanika maksimal 10 sesi terakhir agar tidak dempet
                 allRuns: efficiencyData.slice(0, 10), 
-                
-                // Data pecahan split kilometer untuk sesi lari terbaru
                 splitsBreakdown: latestSplits,
-                
-                // Data akumulasi mingguan untuk grafik makro harian/mingguan
                 weeklyTrends: weeklyRes.data || []
             };
         } catch (err) {
