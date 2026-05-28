@@ -68,14 +68,29 @@ export const advancedAnalyticsService = {
                 acrClass = 'text-red-600 bg-red-50 border-red-100';
             }
 
-            const recentRunsForVo2 = efficiencyData.slice(0, 3);
-            const avgVo2Max = recentRunsForVo2.reduce((acc, r) => acc + parseFloat(r.vo2max_estimate || 0), 0) / recentRunsForVo2.length;
+            const chronologicalRuns = [...efficiencyData].reverse();
+let overallVo2MaxEMA = 0;
+
+// Smoothing factor (k = 2 / (N + 1)). Kita pasang rentang N = 10 sesi untuk kestabilan tren global
+const smoothingFactor = 2 / (10 + 1); 
+
+chronologicalRuns.forEach((run) => {
+    const sessionVo2 = parseFloat(run.vo2max_estimate || 0);
+    if (sessionVo2 > 0) {
+        if (overallVo2MaxEMA === 0) {
+            overallVo2MaxEMA = sessionVo2; // Inisialisasi basis awal dari sesi pertama
+        } else {
+            // Jalankan Formula EMA
+            overallVo2MaxEMA = (sessionVo2 * smoothingFactor) + (overallVo2MaxEMA * (1 - smoothingFactor));
+        }
+    }
+});
 
             return {
                 acrRatio,
                 acrZone,
                 acrClass,
-                currentVo2Max: avgVo2Max.toFixed(1),
+                currentVo2Max: overallVo2MaxEMA > 0 ? overallVo2MaxEMA.toFixed(1) : '0.0',
                 latestPropulsion: latestRun.propulsion_score || 0,
                 latestCadence: latestRun.cadence || 0,
                 latestStride: latestRun.stride_length || 0,
