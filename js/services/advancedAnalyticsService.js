@@ -31,8 +31,7 @@ export const advancedAnalyticsService = {
             if (efficiencyData.length === 0) return this.getEmptyState();
 
             const latestRun = efficiencyData[0];
-
-            -- PERBAIKAN DI SINI: Ganti latestRun.id menjadi latestRun.activity_id
+            
             const latestSplits = splitsRes.data 
                 ? splitsRes.data.filter(s => s.activity_id === latestRun.activity_id)
                 : [];
