@@ -23,13 +23,13 @@ export default {
             acrZone: 'Optimal',
             acrClass: '',
             currentVo2Max: '0.0',
-            vo2MaxClass: 'Calculating...', // Penampung baru kelas ACSM
+            vo2MaxClass: 'Calculating...', // Penampung kelas ACSM
             vo2MaxColorClass: 'text-slate-400',
-            latestPropulsion: 0,
-            latestCadence: 0,
-            latestStride: 0,
+            latestPropulsion: 0,   // Akan menampung rata-rata global
+            latestCadence: 0,      // Akan menampung rata-rata global
+            latestStride: 0,       // Akan menampung rata-rata global
             latestStepsPerMeter: 0,
-            latestFatigue: 0 // Penampung baru fatigue score
+            latestFatigue: 0       // Akan menampung rata-rata global (%)
         });
 
         const biomechanicsChartData = ref({ labels: [], cadence: [], stride: [] });
@@ -48,10 +48,6 @@ export default {
             return { label: 'Superior', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' };
         };
 
-        // ❌ BARIS BOCOR YANG MEMBUAT ERROR SUDAH DIHAPUS DARI SINI:
-        // const result = await advancedAnalyticsService.getSportScienceStats();
-        // const acsmRating = getAcsmVo2MaxClassification(result.currentVo2Max);
-
         const refreshIcons = () => {
             nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
         };
@@ -59,27 +55,51 @@ export default {
         const loadLabData = async () => {
             isLoading.value = true;
             try {
-                // ✅ Pengambilan data yang aman dan benar di dalam fungsi async
                 const result = await advancedAnalyticsService.getSportScienceStats();
                 
-                // Kalkulasi kelas ACSM secara real-time
+                // Kalkulasi kelas ACSM secara real-time berdasarkan tren global (EMA)
                 const acsmRating = getAcsmVo2MaxClassification(result.currentVo2Max);
 
-                // Dapatkan baris run terakhir untuk mengambil fatigue_score
-                const latestRunRaw = result.allRuns && result.allRuns.length > 0 ? result.allRuns[0] : {};
+                // 🚀 PROSES KALKULASI RATA-RATA KUMULATIF JANGKA PANJANG
+                const runsArray = result.allRuns || [];
+                let totalCadence = 0;
+                let totalStride = 0;
+                let totalPropulsion = 0;
+                let totalFatigue = 0;
+                let validRunsCount = 0;
+
+                runsArray.forEach(run => {
+                    if (run.cadence > 0) {
+                        totalCadence += run.cadence;
+                        totalStride += run.stride_length;
+                        totalPropulsion += run.propulsion_score;
+                        totalFatigue += run.fatigue_score || 0;
+                        validRunsCount++;
+                    }
+                });
+
+                // Tentukan nilai rata-rata global akhir
+                const avgCadence = validRunsCount > 0 ? Math.round(totalCadence / validRunsCount) : 0;
+                const avgStride = validRunsCount > 0 ? Math.round(totalStride / validRunsCount) : 0;
+                const avgPropulsion = validRunsCount > 0 ? Math.round(totalPropulsion / validRunsCount) : 0;
+                
+                // Konversi desimal fatigue ke persentase bulat yang akurat (cth: 0.33 menjadi 33)
+                const avgFatigue = validRunsCount > 0 ? Math.round((totalFatigue / validRunsCount) * 100) : 0;
 
                 sciStats.value = {
-                    acrRatio: result.acrRatio,
+                    acrRatio: result.acrRatio, // Otomatis akumulasi jangka pendek vs panjang dari service
                     acrZone: result.acrZone,
                     acrClass: result.acrClass,
                     currentVo2Max: result.currentVo2Max,
                     vo2MaxClass: acsmRating.label,
                     vo2MaxColorClass: acsmRating.color,
-                    latestPropulsion: result.latestPropulsion,
-                    latestCadence: result.latestCadence,
-                    latestStride: result.latestStride,
+                    
+                    // Ikat data dengan nilai rata-rata historis keseluruhan
+                    latestCadence: avgCadence,
+                    latestStride: avgStride,
+                    latestPropulsion: avgPropulsion,
                     latestStepsPerMeter: result.latestStepsPerMeter,
-                    latestFatigue: latestRunRaw.fatigue_score || 0 // Ikat data fatigue ke state UI
+                    latestFatigue: avgFatigue
                 };
 
                 // Dataset Chart 1: Biomekanika Lari
