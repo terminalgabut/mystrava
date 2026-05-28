@@ -15,21 +15,22 @@ export default `
 
     <div class="bento-grid-summary grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <!-- CARD 1: AEROBIC CAPACITY + ACSM STRATIFICATION -->
-        <div class="bento-card p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-            <div class="card-header flex justify-between items-center mb-2">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Aerobic Capacity</span>
-                <div class="icon-box p-1.5 bg-blue-50 rounded-lg">
-                    <i data-lucide="wind" class="w-4 h-4 text-blue-500"></i>
-                </div>
-            </div>
-            <h2 class="stat-value text-3xl font-black text-blue-600">
-                {{ sciStats.currentVo2Max }} 
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-opacity-40 inline-block align-middle ml-1" :class="sciStats.vo2MaxColorClass">
-                    {{ sciStats.vo2MaxClass }}
-                </span>
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">Kategori kebugaran kardiovaskular standar klinis ACSM.</p>
+        <!-- CARD 1: OVERALL AEROBIC CAPACITY (EMA) -->
+<div class="bento-card p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+    <div class="card-header flex justify-between items-center mb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Overall Aerobic Capacity</span>
+        <div class="icon-box p-1.5 bg-blue-50 rounded-lg">
+            <i data-lucide="wind" class="w-4 h-4 text-blue-500"></i>
         </div>
+    </div>
+    <h2 class="stat-value text-3xl font-black text-blue-600">
+        {{ sciStats.currentVo2Max }} 
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-opacity-40 inline-block align-middle ml-1" :class="sciStats.vo2MaxColorClass">
+            {{ sciStats.vo2MaxClass }}
+        </span>
+    </h2>
+    <p class="text-xs text-slate-500 mt-1">Kapasitas kardiovaskular kumulatif keseluruhan berdasarkan tren jangka panjang (EMA).</p>
+</div>
 
         <!-- CARD 2: ACUTE CHRONIC RATIO -->
         <div class="bento-card p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
