@@ -47,8 +47,10 @@ export default {
             if (value >= 46.5 && value <= 52.4) return { label: 'Excellent', color: 'text-blue-600 bg-blue-50 border-blue-100' };
             return { label: 'Superior', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' };
         };
-        const result = await advancedAnalyticsService.getSportScienceStats();
-        const acsmRating = getAcsmVo2MaxClassification(result.currentVo2Max);
+
+        // ❌ BARIS BOCOR YANG MEMBUAT ERROR SUDAH DIHAPUS DARI SINI:
+        // const result = await advancedAnalyticsService.getSportScienceStats();
+        // const acsmRating = getAcsmVo2MaxClassification(result.currentVo2Max);
 
         const refreshIcons = () => {
             nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
@@ -57,6 +59,7 @@ export default {
         const loadLabData = async () => {
             isLoading.value = true;
             try {
+                // ✅ Pengambilan data yang aman dan benar di dalam fungsi async
                 const result = await advancedAnalyticsService.getSportScienceStats();
                 
                 // Kalkulasi kelas ACSM secara real-time
