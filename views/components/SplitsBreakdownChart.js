@@ -13,7 +13,7 @@ export default {
         const { watch, onUnmounted, onMounted } = Vue;
         let chartInstance = null;
 
-        // Helper untuk konversi speed m/s ke format string pace (MM:SS)
+        // Konversi m/s ke format string pace lari tradisional (MM:SS)
         const msToPaceString = (speedMs) => {
             if (!speedMs || speedMs === 0) return '00:00';
             const paceMinPerKm = 16.6666666667 / speedMs;
@@ -22,7 +22,7 @@ export default {
             return `${minutes}:${seconds.toString().padStart(2, '0')}`;
         };
 
-        // Helper untuk konversi speed m/s ke nominal decimal menit (untuk visualisasi tinggi batang chart)
+        // Konversi m/s ke angka desimal menit untuk menghitung proporsi tinggi grafik batang
         const msToPaceDecimal = (speedMs) => {
             if (!speedMs || speedMs === 0) return 0;
             return 16.6666666667 / speedMs;
@@ -30,26 +30,26 @@ export default {
 
         const renderChart = () => {
             const ctx = document.getElementById('splitsBreakdownCanvas');
-            if (!ctx || !props.splits || props.splits.length === 0) return;
+            if (!ctx) return;
 
             if (chartInstance) {
                 chartInstance.destroy();
             }
 
-            const labels = props.splits.map(s => `KM ${s.split_number}`);
-            const paceValues = props.splits.map(s => msToPaceDecimal(s.split_avg_speed));
+            if (!props.splits || props.splits.length === 0) return;
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: props.splits.map(s => `KM ${s.split_number}`),
                     datasets: [{
-                        data: paceValues,
-                        backgroundColor: '#e2e8f0', // slate-200 default
-                        hoverBackgroundColor: '#3b82f6', // blue-500 saat hover
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        barPercentage: 0.5
+                        label: 'Pace',
+                        data: props.splits.map(s => msToPaceDecimal(s.split_avg_speed)),
+                        backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                        hoverBackgroundColor: '#3b82f6',
+                        borderRadius: 4,
+                        borderWidth: 0,
+                        barPercentage: 0.6
                     }]
                 },
                 options: {
@@ -67,10 +67,13 @@ export default {
                         }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { font: { size: 9 }, color: '#94a3b8' } 
+                        },
                         y: {
                             grid: { borderDash: [4, 4], color: '#f1f5f9' },
-                            reverse: true, // Pace lari terbalik: makin kecil angka menitnya, lari makin cepat (tinggi ke atas)
+                            reverse: true, // KUNCI UTAMA: Makin cepat lari (angka menit makin kecil), posisi balok makin melesat ke atas
                             ticks: {
                                 font: { size: 9 },
                                 color: '#94a3b8',
