@@ -5,16 +5,17 @@ import { Logger } from './debug.js';
 export const advancedAnalyticsService = {
     async getSportScienceStats() {
         try {
-            // Ambil data lari 30 hari terakhir untuk mendapatkan context Acute & Chronic
+            // Ambil data aktivitas 30 hari terakhir
             const { data, error } = await supabase
                 .from('view_advanced_running_efficiency')
                 .select('*')
+                .in('type', ['Run', 'Hike']) // KUNCI FILTER: Amankan murni Run dan Hike
                 .order('start_date_local', { ascending: false });
 
             if (error) throw error;
             if (!data || data.length === 0) return this.getEmptyState();
 
-            // 1. Ambil Sesi Lari Terakhir untuk Snapshot Metric
+            // 1. Ambil Sesi Terakhir untuk Snapshot Metric
             const latestRun = data[0];
 
             // 2. Kalkulasi ACR (Acute-to-Chronic Workload Ratio)
@@ -28,7 +29,6 @@ export const advancedAnalyticsService = {
             const acuteTotal = acuteLoads.reduce((acc, r) => acc + (r.session_workload || 0), 0);
             const chronicTotal = chronicLoads.reduce((acc, r) => acc + (r.session_workload || 0), 0);
 
-            // Rata-rata beban mingguan (7 hari) vs Bulanan (4 minggu)
             const acuteAverage = acuteTotal / 7;
             const chronicAverage = chronicTotal / 28;
 
@@ -37,7 +37,7 @@ export const advancedAnalyticsService = {
                 acrRatio = parseFloat((acuteAverage / chronicAverage).toFixed(2));
             }
 
-            // Tentukan status zona ACR berdasarkan Sport Science
+            // Status zona ACR Berdasarkan Sport Science
             let acrZone = 'Under-training';
             let acrClass = 'text-slate-500 bg-slate-50 border-slate-100';
             if (acrRatio >= 0.8 && acrRatio <= 1.3) {
@@ -64,7 +64,9 @@ export const advancedAnalyticsService = {
                 latestCadence: latestRun.cadence || 0,
                 latestStride: latestRun.stride_length || 0,
                 latestStepsPerMeter: latestRun.steps_per_meter || 0,
-                allRuns: data // untuk dikirim ke grafik garis kemajuan
+                
+                // REFACTOR: Kirim seluruh data untuk kalkulasi, tapi kita batasi data grafik di view nanti
+                allRuns: data 
             };
         } catch (err) {
             Logger.error("SportScienceService_Error", err);
