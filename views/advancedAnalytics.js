@@ -47,6 +47,8 @@ export default {
             if (value >= 46.5 && value <= 52.4) return { label: 'Excellent', color: 'text-blue-600 bg-blue-50 border-blue-100' };
             return { label: 'Superior', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' };
         };
+        const result = await advancedAnalyticsService.getSportScienceStats();
+        const acsmRating = getAcsmVo2MaxClassification(result.currentVo2Max);
 
         const refreshIcons = () => {
             nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
